@@ -1,4 +1,6 @@
-@import "tailwindcss";
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
 
 :root {
   --background: #0a0a0a;
@@ -14,26 +16,9 @@
   --border: #2d2d2d;
 }
 
-@theme inline {
-  --color-background: var(--background);
-  --color-foreground: var(--foreground);
-  --color-primary: var(--primary);
-  --color-primary-light: var(--primary-light);
-  --color-primary-dark: var(--primary-dark);
-  --color-secondary: var(--secondary);
-  --color-success: var(--success);
-  --color-warning: var(--warning);
-  --color-danger: var(--danger);
-  --color-card: var(--card);
-  --color-border: var(--border);
-  --font-sans: var(--font-geist-sans);
-  --font-mono: var(--font-geist-mono);
-}
-
 body {
   background: var(--background);
   color: var(--foreground);
-  font-family: var(--font-sans);
 }
 
 .container {
@@ -44,30 +29,32 @@ body {
 }
 
 /* Web3 Specific Styles */
-.btn {
-  @apply px-4 py-2 rounded font-medium transition-all duration-200;
-}
+@layer components {
+  .btn {
+    @apply px-4 py-2 rounded font-medium transition-all duration-200;
+  }
 
-.btn-primary {
-  @apply bg-primary text-white hover:bg-primary-light;
-}
+  .btn-primary {
+    @apply bg-purple-600 text-white hover:bg-purple-500;
+  }
 
-.btn-outline {
-  @apply border border-border text-foreground hover:bg-card;
-}
+  .btn-outline {
+    @apply border border-gray-600 text-gray-300 hover:bg-gray-800;
+  }
 
-.card {
-  @apply bg-card border border-border rounded-lg p-4 shadow-lg;
-}
+  .card {
+    @apply bg-gray-900 border border-gray-700 rounded-lg p-4 shadow-lg;
+  }
 
-.input, .select {
-  @apply bg-card border border-border rounded px-3 py-2 text-foreground focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent;
-}
+  .input, .select {
+    @apply bg-gray-900 border border-gray-700 rounded px-3 py-2 text-white focus:outline-none focus:ring-2 focus:ring-purple-600 focus:border-transparent;
+  }
 
-.connect-wallet-btn {
-  @apply btn btn-primary flex items-center justify-center space-x-2;
-}
+  .connect-wallet-btn {
+    @apply btn btn-primary flex items-center justify-center space-x-2;
+  }
 
-.network-badge {
-  @apply inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-secondary text-black;
+  .network-badge {
+    @apply inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-cyan-500 text-black;
+  }
 }

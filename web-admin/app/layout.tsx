@@ -1,7 +1,9 @@
 'use client';
 
-import './globals.css';
+import { Geist_Sans } from 'next/font/google';
+import { Geist_Mono } from 'next/font/google';
 import { ReactNode } from 'react';
+import './globals.css';
 
 interface RootLayoutProps {
   children: ReactNode;
