@@ -1,5 +1,19 @@
 # Análisis del Proyecto stablecoin/compra-stableboin
 
+
+## Intruciones para inicializar el projecto 
+1. crea siempre el directorio     stablecoin/compra-stableboin, si no existe , este sera el workspace del projecto
+2. inicializa el projecto con el comando npm init en el directorio stablecoin/compra-stableboin
+3. usa en todo momento el directorio stablecoin/compra-stableboin como workspace para este desarrollo
+4. usa siempre  las herramientas basadas en nextjs, react, ethersjs
+5. usa siempre las convenciones de desarrollo de typescript
+6. tienes que hacer los procesos para mantener la coherencia en el desarrollo y el codigo
+7. presta especial atencion en los imports del codigo,
+10. ejecuta los comandos que sean necesarios
+11. crea los archivos necesarios para este projecto, siguiendo los estandares de nextjs
+
+
+
 ## Descripción General
 
 El proyecto `stablecoin/compra-stableboin` es una aplicación web desarrollada con Next.js 15 (App Router) que permite a usuarios comprar tokens EuroToken (EURT) utilizando tarjetas de crédito a través de Stripe. Los tokens comprados son enviados directamente a la billetera MetaMask del usuario.

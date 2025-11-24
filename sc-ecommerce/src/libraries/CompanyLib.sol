@@ -1,5 +1,5 @@
 /// SPDX-License-Identifier: MIT
-pragma solidity ^0.8.19;
+pragma solidity ^0.8.13;
 
 library CompanyLib {
     struct Company {
@@ -20,24 +20,15 @@ library CompanyLib {
     event CompanyRegistered(uint256 indexed companyId, address indexed owner, string name);
     event CompanyStatusChanged(uint256 indexed companyId, bool isActive);
 
-    function registerCompany(
-        CompanyStorage storage self,
-        address owner,
-        string memory name,
-        string memory description
-    ) external returns (uint256) {
-        uint256 companyId = self.nextCompanyId;
+    function registerCompany(CompanyStorage storage self, address owner, string memory name, string memory description)
+        external
+        returns (uint256)
+    {
+        // Use post-increment to generate ID
+        uint256 companyId = ++self.nextCompanyId;
 
-        self.companies[companyId] = Company(
-            companyId,
-            owner,
-            name,
-            description,
-            true,
-            block.timestamp
-        );
+        self.companies[companyId] = Company(companyId, owner, name, description, true, block.timestamp);
         self.companyByOwner[owner] = companyId;
-        self.nextCompanyId++;
 
         emit CompanyRegistered(companyId, owner, name);
         return companyId;
@@ -46,43 +37,50 @@ library CompanyLib {
     function deactivateCompany(CompanyStorage storage self, uint256 companyId) external {
         require(self.companies[companyId].id != 0, "Company does not exist");
         require(self.companies[companyId].isActive, "Company already inactive");
-        
+
         self.companies[companyId].isActive = false;
-        
+
         emit CompanyStatusChanged(companyId, false);
     }
 
     function activateCompany(CompanyStorage storage self, uint256 companyId) external {
         require(self.companies[companyId].id != 0, "Company does not exist");
         require(!self.companies[companyId].isActive, "Company already active");
-        
+
         self.companies[companyId].isActive = true;
-        
+
         emit CompanyStatusChanged(companyId, true);
     }
 
-    function getCompany(CompanyStorage storage self, uint256 companyId)
-        external
-        view
-        returns (Company memory)
-    {
+    function getCompany(CompanyStorage storage self, uint256 companyId) external view returns (Company memory) {
         return self.companies[companyId];
     }
 
-    function getCompanyByOwner(CompanyStorage storage self, address owner)
-        external
-        view
-        returns (Company memory)
-    {
+    function getCompanyByOwner(CompanyStorage storage self, address owner) external view returns (Company memory) {
         uint256 companyId = self.companyByOwner[owner];
         return self.companies[companyId];
     }
 
-    function isCompanyActive(CompanyStorage storage self, uint256 companyId)
-        external
-        view
-        returns (bool)
-    {
+    function isCompanyActive(CompanyStorage storage self, uint256 companyId) external view returns (bool) {
         return self.companies[companyId].isActive;
+    }
+
+    function getAllCompanies(CompanyStorage storage self) 
+        external view returns (uint256[] memory) 
+    {
+        uint256[] memory allCompanies = new uint256[](self.nextCompanyId);
+        uint256 count = 0;
+        for (uint256 i = 1; i <= self.nextCompanyId; i++) {
+            if (self.companies[i].id != 0) {
+                allCompanies[count] = i;
+                count++;
+            }
+        }
+        
+        uint256[] memory result = new uint256[](count);
+        for (uint256 i = 0; i < count; i++) {
+            result[i] = allCompanies[i];
+        }
+        return result;
     }
 }

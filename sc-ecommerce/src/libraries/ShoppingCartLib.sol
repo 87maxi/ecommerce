@@ -1,9 +1,12 @@
-/// SPDX-License-Identifier: MIT
-pragma solidity ^0.8.19;
+pragma solidity ^0.8.13;
 
-import {ProductLib} from "../libraries/ProductLib.sol";
+// Import ProductLib
+import "../libraries/ProductLib.sol";
 
 library ShoppingCartLib {
+    // External reference to ProductLib
+    // We need to access the productStorage from the main contract
+    // This function will be called with the correct storage reference passed from the main contract
     struct CartItem {
         uint256 productId;
         uint256 quantity;
@@ -11,7 +14,6 @@ library ShoppingCartLib {
 
     struct ShoppingCart {
         CartItem[] items;
-        uint256 itemCount;
     }
 
     struct ShoppingCartStorage {
@@ -21,124 +23,114 @@ library ShoppingCartLib {
 
     event ItemAddedToCart(address indexed customer, uint256 indexed productId, uint256 quantity);
     event ItemRemovedFromCart(address indexed customer, uint256 indexed productId);
-    event ItemQuantityUpdated(address indexed customer, uint256 indexed productId, uint256 quantity);
+    event QuantityUpdated(address indexed customer, uint256 indexed productId, uint256 quantity);
     event CartCleared(address indexed customer);
 
-    function addToCart(
-        ShoppingCartStorage storage self,
-        ProductLib.ProductStorage storage productStorage,
-        address customer,
-        uint256 productId,
-        uint256 quantity
-    ) external returns (bool) {
-        require(quantity > 0, "Quantity must be greater than 0");
-        require(productStorage.products[productId].id != 0, "Product does not exist");
-        require(productStorage.products[productId].isActive, "Product is not active");
-        require(productStorage.products[productId].stock >= quantity, "Insufficient stock");
-        
-        ShoppingCart storage cart = self.carts[customer];
-        
-        // Check if product already in cart
-        uint256 index = self.itemIndex[customer][productId];
-        if (index < cart.items.length && cart.items[index].productId == productId) {
-            // Update existing item
-            cart.items[index].quantity += quantity;
-        } else {
-            // Add new item
-            cart.items.push(CartItem(productId, quantity));
-            self.itemIndex[customer][productId] = cart.items.length - 1;
-            cart.itemCount++;
-        }
-        
-        emit ItemAddedToCart(customer, productId, quantity);
-        return true;
-    }
-
-    function removeFromCart(
-        ShoppingCartStorage storage self,
-        address customer,
-        uint256 productId
-    ) external returns (bool) {
-        ShoppingCart storage cart = self.carts[customer];
-        uint256 index = self.itemIndex[customer][productId];
-        
-        // Validate item exists in cart at this index
-        if (index >= cart.items.length || cart.items[index].productId != productId) {
-            return false;
-        }
-        
-        // Move last item to deleted position if not the last item
-        if (index < cart.items.length - 1) {
-            cart.items[index] = cart.items[cart.items.length - 1];
-            // Update index for the moved item
-            self.itemIndex[customer][cart.items[index].productId] = index;
-        }
-        
-        // Remove last item
-        cart.items.pop();
-        cart.itemCount--;
-        
-        // Clear the index
-        delete self.itemIndex[customer][productId];
-        
-        emit ItemRemovedFromCart(customer, productId);
-        return true;
-    }
-
-    function updateQuantity(
-        ShoppingCartStorage storage self,
-        ProductLib.ProductStorage storage productStorage,
-        address customer,
-        uint256 productId,
-        uint256 quantity
-    ) external returns (bool) {
-        require(quantity > 0, "Quantity must be greater than 0");
-        
-        ShoppingCart storage cart = self.carts[customer];
-        uint256 index = self.itemIndex[customer][productId];
-        
-        // Validate item exists in cart
-        if (index >= cart.items.length || cart.items[index].productId != productId) {
-            return false;
-        }
-        
-        // Check stock availability
-        require(productStorage.products[productId].stock >= quantity, "Insufficient stock");
-        
-        cart.items[index].quantity = quantity;
-        
-        emit ItemQuantityUpdated(customer, productId, quantity);
-        return true;
-    }
-
-    function getCart(ShoppingCartStorage storage self, address customer)
+    function addToCart(ShoppingCartStorage storage self, address customer, uint256 productId, uint256 quantity)
         external
-        view
-        returns (CartItem[] memory)
     {
+        require(quantity > 0, "ShoppingCartLib: Quantity must be greater than 0");
+
+        ShoppingCart storage cart = self.carts[customer];
+        uint256 index = self.itemIndex[customer][productId];
+
+        if (cart.items.length == 0) {
+            // Cart is empty, add item
+            cart.items.push(CartItem({productId: productId, quantity: quantity}));
+            self.itemIndex[customer][productId] = cart.items.length;
+
+            emit ItemAddedToCart(customer, productId, quantity);
+        } else if (self.itemIndex[customer][productId] == 0) {
+            // Item not in cart, add it
+            cart.items.push(CartItem({productId: productId, quantity: quantity}));
+            self.itemIndex[customer][productId] = cart.items.length;
+
+            emit ItemAddedToCart(customer, productId, quantity);
+        } else {
+            // Item already in cart, update quantity
+            cart.items[index - 1].quantity += quantity;
+
+            emit QuantityUpdated(customer, productId, cart.items[index - 1].quantity);
+        }
+    }
+
+    function removeFromCart(ShoppingCartStorage storage self, address customer, uint256 productId) external {
+        ShoppingCart storage cart = self.carts[customer];
+        uint256 index = self.itemIndex[customer][productId];
+
+        require(cart.items.length > 0, "ShoppingCartLib: Cart is empty");
+        require(index > 0 && cart.items[index - 1].productId == productId, "ShoppingCartLib: Item not in cart");
+
+        uint256 lastIndex = cart.items.length - 1;
+        uint256 lastProductId = cart.items[lastIndex].productId;
+
+        // Move the last item to the place of the removed item
+        cart.items[index - 1] = cart.items[lastIndex];
+
+        // Update the index of the moved item
+        self.itemIndex[customer][lastProductId] = index;
+
+        // Remove the last item
+        cart.items.pop();
+
+        // Clear the index of the removed item
+        self.itemIndex[customer][productId] = 0;
+
+        emit ItemRemovedFromCart(customer, productId);
+    }
+
+    function updateQuantity(ShoppingCartStorage storage self, address customer, uint256 productId, uint256 quantity)
+        external
+    {
+        require(quantity > 0, "ShoppingCartLib: Quantity must be greater than 0");
+
+        ShoppingCart storage cart = self.carts[customer];
+        uint256 index = self.itemIndex[customer][productId];
+
+        require(cart.items.length > 0, "ShoppingCartLib: Cart is empty");
+        require(index > 0 && cart.items[index - 1].productId == productId, "ShoppingCartLib: Item not in cart");
+
+        cart.items[index - 1].quantity = quantity;
+
+        emit QuantityUpdated(customer, productId, quantity);
+    }
+
+    function getCart(ShoppingCartStorage storage self, address customer) external view returns (CartItem[] memory) {
         return self.carts[customer].items;
     }
 
     function clearCart(ShoppingCartStorage storage self, address customer) external {
         delete self.carts[customer];
-        delete self.itemIndex[customer];
-        
+
+        // Clear all indices for this customer
+        // Since we can't iterate over mappings, we'll handle this in the context if needed
+        // For now, we just delete the cart
         emit CartCleared(customer);
     }
 
+    // Calculate total price of items in cart
+    // Validates that products exist and are active
     function calculateTotal(
         ShoppingCartStorage storage self,
         ProductLib.ProductStorage storage productStorage,
         address customer
     ) external view returns (uint256) {
+        CartItem[] memory items = self.carts[customer].items;
         uint256 total = 0;
-        CartItem[] storage items = self.carts[customer].items;
         
         for (uint256 i = 0; i < items.length; i++) {
-            uint256 productId = items[i].productId;
-            uint256 quantity = items[i].quantity;
+            ProductLib.Product storage product = productStorage.products[items[i].productId];
+            // Validate product exists and is active
+            require(product.id != 0, "ShoppingCartLib: Product does not exist");
+            require(product.active, "ShoppingCartLib: Product is not active");
             
-            // Validate product still exists and is active
-            if (productStorage.products[productId].id != 0 && 
-                productStorage.products[productId].isActive) {
-                total += productStorage
+            total += product.price * items[i].quantity;
+        }
+        
+        return total;
+    }
+
+    function getCartItemCount(ShoppingCartStorage storage self, address customer) external view returns (uint256) {
+        return self.carts[customer].items.length;
+    }
+}

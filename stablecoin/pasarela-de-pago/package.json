@@ -1,0 +1,38 @@
+{
+  "name": "pasarela-de-pago",
+  "version": "1.0.0",
+  "description": "Pasarela de pago con Stripe basada en la estructura de stablecoin/pasarela-de-pago",
+  "main": "index.js",
+  "scripts": {
+    "dev": "next dev -p 3032",
+    "build": "next build",
+    "start": "next start"
+  },
+  "keywords": [
+    "stripe",
+    "payment",
+    "gateway",
+    "nextjs"
+  ],
+  "author": "",
+  "license": "MIT",
+  "dependencies": {
+    "@stripe/react-stripe-js": "^2.7.0",
+    "@stripe/stripe-js": "^3.0.1",
+    "@tailwindcss/postcss": "^4.1.17",
+    "next": "^15.0.3",
+    "react": "^19.0.0",
+    "react-dom": "^19.0.0"
+  },
+  "devDependencies": {
+    "@types/node": "^20.14.15",
+    "@types/react": "^18.3.3",
+    "@types/react-dom": "^18.3.0",
+    "autoprefixer": "^10.4.20",
+    "eslint": "^8.57.0",
+    "postcss": "^8.4.47",
+    "prettier": "^3.3.3",
+    "tailwindcss": "^3.4.13",
+    "typescript": "^5.5.4"
+  }
+}

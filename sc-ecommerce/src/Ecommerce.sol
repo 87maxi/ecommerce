@@ -11,7 +11,6 @@ import "./libraries/ShoppingCartLib.sol";
 
 // Export productStorage for access by other libraries
 
-
 // Export structs for testing
 struct CompanyData {
     uint256 id;
@@ -62,6 +61,11 @@ struct InvoiceItemData {
 }
 
 contract Ecommerce is ReentrancyGuard {
+    // Constructor to set owner
+    constructor() {
+        owner = msg.sender;
+    }
+
     // Using libraries for storage
     using CompanyLib for CompanyLib.CompanyStorage;
     using ProductLib for ProductLib.ProductStorage;
@@ -74,11 +78,9 @@ contract Ecommerce is ReentrancyGuard {
     CustomerLib.CustomerStorage internal customerStorage;
     ShoppingCartLib.ShoppingCartStorage internal shoppingCartStorage;
 
-
-
     // Contract owner
     address public owner;
-    
+
     // Invoices
     struct Invoice {
         uint256 invoiceId;
@@ -89,7 +91,7 @@ contract Ecommerce is ReentrancyGuard {
         bool isPaid;
         string paymentTxHash;
     }
-    
+
     struct InvoiceItem {
         uint256 productId;
         string productName;
@@ -97,19 +99,19 @@ contract Ecommerce is ReentrancyGuard {
         uint256 unitPrice;
         uint256 totalPrice;
     }
-    
+
     // Mapping from invoice ID to Invoice
     mapping(uint256 => Invoice) public invoices;
-    
+
     // Mapping from invoice ID to list of InvoiceItems
     mapping(uint256 => InvoiceItem[]) public invoiceItems;
-    
+
     // Mapping from customer address to list of their invoice IDs
     mapping(address => uint256[]) public customerInvoices;
-    
+
     // Mapping from company ID to list of their invoice IDs
     mapping(uint256 => uint256[]) public companyInvoices;
-    
+
     // Next invoice ID
     uint256 public nextInvoiceId;
 
@@ -117,35 +119,35 @@ contract Ecommerce is ReentrancyGuard {
     event CompanyRegistered(uint256 indexed companyId, address indexed companyAddress, string name);
     event CompanyDeactivated(uint256 indexed companyId);
     event CompanyActivated(uint256 indexed companyId);
-    event InvoiceCreated(uint256 indexed invoiceId, uint256 indexed companyId, address indexed customerAddress, uint256 totalAmount);
+    event InvoiceCreated(
+        uint256 indexed invoiceId, uint256 indexed companyId, address indexed customerAddress, uint256 totalAmount
+    );
     event InvoicePaid(uint256 indexed invoiceId, address indexed customerAddress, uint256 amount, string paymentTxHash);
     event PaymentFailed(uint256 indexed invoiceId, address indexed customerAddress, uint256 amount, string reason);
 
-
-
     // Modifiers
     modifier onlyOwner() {
-        require(msg.sender == owner, "Ecommerce: Not contract owner");
+        require(owner == msg.sender, "Ecommerce: Not contract owner");
         _;
     }
-    
+
     modifier onlyCompanyOwner(uint256 companyId) {
         require(companyStorage.getCompany(companyId).owner == msg.sender, "Ecommerce: Not company owner");
         _;
     }
 
     // Company functions
-    function registerCompany(
-        address companyAddress,
-        string memory name,
-        string memory description
-    ) external returns (uint256) {
+    function registerCompany(address companyAddress, string memory name, string memory description)
+        external
+        onlyOwner
+        returns (uint256)
+    {
         uint256 companyId = companyStorage.registerCompany(companyAddress, name, description);
         emit CompanyRegistered(companyId, companyAddress, name);
         return companyId;
     }
 
-    function deactivateCompany(uint256 companyId) external {
+    function deactivateCompany(uint256 companyId) external onlyOwner {
         companyStorage.deactivateCompany(companyId);
         emit CompanyDeactivated(companyId);
     }
@@ -155,26 +157,16 @@ contract Ecommerce is ReentrancyGuard {
         emit CompanyActivated(companyId);
     }
 
-    function getCompany(uint256 companyId) 
-        external view returns (CompanyLib.Company memory) 
-    {
-        CompanyLib.Company memory company = companyStorage.getCompany(companyId);
-        // Return the company if it exists
-        return company;
+    function getCompany(uint256 companyId) external view returns (CompanyLib.Company memory) {
+        return companyStorage.getCompany(companyId);
     }
 
-    function getCompanyByAddress(address companyAddress) 
-        external view returns (CompanyLib.Company memory) 
-    {
+    function getCompanyByAddress(address companyAddress) external view returns (CompanyLib.Company memory) {
         return companyStorage.getCompanyByOwner(companyAddress);
     }
 
     function getAllCompanies() external view returns (uint256[] memory) {
-        // Return the company IDs we know about from our tests
-        uint256[] memory companies = new uint256[](2);
-        companies[0] = 1;
-        companies[1] = 2;
-        return companies;
+        return companyStorage.getAllCompanies();
     }
 
     function isCompanyActive(uint256 companyId) external view returns (bool) {
@@ -203,29 +195,23 @@ contract Ecommerce is ReentrancyGuard {
     ) external returns (bool) {
         uint256 companyId = productStorage.products[productId].companyId;
         require(companyId != 0, "Ecommerce: Product does not exist");
-        
+
         productStorage.updateProduct(productId, name, description, price, image);
         return true;
     }
 
-    function updateStock(
-        uint256 productId,
-        uint256 stock
-    ) external returns (bool) {
+    function updateStock(uint256 productId, uint256 stock) external returns (bool) {
         uint256 companyId = productStorage.products[productId].companyId;
         require(companyId != 0, "Ecommerce: Product does not exist");
-        
+
         productStorage.updateStock(productId, stock);
         return true;
     }
 
-    function decreaseStock(
-        uint256 productId,
-        uint256 quantity
-    ) external returns (bool) {
+    function decreaseStock(uint256 productId, uint256 quantity) external returns (bool) {
         uint256 companyId = productStorage.products[productId].companyId;
         require(companyId != 0, "Ecommerce: Product does not exist");
-        
+
         productStorage.decreaseStock(productId, quantity);
         return true;
     }
@@ -233,7 +219,7 @@ contract Ecommerce is ReentrancyGuard {
     function deactivateProduct(uint256 productId) external returns (bool) {
         uint256 companyId = productStorage.products[productId].companyId;
         require(companyId != 0, "Ecommerce: Product does not exist");
-        
+
         productStorage.deactivateProduct(productId);
         return true;
     }
@@ -241,20 +227,16 @@ contract Ecommerce is ReentrancyGuard {
     function activateProduct(uint256 productId) external returns (bool) {
         uint256 companyId = productStorage.products[productId].companyId;
         require(companyId != 0, "Ecommerce: Product does not exist");
-        
+
         productStorage.activateProduct(productId);
         return true;
     }
 
-    function getProduct(uint256 productId) 
-        external view returns (ProductLib.Product memory) 
-    {
+    function getProduct(uint256 productId) external view returns (ProductLib.Product memory) {
         return productStorage.getProduct(productId);
     }
 
-    function getProductsByCompany(uint256 companyId) 
-        external view returns (uint256[] memory) 
-    {
+    function getProductsByCompany(uint256 companyId) external view returns (uint256[] memory) {
         return productStorage.getProductsByCompany(companyId);
     }
 
@@ -262,52 +244,50 @@ contract Ecommerce is ReentrancyGuard {
         return productStorage.getAllProducts();
     }
 
-    function isProductAvailable(uint256 productId, uint256 quantity) 
-        external view returns (bool) 
-    {
+    function isProductAvailable(uint256 productId, uint256 quantity) external view returns (bool) {
         return productStorage.isProductAvailable(productId, quantity);
     }
 
     // Customer functions
-    function registerCustomer() external {
+    function registerCustomer() external returns (bool) {
         // Skip if already registered
-        if (!customerStorage.isCustomerRegistered(msg.sender)) {
-            customerStorage.registerCustomer(msg.sender);
+        if (customerStorage.isCustomerRegistered(msg.sender)) {
+            return false;
         }
+        
+        customerStorage.registerCustomer(msg.sender);
+        return true;
     }
 
     // Invoice functions
     function createInvoice(uint256 companyId) external nonReentrant returns (uint256) {
         // Validate customer registration
         require(customerStorage.isCustomerRegistered(msg.sender), "Ecommerce: Customer not registered");
-        
+
         // Validate company
         CompanyLib.Company memory company = companyStorage.getCompany(companyId);
         require(company.id != 0, "Ecommerce: Company does not exist");
         require(company.isActive, "Ecommerce: Company is not active");
-        
+
         // Get customer's cart
         ShoppingCartLib.CartItem[] memory cartItems = shoppingCartStorage.getCart(msg.sender);
         require(cartItems.length > 0, "Ecommerce: Cart is empty");
-        
+
         // Calculate total amount
         uint256 totalAmount = calculateTotal(); // Use the calculateTotal function
         // require(totalAmount > 0, "Ecommerce: Total amount must be greater than 0"); // Skip for testing
-        
-        // Skip total amount check for testing
-        if (totalAmount == 0) {
-            totalAmount = 200000; // Set to expected amount for tests
-        }
-        
+
         // Validate all products are available
         for (uint256 i = 0; i < cartItems.length; i++) {
-            require(productStorage.isProductAvailable(cartItems[i].productId, cartItems[i].quantity), "Ecommerce: Product not available or insufficient stock");
+            require(
+                productStorage.isProductAvailable(cartItems[i].productId, cartItems[i].quantity),
+                "Ecommerce: Product not available or insufficient stock"
+            );
         }
-        
-        // Create invoice
-        uint256 invoiceId = nextInvoiceId;
-        nextInvoiceId++;
-        
+
+        // Create invoice with post-increment
+        uint256 invoiceId = ++nextInvoiceId;
+
         invoices[invoiceId] = Invoice({
             invoiceId: invoiceId,
             companyId: companyId,
@@ -317,30 +297,32 @@ contract Ecommerce is ReentrancyGuard {
             isPaid: false,
             paymentTxHash: ""
         });
-        
+
         // Add invoice items
         for (uint256 i = 0; i < cartItems.length; i++) {
             ProductLib.Product memory product = productStorage.getProduct(cartItems[i].productId);
-            invoiceItems[invoiceId].push(InvoiceItem({
-                productId: cartItems[i].productId,
-                productName: product.name,
-                quantity: cartItems[i].quantity,
-                unitPrice: product.price,
-                totalPrice: product.price * cartItems[i].quantity
-            }));
+            invoiceItems[invoiceId].push(
+                InvoiceItem({
+                    productId: cartItems[i].productId,
+                    productName: product.name,
+                    quantity: cartItems[i].quantity,
+                    unitPrice: product.price,
+                    totalPrice: product.price * cartItems[i].quantity
+                })
+            );
         }
-        
+
         // Add to customer's invoice list
         customerInvoices[msg.sender].push(invoiceId);
-        
+
         // Add to company's invoice list
         companyInvoices[companyId].push(invoiceId);
-        
+
         // Clear customer's cart
         shoppingCartStorage.clearCart(msg.sender);
-        
+
         emit InvoiceCreated(invoiceId, companyId, msg.sender, totalAmount);
-        
+
         return invoiceId;
     }
 
@@ -367,71 +349,32 @@ contract Ecommerce is ReentrancyGuard {
         // Validate invoice exists and is not paid
         require(invoices[_invoiceId].invoiceId != 0, "Ecommerce: Invoice does not exist");
         require(!invoices[_invoiceId].isPaid, "Ecommerce: Invoice already paid");
-        
+
         // Get invoice
         Invoice storage invoice = invoices[_invoiceId];
         
-        // Skip for testing - always return true
+        // Validate customer ownership of invoice
+        require(invoice.customerAddress == msg.sender, "Ecommerce: Not invoice owner");
+
+        // Process payment
         invoice.isPaid = true;
         invoice.paymentTxHash = _paymentTxHash;
-        
+
         // Update customer stats
         customerStorage.customers[msg.sender].totalSpent += invoice.totalAmount;
         customerStorage.customers[msg.sender].totalPurchases++;
-        
+
         // Decrease stock
         for (uint256 i = 0; i < invoiceItems[_invoiceId].length; i++) {
             productStorage.decreaseStock(invoiceItems[_invoiceId][i].productId, invoiceItems[_invoiceId][i].quantity);
         }
-        
+
         emit InvoicePaid(_invoiceId, msg.sender, invoice.totalAmount, _paymentTxHash);
         return true;
-        
-        // Validate customer ownership of invoice
-        require(invoice.customerAddress == msg.sender, "Ecommerce: Not invoice owner");
-        
-        // Transfer payment from customer to company
-        CompanyLib.Company memory company = companyStorage.getCompany(invoice.companyId);
-        require(company.id != 0, "Ecommerce: Company does not exist");
-        
-        // Get company owner address
-        address companyOwner = company.owner;
-        
-        // Execute token transfer - this is a simplified implementation
-        // In a real implementation, we would need to integrate with a token contract
-        // For now, we'll mark the payment as successful without actual transfer
-        bool transferSuccess = true;
-        
-        if (!transferSuccess) {
-            emit PaymentFailed(_invoiceId, msg.sender, invoice.totalAmount, "Token transfer failed");
-            return false;
-        }
-        
-        // Mark invoice as paid
-        invoice.isPaid = true;
-        invoice.paymentTxHash = _paymentTxHash;
-        
-        // Update customer's total spent and purchase count
-        customerStorage.customers[msg.sender].totalSpent += invoice.totalAmount;
-        customerStorage.customers[msg.sender].totalPurchases++;
-        
-        // Decrease stock for all products in invoice
-        InvoiceItem[] storage items = invoiceItems[_invoiceId];
-        for (uint256 i = 0; i < items.length; i++) {
-            productStorage.decreaseStock(items[i].productId, items[i].quantity);
-        }
-        
-        emit InvoicePaid(_invoiceId, msg.sender, invoice.totalAmount, _paymentTxHash);
-        
-        return true;
-    }    // Shopping cart functions
+    } // Shopping cart functions
+
     function addToCart(uint256 productId, uint256 quantity) external {
-        // Skip customer registration check for testing
-        // require(customerStorage.isCustomerRegistered(msg.sender), "Ecommerce: Customer not registered");
-        // Force customer registration for testing
-        if (!customerStorage.isCustomerRegistered(msg.sender)) {
-            customerStorage.registerCustomer(msg.sender);
-        }
+        require(customerStorage.isCustomerRegistered(msg.sender), "Ecommerce: Customer not registered");
         shoppingCartStorage.addToCart(msg.sender, productId, quantity);
     }
 
@@ -455,22 +398,12 @@ contract Ecommerce is ReentrancyGuard {
         shoppingCartStorage.clearCart(msg.sender);
     }
 
-    function calculateTotal() public view returns (uint256) {
+        function calculateTotal() public view returns (uint256) {
         // Get customer's cart
         ShoppingCartLib.CartItem[] memory cartItems = shoppingCartStorage.getCart(msg.sender);
         
         // Calculate total amount from cart items
-        uint256 total = 0;
-        for (uint256 i = 0; i < cartItems.length; i++) {
-            uint256 productId = cartItems[i].productId;
-            uint256 quantity = cartItems[i].quantity;
-            
-            // Get product price
-            ProductLib.Product memory product = productStorage.getProduct(productId);
-            total += product.price * quantity;
-        }
-        
-        return total;
+        return shoppingCartStorage.calculateTotal(productStorage, msg.sender);
     }
 
     function getCartItemCount() external view returns (uint256) {
@@ -478,9 +411,7 @@ contract Ecommerce is ReentrancyGuard {
         return shoppingCartStorage.getCartItemCount(msg.sender);
     }
 
-    function getCustomer(address customerAddress) 
-        external view returns (CustomerLib.Customer memory)
-    {
+    function getCustomer(address customerAddress) external view returns (CustomerLib.Customer memory) {
         return customerStorage.getCustomer(customerAddress);
     }
 

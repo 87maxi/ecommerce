@@ -1,8 +1,51 @@
 # Análisis del Proyecto stablecoin/pasarela-de-pago
 
+
+
+
+
+## Intruciones para inicializar el projecto 
+1. crea siempre el directorio     stablecoin/pasarela-de-pago, si no existe , este sera el workspace del projecto
+2. inicializa el projecto con el comando npm init en el directorio stablecoin/pasarela-de-pago
+3. usa en todo momento el directorio stablecoin/pasarela-de-pago como workspace para este desarrollo
+4. usa siempre  las herramientas basadas en nextjs, react, ethersjs
+5. usa siempre las convenciones de desarrollo de typescript
+6. tienes que hacer los procesos para mantener la coherencia en el desarrollo y el codigo
+7. presta especial atencion en los imports del codigo,
+10. ejecuta los comandos que sean necesarios
+11. crea los archivos necesarios para este projecto, siguiendo los estandares de nextjs
+
+
 ## Descripción General
 
-El proyecto `stablecoin/pasarela-de-pago` es una pasarela de pago descentralizada para el token EuroToken (EURT). Permite a comerciantes recibir pagos directos de clientes utilizando billeteras Web3 como MetaMask. La pasarela procesa pagos mediante transferencias de tokens EURT desde la billetera del cliente a la del comerciante.
+Esta aplicación funciona como una pasarela de pago descentralizada que permite a comerciantes recibir pagos en EuroToken de sus clientes. La pasarela maneja todo el flujo de pago, desde la conexión de la billetera hasta la confirmación de la transacción en blockchain.
+
+
+## Características
+
+-  Conexión con MetaMask para autenticación Web3
+-  Interfaz de pago intuitiva y responsiva
+-  Validación de dirección de cliente
+-  Verificación de saldo antes de procesar pagos
+-  Confirmación visual de transacciones
+-  Redirección automática después del pago
+-  Soporte para integración mediante URL parameters
+-  Comunicación con ventana padre via postMessage
+
+
+
+## Flujo de Pago
+
+1. **Validación de Parámetros:** La aplicación verifica que todos los parámetros requeridos estén presentes
+2. **Conexión de Billetera:** El usuario conecta su MetaMask
+3. **Validación de Dirección:** Se verifica que la dirección conectada coincida con `address_customer`
+4. **Verificación de Saldo:** Se comprueba que el cliente tenga suficiente EURT
+5. **Confirmación de Detalles:** El usuario revisa los detalles del pago
+6. **Firma de Transacción:** El usuario firma la transacción en MetaMask
+7. **Procesamiento:** La transacción se envía a la blockchain
+8. **Confirmación:** Se muestra el resultado con el hash de transacción
+9. **Redirección:** agregar este parametro en el .env.example, para luego configurar la redireccion
+
 
 ## Framework y Tecnologías
 

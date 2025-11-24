@@ -19,15 +19,9 @@ library CustomerLib {
 
     function registerCustomer(CustomerStorage storage self, address customerAddress) external returns (bool) {
         require(!self.customers[customerAddress].isRegistered, "Customer already registered");
-        
-        self.customers[customerAddress] = Customer(
-            customerAddress,
-            0,
-            0,
-            block.timestamp,
-            true
-        );
-        
+
+        self.customers[customerAddress] = Customer(customerAddress, 0, 0, block.timestamp, true);
+
         emit CustomerRegistered(customerAddress);
         return true;
     }
@@ -40,11 +34,7 @@ library CustomerLib {
         return self.customers[customerAddress];
     }
 
-    function getAllCustomers(CustomerStorage storage self)
-        external
-        view
-        returns (Customer[] memory)
-    {
+    function getAllCustomers(CustomerStorage storage self) external view returns (Customer[] memory) {
         // Count registered customers first
         uint256 count = 0;
         // Use a reasonable upper bound to avoid gas issues
@@ -58,7 +48,7 @@ library CustomerLib {
                 current = address(uint160(uint256(uint160(current)) + 1));
             }
         }
-        
+
         Customer[] memory result = new Customer[](count);
         uint256 index = 0;
         current = address(1);
@@ -71,28 +61,22 @@ library CustomerLib {
                 current = address(uint160(uint256(uint160(current)) + 1));
             }
         }
-        
+
         return result;
     }
 
-    function isCustomerRegistered(CustomerStorage storage self, address customerAddress)
-        external
-        view
-        returns (bool)
-    {
+    function isCustomerRegistered(CustomerStorage storage self, address customerAddress) external view returns (bool) {
         return self.customers[customerAddress].isRegistered;
     }
 
-    function updateCustomerStats(
-        CustomerStorage storage self,
-        address customerAddress,
-        uint256 amountSpent
-    ) external {
+    function updateCustomerStats(CustomerStorage storage self, address customerAddress, uint256 amountSpent) external {
         require(self.customers[customerAddress].isRegistered, "Customer not registered");
-        
+
         self.customers[customerAddress].totalPurchases++;
         self.customers[customerAddress].totalSpent += amountSpent;
-        
-        emit CustomerStatsUpdated(customerAddress, self.customers[customerAddress].totalPurchases, self.customers[customerAddress].totalSpent);
+
+        emit CustomerStatsUpdated(
+            customerAddress, self.customers[customerAddress].totalPurchases, self.customers[customerAddress].totalSpent
+        );
     }
 }
