@@ -6,8 +6,11 @@ export default function RootLayout({
   children: React.ReactNode;
 }) {
   return (
-    <html lang="en">
-      <body>{children}</body>
-    </html>
+    <html lang="es">
+  <body className="min-h-screen antialiased">
+    {children}
+    <script src="/metamask-detection.js"></script>
+  </body>
+</html>
   );
 }

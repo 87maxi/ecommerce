@@ -70,3 +70,20 @@ src/
 │   ├── layout.tsx
 │   └── page.tsx
 ```
+
+## Integración con Pasarela de Pago
+
+Esta aplicación está diseñada para interoperar con `stablecoin/pasarela-de-pago`, permitiendo:
+
+- **Parámetros compatibles**: Soporte para `invoice` y `redirectUrl`
+- **Flujo unificado**: Redirección tras pago exitoso a URLs personalizadas
+- **Metadata compartida**: El campo `invoice` se propaga a través del sistema
+- **Seguimiento**: El mismo `clientSecret` y parámetros se mantienen coherentes entre servicios
+
+### Uso Combinado
+
+1. `pasarela-de-pago` inicia el proceso con parámetros estructurados
+2. `compra-stableboin` procesa el pago y mantiene la trazabilidad
+3. Redirección automática al sitio original con resultados
+
+Este enfoque permite una experiencia de pago seamless entre aplicaciones mientras se mantiene la seguridad y trazabilidad.

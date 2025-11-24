@@ -8,10 +8,28 @@ export default function Confirmation() {
 
   useEffect(() => {
     const params = new URLSearchParams(window.location.search);
+    // Permitir distintos indicadores de estado de pago
     const payment_status = params.get('payment_status');
+    const status = params.get('status');
+    const success = params.get('success');
+    const redirectStatus = params.get('redirect_status');
     const redir = new URLSearchParams(window.location.hash.substring(1)).get('redirect_url');
 
-    setStatus(payment_status || 'unknown');
+    // Lógica de prioridad para determinar el estado del pago
+    // Orden de prioridad: payment_status > redirect_status > status > success
+    if (payment_status === 'succeeded') {
+      setStatus('succeeded');
+    } else if (redirectStatus === 'succeeded') {
+      setStatus('succeeded');
+    } else if (status === 'confirmed') {
+      setStatus('succeeded');
+    } else if (success === 'true') {
+      setStatus('succeeded');
+    } else if (params.get('redirect_status') === 'succeeded') {
+      setStatus('succeeded');
+    } else {
+      setStatus('unknown');
+    }
     setRedirectUrl(redir || null);
 
     if (redir) {

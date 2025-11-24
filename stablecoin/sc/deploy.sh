@@ -3,7 +3,7 @@
 
 set -e
 
-export PROJECT_ROOT="/home/maxi/Documentos/source/codecrypto/practice/ecommerce/stablecoin/sc"
+export PROJECT_ROOT="${PWD}"
 
 echo "Iniciando proceso de desarrollo y despliegue..."
 

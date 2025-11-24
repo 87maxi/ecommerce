@@ -37,7 +37,7 @@ const CheckoutForm = ({ clientSecret }: { clientSecret: string }) => {
       elements,
       clientSecret,
       confirmParams: {
-        return_url: "http://localhost:3002/confirmation", // Ajustable
+        return_url: paymentData?.redirectUrl ? `${paymentData.redirectUrl}?success=true&status=confirmed` : `${process.env.NEXT_PUBLIC_COMPRAS_STABLEBOIN_URL || 'http://localhost:3033'}?success=true&status=confirmed`, // Redirección a compras-stableboin
       },
     });
 

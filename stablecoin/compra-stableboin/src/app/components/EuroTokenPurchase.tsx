@@ -9,6 +9,7 @@ export default function EuroTokenPurchase() {
   const [walletAddress, setWalletAddress] = useState<string>('');
   const [clientSecret, setClientSecret] = useState<string>('');
   const [step, setStep] = useState<'connect' | 'pay' | 'success'>('connect');
+  const [redirectUrl, setRedirectUrl] = useState<string | null>(null);
 
   const handleWalletConnected = (address: string) => {
     setWalletAddress(address);
@@ -18,9 +19,17 @@ export default function EuroTokenPurchase() {
   useEffect(() => {
     if (!walletAddress || !amount) return;
 
+    const searchParams = new URLSearchParams(window.location.search);
+    const invoice = searchParams.get('invoice') || `EURT_PURCHASE_${Date.now()}`;
+    const redirect = searchParams.get('redirect') || 'http://localhost:3002';
+    
+    if (redirect) {
+      setRedirectUrl(redirect);
+    }
+
     fetch('/api/create-payment-intent', {
       method: 'POST',
-      body: JSON.stringify({ amount, walletAddress }),
+      body: JSON.stringify({ amount, walletAddress, invoice }),
       headers: { 'Content-Type': 'application/json' },
     })
       .then((res) => res.json())
@@ -58,7 +67,13 @@ export default function EuroTokenPurchase() {
         {step === 'connect' && <MetaMaskConnect onWalletConnected={handleWalletConnected} />}
 
         {step === 'pay' && clientSecret && walletAddress && (
-          <CheckoutForm clientSecret={clientSecret} walletAddress={walletAddress} amount={amount} />
+          <CheckoutForm 
+            clientSecret={clientSecret} 
+            walletAddress={walletAddress} 
+            amount={amount} 
+            invoice={new URLSearchParams(window.location.search).get('invoice') || `EURT_PURCHASE_${Date.now()}`} 
+            redirectUrl={redirectUrl} 
+          />
         )}
       </div>
     </div>

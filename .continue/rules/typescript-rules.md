@@ -5,16 +5,10 @@ invokable: false
 ---
 
 
-# **Descripcion de la metodolgia de desarrollo**
 
-## workspace 
--  en caso de no estar  crear un directorio web-admin y usar como workspace, no puedes crear arcivos ni documentos fuera de ese directorio
-- usa el directorio creado web-admin para instalar todas las dependencias necesarias para el projecto
-- ejecuta el comando build
-- ejecuta test y crea los que sean necesarios
-- remueve los archivos de cache 
  
 ## instala las dependencias y implementalas en el projecto
+**definicion del projecto** si el prjecto ya esta inicializado omitir estas intruciones
 - **Next.js** - React framework
 - **TypeScript** - usa typescript de manera tigurosa el tipado de varible, por ningun motivo uses **any**
 - **Tailwind CSS** - stilos usa sibre diseño moderno orientados a web3

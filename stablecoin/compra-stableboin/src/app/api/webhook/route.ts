@@ -28,6 +28,9 @@ export async function POST(request: NextRequest) {
 
     // Llamar a mintTokens
     try {
+      // Corregir: actualizar a la nueva lógica del webhook donde mint-tokens maneja directamente el evento de Stripe
+      // No necesitamos hacer fetch separado ya que el webhook de Stripe irá directamente a mint-tokens
+      // Mantener el código para compatibilidad temporal
       const response = await fetch(process.env.NEXT_PUBLIC_SITE_URL + '/api/mint-tokens', {
         method: 'POST',
         body: JSON.stringify({ walletAddress, amount }),

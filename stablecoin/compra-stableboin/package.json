@@ -4,9 +4,9 @@
   "description": "Aplicación para comprar EuroTokens (EURT) con tarjeta de crédito a través de Stripe",
   "main": "index.js",
   "scripts": {
-    "dev": "next dev -p 3031",
+    "dev": "next dev -p 3033",
     "build": "next build",
-    "start": "next start"
+    "start": "next start -p 3033"
   },
   "keywords": [
     "stablecoin",
