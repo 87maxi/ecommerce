@@ -10,9 +10,11 @@ interface CheckoutFormProps {
   clientSecret: string;
   walletAddress: string;
   amount: number;
+  invoice?: string;
+  redirectUrl?: string | null;
 }
 
-const Form = ({ clientSecret, walletAddress, amount }: CheckoutFormProps) => {
+const Form = ({ clientSecret, walletAddress, amount, invoice, redirectUrl }: CheckoutFormProps) => {
   const stripe = useStripe();
   const elements = useElements();
   const [error, setError] = useState<string | null>(null);
@@ -35,7 +37,9 @@ const Form = ({ clientSecret, walletAddress, amount }: CheckoutFormProps) => {
       clientSecret,
       elements,
       confirmParams: {
-        return_url: `${window.location.origin}/success?wallet=${walletAddress}&amount=${amount}`,
+        return_url: redirectUrl 
+          ? `${redirectUrl}/confirmation?success=true&wallet=${walletAddress}&amount=${amount}&invoice=${encodeURIComponent(invoice || '')}&status=confirmed`
+          : `${process.env.NEXT_PUBLIC_PASARELA_PAGO_URL || 'http://localhost:3002'}/confirmation?success=true&wallet=${walletAddress}&amount=${amount}&invoice=${encodeURIComponent(invoice || '')}&status=confirmed`,
       },
     });
 
@@ -64,10 +68,14 @@ export default function CheckoutForm({
   clientSecret,
   walletAddress,
   amount,
+  invoice,
+  redirectUrl
 }: {
   clientSecret: string;
   walletAddress: string;
   amount: number;
+  invoice?: string;
+  redirectUrl?: string | null;
 }) {
   const options = {
     clientSecret,
@@ -80,7 +88,13 @@ export default function CheckoutForm({
     <div className="bg-white rounded-xl p-6 shadow-md">
       <h3 className="text-lg font-semibold text-gray-800 mb-4">Detalles del Pago</h3>
       <Elements options={options} stripe={stripePromise}>
-        <Form clientSecret={clientSecret} walletAddress={walletAddress} amount={amount} />
+        <Form 
+          clientSecret={clientSecret} 
+          walletAddress={walletAddress} 
+          amount={amount} 
+          invoice={invoice} 
+          redirectUrl={redirectUrl} 
+        />
       </Elements>
     </div>
   );

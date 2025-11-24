@@ -1,7 +1,7 @@
 pragma solidity ^0.8.13;
 
 // Import necessary interfaces
-import "@openzeppelin/contracts/utils/ReentrancyGuard.sol";
+import {ReentrancyGuard}  from "@openzeppelin/contracts/utils/ReentrancyGuard.sol";
 
 // Import libraries
 import "./libraries/CompanyLib.sol";

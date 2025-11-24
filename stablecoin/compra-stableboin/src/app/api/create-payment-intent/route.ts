@@ -6,13 +6,14 @@ const stripe = require('stripe')(process.env.STRIPE_SECRET_KEY!);
 
 export async function POST(request: NextRequest) {
   try {
-    const { amount, walletAddress } = await request.json();
+    const { amount, walletAddress, invoice } = await request.json();
 
     const paymentIntent = await stripe.paymentIntents.create({
       amount: Math.round(amount * 100), // Céntimos
       currency: 'eur',
       metadata: {
         walletAddress,
+        invoice: invoice || 'STABLECOIN_PURCHASE',
       },
     });
 

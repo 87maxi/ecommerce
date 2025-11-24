@@ -4,7 +4,7 @@
   "description": "Pasarela de pago con Stripe basada en la estructura de stablecoin/pasarela-de-pago",
   "main": "index.js",
   "scripts": {
-    "dev": "next dev -p 3032",
+    "dev": "next dev -p 3002",
     "build": "next build",
     "start": "next start"
   },
