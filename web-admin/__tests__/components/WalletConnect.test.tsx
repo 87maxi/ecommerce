@@ -1,147 +1,115 @@
-import { render, screen, waitFor } from '@testing-library/react';
-import userEvent from '@testing-library/user-event';
-import WalletConnect from '../../app/components/WalletConnect';
+import { render, screen, fireEvent } from '@testing-library/react';
+import WalletConnect from '../components/WalletConnect';
+
+// Mock the useWallet hook
+jest.mock('../hooks/useWallet', () => ({
+  useWallet: () => ({
+    connect: jest.fn(),
+    disconnect: jest.fn(),
+    isConnected: false,
+    address: null,
+    chainId: null,
+    connecting: false,
+    error: null,
+  }),
+}));
 
 describe('WalletConnect', () => {
-  const mockOnConnect = jest.fn();
-  const mockOnDisconnect = jest.fn();
-
   beforeEach(() => {
-    mockOnConnect.mockClear();
-    mockOnDisconnect.mockClear();
-    // Clear the mock implementations
-    window.mockEthereum.request.mockClear();
-    window.mockEthereum.on.mockClear();
-    window.mockEthereum.removeListener.mockClear();
+    // Reset all mocks before each test
+    jest.clearAllMocks();
   });
-
   it('renders connect button when not connected', () => {
-    render(<WalletConnect onConnect={mockOnConnect} onDisconnect={mockOnDisconnect} />);
-    
+    render(<WalletConnect />);
     expect(screen.getByRole('button', { name: /connect wallet/i })).toBeInTheDocument();
   });
 
-  it('renders wallet info when connected', async () => {
-    // Mock connected state
+  it('calls connect function when button is clicked', () => {
+    const mockConnect = jest.fn();
+    const mockDisconnect = jest.fn();
+
+    jest.spyOn(require('../hooks/useWallet'), 'useWallet').mockReturnValue({
+      connect: mockConnect,
+      disconnect: mockDisconnect,
+      isConnected: false,
+      address: null,
+      chainId: null,
+      connecting: false,
+      error: null,
+    });
+
+    render(<WalletConnect />);
+    fireEvent.click(screen.getByRole('button', { name: /connect wallet/i }));
+    expect(mockConnect).toHaveBeenCalled();
+  });
+  it('renders wallet info when connected', () => {
     const mockAddress = '0x1234567890123456789012345678901234567890';
     
-    // Use the shared mock from setup
-    window.mockEthereum.request.mockImplementation((args: { method: string }) => {
-      if (args.method === 'eth_accounts') {
-        return [mockAddress];
-      }
-      if (args.method === 'eth_chainId') {
-        return '0x7a69'; // 31337 in hex
-      }
-      return [];
+    jest.spyOn(require('../hooks/useWallet'), 'useWallet').mockReturnValue({
+      connect: jest.fn(),
+      disconnect: jest.fn(),
+      isConnected: true,
+      address: mockAddress,
+      chainId: '0x7a69',
+      connecting: false,
+      error: null,
     });
     
-    // Wait for useEffect to complete
-    render(<WalletConnect onConnect={mockOnConnect} onDisconnect={mockOnDisconnect} />);
-    
-    await waitFor(() => {
-      expect(mockOnConnect).toHaveBeenCalledWith(mockAddress);
-    });
-    
+    render(<WalletConnect />);
     expect(screen.getByText(/0x1234/i)).toBeInTheDocument();
     expect(screen.getByText(/chain: 31337/i)).toBeInTheDocument();
     expect(screen.getByRole('button', { name: /disconnect/i })).toBeInTheDocument();
   });
 
-  it('calls onConnect when wallet connects', async () => {
-    const user = userEvent.setup();
-    
-    // Mock connection response
+  it('calls disconnect when disconnect button is clicked', () => {
+    const mockDisconnect = jest.fn();
     const mockAddress = '0x1234567890123456789012345678901234567890';
     
-    // Use the shared mock from setup
-    window.mockEthereum.request.mockImplementation((args: { method: string }) => {
-      if (args.method === 'eth_requestAccounts') {
-        return [mockAddress];
-      }
-      if (args.method === 'eth_chainId') {
-        return '0x7a69';
-      }
-      return [];
+    jest.spyOn(require('../hooks/useWallet'), 'useWallet').mockReturnValue({
+      connect: jest.fn(),
+      disconnect: mockDisconnect,
+      isConnected: true,
+      address: mockAddress,
+      chainId: '0x7a69',
+      connecting: false,
+      error: null,
     });
 
-    render(<WalletConnect onConnect={mockOnConnect} onDisconnect={mockOnDisconnect} />);
-    
-    const connectButton = screen.getByRole('button', { name: /connect wallet/i });
-    await user.click(connectButton);
-    
-    await waitFor(() => {
-      expect(mockOnConnect).toHaveBeenCalledWith(mockAddress);
-    });
+    render(<WalletConnect />);
+
+    fireEvent.click(screen.getByRole('button', { name: /disconnect/i }));
+    expect(mockDisconnect).toHaveBeenCalled();
   });
 
-  it('calls onDisconnect when disconnect button is clicked', async () => {
-    const user = userEvent.setup();
-    
-    // Set up already connected state
-    const mockAddress = '0x1234567890123456789012345678901234567890';
-    
-    // Use the shared mock from setup
-    window.mockEthereum.request.mockImplementation((args: { method: string }) => {
-      if (args.method === 'eth_accounts') {
-        return [mockAddress];
-      }
-      if (args.method === 'eth_chainId') {
-        return '0x7a69';
-      }
-      return [];
+  it('shows connecting state', () => {
+    jest.spyOn(require('../hooks/useWallet'), 'useWallet').mockReturnValue({
+      connect: jest.fn(),
+      disconnect: jest.fn(),
+      isConnected: false,
+      address: null,
+      chainId: null,
+      connecting: true,
+      error: null,
     });
 
-    render(<WalletConnect onConnect={mockOnConnect} onDisconnect={mockOnDisconnect} />);
-    
-    await waitFor(() => {
-      expect(mockOnConnect).toHaveBeenCalledWith(mockAddress);
-    });
-    
-    const disconnectButton = screen.getByRole('button', { name: /disconnect/i });
-    await user.click(disconnectButton);
-    
-    expect(mockOnDisconnect).toHaveBeenCalled();
+    render(<WalletConnect />);
+    expect(screen.getByText(/connecting/i)).toBeInTheDocument();
   });
 
-  it('shows error when connect is clicked without MetaMask', async () => {
-    const user = userEvent.setup();
-    
-    // Mock no MetaMask
-    Object.defineProperty(window, 'ethereum', {
-      value: undefined,
-      writable: true,
+  it('shows error message', () => {
+    const errorMessage = 'Connection failed';
+
+    jest.spyOn(require('../hooks/useWallet'), 'useWallet').mockReturnValue({
+      connect: jest.fn(),
+      disconnect: jest.fn(),
+      isConnected: false,
+      address: null,
+      chainId: null,
+      connecting: false,
+      error: errorMessage,
     });
 
-    render(<WalletConnect onConnect={mockOnConnect} onDisconnect={mockOnDisconnect} />);
-    
-    // Click connect button
-    const connectButton = screen.getByRole('button', { name: /connect wallet/i });
-    await user.click(connectButton);
-    
-    // Error should be shown after trying to connect
-    await waitFor(() => {
-      expect(screen.getByText(/metamask is not installed/i)).toBeInTheDocument();
-    });
-  });
-
-  it('handles connection errors gracefully', async () => {
-    const user = userEvent.setup();
-    
-    // Mock error during connection
-    window.mockEthereum.request = jest
-      .fn()
-      .mockRejectedValue(new Error('User rejected request'));
-
-    render(<WalletConnect onConnect={mockOnConnect} onDisconnect={mockOnDisconnect} />);
-    
-    const connectButton = screen.getByRole('button', { name: /connect wallet/i });
-    await user.click(connectButton);
-    
-    await waitFor(() => {
-      expect(screen.getByText(/user rejected request/i)).toBeInTheDocument();
-    }, { timeout: 10000 });
-    
-    expect(mockOnConnect).not.toHaveBeenCalled();
+    render(<WalletConnect />);
+    expect(screen.getByText(errorMessage)).toBeInTheDocument();
   });
 });

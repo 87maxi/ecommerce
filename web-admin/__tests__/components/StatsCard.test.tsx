@@ -1,27 +1,46 @@
 import { render, screen } from '@testing-library/react';
-import StatsCard from '../../app/components/StatsCard';
+import { StatsCard } from '../../src/components/StatsCard';
 
 describe('StatsCard', () => {
-  it('renders title, value, and description', () => {
+  const mockIcon = <svg data-testid="mock-icon" />;
+  it('renders stats card with correct content', () => {
     render(
       <StatsCard 
-        title="Test Stat" 
-        value={100} 
-        description="This is a test description" 
+        title="Total Users"
+        value="1,234"
+        icon={mockIcon}
+        color="bg-blue-500"
+        description="Active users this month"
       />
     );
     
-    expect(screen.getByText('Test Stat')).toBeInTheDocument();
-    expect(screen.getByText('100')).toBeInTheDocument();
-    expect(screen.getByText('This is a test description')).toBeInTheDocument();
+    expect(screen.getByText('Total Users')).toBeInTheDocument();
+    expect(screen.getByText('1,234')).toBeInTheDocument();
+    expect(screen.getByText('Active users this month')).toBeInTheDocument();
+    expect(screen.getByTestId('mock-icon')).toBeInTheDocument();
+  });
+
+  it('renders without description', () => {
+    render(
+      <StatsCard 
+        title="Revenue"
+        value="$12,345"
+        icon={mockIcon}
+        color="bg-green-500"
+      />
+    );
+    
+    expect(screen.getByText('Revenue')).toBeInTheDocument();
+    expect(screen.getByText('$12,345')).toBeInTheDocument();
+    expect(screen.queryByText('Active users this month')).not.toBeInTheDocument();
   });
 
   it('displays number values correctly', () => {
     render(
       <StatsCard 
-        title="Number Value" 
-        value={1234} 
-        description="Number test" 
+        title="Number Value"
+        value={1234}
+        description="Number test"
       />
     );
     
@@ -31,68 +50,26 @@ describe('StatsCard', () => {
   it('displays string values correctly', () => {
     render(
       <StatsCard 
-        title="String Value" 
-        value="10.5 ETH" 
-        description="String test" 
+        title="String Value"
+        value="10.5 ETH"
+        description="String test"
       />
     );
     
     expect(screen.getByText('10.5 ETH')).toBeInTheDocument();
   });
 
-  it('applies correct color class for primary', () => {
+  it('applies correct color class', () => {
     render(
       <StatsCard 
-        title="Primary" 
+        title="Colored Card"
         value={100} 
-        description="Primary color test" 
-        color="primary" 
+        description="Color test"
+        color="bg-red-500"
       />
     );
     
     const indicator = screen.getByTestId('color-indicator');
-    expect(indicator).toHaveClass('bg-primary');
-  });
-
-  it('applies correct color class for success', () => {
-    render(
-      <StatsCard 
-        title="Success" 
-        value={100} 
-        description="Success color test" 
-        color="success" 
-      />
-    );
-    
-    const indicator = screen.getByTestId('color-indicator');
-    expect(indicator).toHaveClass('bg-success');
-  });
-
-  it('applies correct color class for warning', () => {
-    render(
-      <StatsCard 
-        title="Warning" 
-        value={100} 
-        description="Warning color test" 
-        color="warning" 
-      />
-    );
-    
-    const indicator = screen.getByTestId('color-indicator');
-    expect(indicator).toHaveClass('bg-warning');
-  });
-
-  it('applies correct color class for danger', () => {
-    render(
-      <StatsCard 
-        title="Danger" 
-        value={100} 
-        description="Danger color test" 
-        color="danger" 
-      />
-    );
-    
-    const indicator = screen.getByTestId('color-indicator');
-    expect(indicator).toHaveClass('bg-danger');
+    expect(indicator).toHaveClass('bg-red-500');
   });
 });

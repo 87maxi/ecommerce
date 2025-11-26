@@ -12,7 +12,7 @@ library CompanyLib {
     }
 
     struct CompanyStorage {
-        mapping(uint256 => Company) companies;
+        mapping(uint256 => Company) company;
         mapping(address => uint256) companyByOwner;
         uint256 nextCompanyId;
     }
@@ -27,7 +27,7 @@ library CompanyLib {
         // Use post-increment to generate ID
         uint256 companyId = ++self.nextCompanyId;
 
-        self.companies[companyId] = Company(companyId, owner, name, description, true, block.timestamp);
+        self.company[companyId] = Company(companyId, owner, name, description, true, block.timestamp);
         self.companyByOwner[owner] = companyId;
 
         emit CompanyRegistered(companyId, owner, name);
@@ -35,34 +35,34 @@ library CompanyLib {
     }
 
     function deactivateCompany(CompanyStorage storage self, uint256 companyId) external {
-        require(self.companies[companyId].id != 0, "Company does not exist");
-        require(self.companies[companyId].isActive, "Company already inactive");
+        require(self.company[companyId].id != 0, "Company does not exist");
+        require(self.company[companyId].isActive, "Company already inactive");
 
-        self.companies[companyId].isActive = false;
+        self.company[companyId].isActive = false;
 
         emit CompanyStatusChanged(companyId, false);
     }
 
     function activateCompany(CompanyStorage storage self, uint256 companyId) external {
-        require(self.companies[companyId].id != 0, "Company does not exist");
-        require(!self.companies[companyId].isActive, "Company already active");
+        require(self.company[companyId].id != 0, "Company does not exist");
+        require(!self.company[companyId].isActive, "Company already active");
 
-        self.companies[companyId].isActive = true;
+        self.company[companyId].isActive = true;
 
         emit CompanyStatusChanged(companyId, true);
     }
 
     function getCompany(CompanyStorage storage self, uint256 companyId) external view returns (Company memory) {
-        return self.companies[companyId];
+        return self.company[companyId];
     }
 
     function getCompanyByOwner(CompanyStorage storage self, address owner) external view returns (Company memory) {
         uint256 companyId = self.companyByOwner[owner];
-        return self.companies[companyId];
+        return self.company[companyId];
     }
 
     function isCompanyActive(CompanyStorage storage self, uint256 companyId) external view returns (bool) {
-        return self.companies[companyId].isActive;
+        return self.company[companyId].isActive;
     }
 
     function getAllCompanies(CompanyStorage storage self) 
@@ -71,7 +71,7 @@ library CompanyLib {
         uint256[] memory allCompanies = new uint256[](self.nextCompanyId);
         uint256 count = 0;
         for (uint256 i = 1; i <= self.nextCompanyId; i++) {
-            if (self.companies[i].id != 0) {
+            if (self.company[i].id != 0) {
                 allCompanies[count] = i;
                 count++;
             }

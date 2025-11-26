@@ -1,54 +1,57 @@
 import { render, screen } from '@testing-library/react';
-import TransactionList from '../../app/components/TransactionList';
+import { TransactionList } from '../../src/components/TransactionList';
 
 describe('TransactionList', () => {
-  const transactions = [
-    { id: '0x8a1...d2e4', user: 'Alice', amount: '0.5 ETH', status: 'confirmed', time: '2 min ago' },
-    { id: '0x3b2...f7a1', user: 'Bob', amount: '1.2 ETH', status: 'pending', time: '15 min ago' },
-    { id: '0x1c3...e8b2', user: 'Charlie', amount: '0.8 ETH', status: 'failed', time: '1 hour ago' }
+  const mockTransactions = [
+    {
+      id: '1',
+      type: 'Registro de Empresa',
+      amount: '-',
+      from: '0x742d35Cc6634C0532925a3b8D4C0532925a3b8D4',
+      to: '0x5FbDB2315678afecb367f032d93F642f64180aa3',
+      timestamp: 'Hace 2 horas',
+      status: 'completed' as const,
+    },
+    {
+      id: '2',
+      type: 'Agregar Producto',
+      amount: '-',
+      from: '0x742d35Cc6634C0532925a3b8D4C0532925a3b8D4',
+      to: '0x5FbDB2315678afecb367f032d93F642f64180aa3',
+      timestamp: 'Hace 5 horas',
+      status: 'completed' as const,
+    },
   ];
 
+  it('renders transaction list with correct title', () => {
+    render(<TransactionList transactions={mockTransactions} title="Actividad Reciente" />);
+    expect(screen.getByText('Actividad Reciente')).toBeInTheDocument();
+  });
+
   it('renders all transactions', () => {
-    render(<TransactionList transactions={transactions} />);
-    
-    expect(screen.getByText('Recent Activity')).toBeInTheDocument();
-    expect(screen.getByText('0x8a1...d2e4')).toBeInTheDocument();
-    expect(screen.getByText('Alice')).toBeInTheDocument();
-    expect(screen.getByText('0.5 ETH')).toBeInTheDocument();
-    expect(screen.getByText('Confirmed')).toBeInTheDocument();
-    expect(screen.getByText('2 min ago')).toBeInTheDocument();
+    render(<TransactionList transactions={mockTransactions} />);
+    expect(screen.getByText('Registro de Empresa')).toBeInTheDocument();
+    expect(screen.getByText('Agregar Producto')).toBeInTheDocument();
   });
 
-  it('shows correct status badge colors', () => {
-    render(<TransactionList transactions={transactions} />);
-    
-    // Check status badge colors
-    const confirmedBadge = screen.getByText('Confirmed').closest('span');
-    const pendingBadge = screen.getByText('Pending').closest('span');
-    const failedBadge = screen.getByText('Failed').closest('span');
-    
-    expect(confirmedBadge).toHaveClass('bg-success/20', 'text-success');
-    expect(pendingBadge).toHaveClass('bg-warning/20', 'text-warning');
-    expect(failedBadge).toHaveClass('bg-danger/20', 'text-danger');
-  });
-
-  it('renders empty state when no transactions provided', () => {
+  it('renders empty state when no transactions', () => {
     render(<TransactionList transactions={[]} />);
-    
-    // Should still show table header but no rows
-    expect(screen.getByText('Transaction')).toBeInTheDocument();
-    expect(screen.queryByText(/0x/i)).not.toBeInTheDocument();
+    expect(screen.getByText('No hay transacciones recientes')).toBeInTheDocument();
   });
-
-  it('format of transaction data is preserved', () => {
-    render(<TransactionList transactions={transactions} />);
     
-    // Check that transaction ID is displayed as monospace
-    const txIdElement = screen.getByText('0x8a1...d2e4');
-    expect(txIdElement).toHaveClass('font-mono');
+  it('displays correct status colors', () => {
+    render(<TransactionList transactions={mockTransactions} />);
+    const statusElements = screen.getAllByText('completed');
+    expect(statusElements[0]).toHaveClass('bg-green-100');
+  });
+  it('format of transaction data is preserved', () => {
+    render(<TransactionList transactions={mockTransactions} />);
+    
+    // Check that addresses are displayed as monospace
+    const addressElement = screen.getByText('0x742d35Cc6634C0532925a3b8D4C0532925a3b8D4');
+    expect(addressElement).toHaveClass('font-mono');
     
     // Check that amounts are displayed correctly
-    expect(screen.getByText('0.5 ETH')).toBeInTheDocument();
-    expect(screen.getByText('1.2 ETH')).toBeInTheDocument();
+    expect(screen.getByText('-')).toBeInTheDocument();
   });
 });
