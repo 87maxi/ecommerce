@@ -1,13 +1,13 @@
 No files changed, compilation skipped
 
 Ran 2 tests for test/Counter.t.sol:CounterTest
-[PASS] testFuzz_SetNumber(uint256) (runs: 256, μ: 52141, ~: 52541)
+[PASS] testFuzz_SetNumber(uint256) (runs: 256, μ: 52383, ~: 52541)
 [PASS] test_Increment() (gas: 51847)
-Suite result: ok. 2 passed; 0 failed; 0 skipped; finished in 5.03ms (4.89ms CPU time)
+Suite result: ok. 2 passed; 0 failed; 0 skipped; finished in 6.78ms (6.56ms CPU time)
 
 Ran 11 tests for test/EuroToken.t.sol:EuroTokenTest
-[PASS] testFuzz_Mint_WithDifferentAmounts(uint256) (runs: 256, μ: 93413, ~: 94128)
-[PASS] testFuzz_Transfer_WithDifferentAmounts(uint256) (runs: 256, μ: 142978, ~: 142974)
+[PASS] testFuzz_Mint_WithDifferentAmounts(uint256) (runs: 256, μ: 93581, ~: 94140)
+[PASS] testFuzz_Transfer_WithDifferentAmounts(uint256) (runs: 256, μ: 142976, ~: 142974)
 [PASS] test_BurnFrom_WithAllowance() (gas: 174636)
 [PASS] test_Burn_Successful() (gas: 129059)
 [PASS] test_Metadata_IsCorrect() (gas: 26322)
@@ -17,7 +17,7 @@ Ran 11 tests for test/EuroToken.t.sol:EuroTokenTest
 [PASS] test_TotalSupply_StartsAtZero() (gas: 7924)
 [PASS] test_TransferFrom_WithAllowance() (gas: 187805)
 [PASS] test_Transfer_Successful() (gas: 142208)
-Suite result: ok. 11 passed; 0 failed; 0 skipped; finished in 18.66ms (30.02ms CPU time)
+Suite result: ok. 11 passed; 0 failed; 0 skipped; finished in 29.31ms (50.42ms CPU time)
 
 ╭----------------------------------+-----------------+-------+--------+-------+---------╮
 | src/Counter.sol:Counter Contract |                 |       |        |       |         |
@@ -34,7 +34,7 @@ Suite result: ok. 11 passed; 0 failed; 0 skipped; finished in 18.66ms (30.02ms C
 |----------------------------------+-----------------+-------+--------+-------+---------|
 | number                           | 2424            | 2424  | 2424   | 2424  | 257     |
 |----------------------------------+-----------------+-------+--------+-------+---------|
-| setNumber                        | 23784           | 43193 | 43738  | 44068 | 258     |
+| setNumber                        | 23784           | 43432 | 43744  | 44068 | 258     |
 ╰----------------------------------+-----------------+-------+--------+-------+---------╯
 
 ╭--------------------------------------+-----------------+-------+--------+-------+---------╮
@@ -58,7 +58,7 @@ Suite result: ok. 11 passed; 0 failed; 0 skipped; finished in 18.66ms (30.02ms C
 |--------------------------------------+-----------------+-------+--------+-------+---------|
 | decimals                             | 383             | 383   | 383    | 383   | 1       |
 |--------------------------------------+-----------------+-------+--------+-------+---------|
-| mint                                 | 24786           | 70773 | 71203  | 71563 | 518     |
+| mint                                 | 24786           | 70855 | 71203  | 71563 | 518     |
 |--------------------------------------+-----------------+-------+--------+-------+---------|
 | name                                 | 3353            | 3353  | 3353   | 3353  | 1       |
 |--------------------------------------+-----------------+-------+--------+-------+---------|
@@ -68,10 +68,10 @@ Suite result: ok. 11 passed; 0 failed; 0 skipped; finished in 18.66ms (30.02ms C
 |--------------------------------------+-----------------+-------+--------+-------+---------|
 | totalSupply                          | 2500            | 2500  | 2500   | 2500  | 260     |
 |--------------------------------------+-----------------+-------+--------+-------+---------|
-| transfer                             | 47295           | 47309 | 47307  | 47343 | 257     |
+| transfer                             | 47295           | 47308 | 47307  | 47331 | 257     |
 |--------------------------------------+-----------------+-------+--------+-------+---------|
 | transferFrom                         | 48734           | 48734 | 48734  | 48734 | 1       |
 ╰--------------------------------------+-----------------+-------+--------+-------+---------╯
 
 
-Ran 2 test suites in 57.84ms (23.69ms CPU time): 13 tests passed, 0 failed, 0 skipped (13 total tests)
+Ran 2 test suites in 73.06ms (36.09ms CPU time): 13 tests passed, 0 failed, 0 skipped (13 total tests)

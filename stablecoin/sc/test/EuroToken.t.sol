@@ -2,7 +2,7 @@
 pragma solidity ^0.8.19;
 
 import {Test} from "forge-std/Test.sol";
-import {EuroToken} from "src/EuroToken.sol";
+import {EuroToken} from "../src/EuroToken.sol";
 
 contract EuroTokenTest is Test {
     EuroToken public euroToken;

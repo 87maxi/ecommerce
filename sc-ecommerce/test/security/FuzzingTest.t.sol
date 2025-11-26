@@ -1,8 +1,13 @@
 pragma solidity ^0.8.13;
 
-import "forge-std/Test.sol";
-import "../../src/Ecommerce.sol";
-import "../../test/mock/ERC20Mock.sol";
+import {Test} from "forge-std/Test.sol";
+import {Ecommerce} from "../../src/Ecommerce.sol";
+import {ERC20Mock} from "../../test/mock/ERC20Mock.sol";
+
+// Import the libraries to access their types
+import {ShoppingCartLib} from "../../src/libraries/ShoppingCartLib.sol";
+import {CompanyLib} from "../../src/libraries/CompanyLib.sol";
+import {ProductLib} from "../../src/libraries/ProductLib.sol";
 
 contract FuzzingTest is Test {
     Ecommerce public ecommerce;
@@ -48,7 +53,7 @@ contract FuzzingTest is Test {
         vm.startPrank(customer);
         ecommerce.addToCart(productId, quantity);
 
-        // Verify cart contents
+        // Verify cart contents - use the correct return type
         ShoppingCartLib.CartItem[] memory cart = ecommerce.getCart();
         assertEq(cart.length, 1);
         assertEq(cart[0].productId, productId);
@@ -88,7 +93,7 @@ contract FuzzingTest is Test {
         vm.startPrank(owner);
         uint256 newCompanyId = ecommerce.registerCompany(companyAddress, "Fuzz Company", "Fuzz Description");
 
-        // Verify company was registered
+        // Verify company was registered - access the struct fields correctly
         CompanyLib.Company memory company = ecommerce.getCompany(newCompanyId);
         assertEq(company.id, newCompanyId);
         assertEq(company.owner, companyAddress);
@@ -106,7 +111,7 @@ contract FuzzingTest is Test {
         uint256 newProductId =
             ecommerce.addProduct(companyId, "Fuzz Product", "Fuzz Description", price, "ipfs://image", 10);
 
-        // Verify product was added with correct price
+        // Verify product was added with correct price - access the struct fields correctly
         ProductLib.Product memory product = ecommerce.getProduct(newProductId);
         assertEq(product.price, price);
 

@@ -1,7 +1,7 @@
 pragma solidity ^0.8.13;
 
 // Import ProductLib
-import "../libraries/ProductLib.sol";
+import {ProductLib} from "../libraries/ProductLib.sol";
 
 library ShoppingCartLib {
     // External reference to ProductLib

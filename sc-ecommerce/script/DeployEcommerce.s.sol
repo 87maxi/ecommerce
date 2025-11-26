@@ -1,16 +1,18 @@
 pragma solidity ^0.8.13;
 
 // Import necessary libraries
-import "forge-std/Script.sol";
+import {Script} from  "forge-std/Script.sol";
 
 // Import the main contract
-import "../src/Ecommerce.sol";
+import {Ecommerce} from "../src/Ecommerce.sol";
+
+import {console2} from "forge-std/console2.sol";
 
 // Import libraries (needed for storage layout)
-import "../src/libraries/CompanyLib.sol";
-import "../src/libraries/ProductLib.sol";
-import "../src/libraries/CustomerLib.sol";
-import "../src/libraries/ShoppingCartLib.sol";
+import {CompanyLib} from "../src/libraries/CompanyLib.sol";
+import {ProductLib} from "../src/libraries/ProductLib.sol";
+import {CustomerLib} from "../src/libraries/CustomerLib.sol";
+import {ShoppingCartLib} from "../src/libraries/ShoppingCartLib.sol";
 
 contract DeployEcommerce is Script {
     function run() public {

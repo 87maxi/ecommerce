@@ -4,10 +4,10 @@ pragma solidity ^0.8.13;
 import {ReentrancyGuard}  from "@openzeppelin/contracts/utils/ReentrancyGuard.sol";
 
 // Import libraries
-import "./libraries/CompanyLib.sol";
-import "./libraries/ProductLib.sol";
-import "./libraries/CustomerLib.sol";
-import "./libraries/ShoppingCartLib.sol";
+import {CompanyLib}  from "./libraries/CompanyLib.sol";
+import {ProductLib}  from "./libraries/ProductLib.sol";
+import {CustomerLib}  from "./libraries/CustomerLib.sol";
+import {ShoppingCartLib}  from "./libraries/ShoppingCartLib.sol";
 
 // Export productStorage for access by other libraries
 
