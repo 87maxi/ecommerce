@@ -37,9 +37,9 @@ const Form = ({ clientSecret, walletAddress, amount, invoice, redirectUrl }: Che
       clientSecret,
       elements,
       confirmParams: {
-        return_url: redirectUrl 
-          ? `${redirectUrl}/confirmation?success=true&wallet=${walletAddress}&amount=${amount}&invoice=${encodeURIComponent(invoice || '')}&status=confirmed`
-          : `${process.env.NEXT_PUBLIC_PASARELA_PAGO_URL || 'http://localhost:3002'}/confirmation?success=true&wallet=${walletAddress}&amount=${amount}&invoice=${encodeURIComponent(invoice || '')}&status=confirmed`,
+        return_url: redirectUrl
+          ? `${redirectUrl}?success=true&tokens=${amount}&invoice=${encodeURIComponent(invoice || '')}`
+          : `${window.location.origin}/success?success=true&tokens=${amount}&invoice=${encodeURIComponent(invoice || '')}`,
       },
     });
 
@@ -80,7 +80,7 @@ export default function CheckoutForm({
   const options = {
     clientSecret,
     appearance: {
-      theme: 'stripe',
+      theme: 'stripe' as const,
     },
   };
 
@@ -88,12 +88,12 @@ export default function CheckoutForm({
     <div className="bg-white rounded-xl p-6 shadow-md">
       <h3 className="text-lg font-semibold text-gray-800 mb-4">Detalles del Pago</h3>
       <Elements options={options} stripe={stripePromise}>
-        <Form 
-          clientSecret={clientSecret} 
-          walletAddress={walletAddress} 
-          amount={amount} 
-          invoice={invoice} 
-          redirectUrl={redirectUrl} 
+        <Form
+          clientSecret={clientSecret}
+          walletAddress={walletAddress}
+          amount={amount}
+          invoice={invoice}
+          redirectUrl={redirectUrl}
         />
       </Elements>
     </div>

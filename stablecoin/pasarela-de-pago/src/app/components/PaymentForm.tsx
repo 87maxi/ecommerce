@@ -1,10 +1,6 @@
 "use client";
 
 import { useEffect, useState } from 'react';
-import { loadStripe } from '@stripe/stripe-js';
-import { Elements, useStripe, useElements, PaymentElement } from '@stripe/react-stripe-js';
-
-const stripePromise = loadStripe(process.env.NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY!);
 
 // Tipos
 interface PaymentData {
@@ -13,59 +9,11 @@ interface PaymentData {
   redirectUrl: string | null;
 }
 
-const CheckoutForm = ({ clientSecret }: { clientSecret: string }) => {
-  const stripe = useStripe();
-  const elements = useElements();
-  const [error, setError] = useState<string | null>(null);
-  const [processing, setProcessing] = useState(false);
-
-  const handleSubmit = async (event: React.FormEvent) => {
-    event.preventDefault();
-
-    if (!stripe || !elements) return;
-
-    setProcessing(true);
-
-    const { error: submitError } = await elements.submit();
-    if (submitError) {
-      setError(submitError.message || 'Error processing payment');
-      setProcessing(false);
-      return;
-    }
-
-    const result = await stripe.confirmPayment({
-      elements,
-      clientSecret,
-      confirmParams: {
-        return_url: paymentData?.redirectUrl ? `${paymentData.redirectUrl}?success=true&status=confirmed` : `${process.env.NEXT_PUBLIC_COMPRAS_STABLEBOIN_URL || 'http://localhost:3033'}?success=true&status=confirmed`, // Redirección a compras-stableboin
-      },
-    });
-
-    if (result.error) {
-      setError(result.error.message || 'Payment failed');
-    }
-    setProcessing(false);
-  };
-
-  return (
-    <form onSubmit={handleSubmit} className="space-y-4">
-      {error && <div className="text-red-600 text-sm">{error}</div>}
-      <PaymentElement />
-      <button
-        type="submit"
-        disabled={!stripe || processing}
-        className="w-full bg-blue-600 text-white py-3 rounded-lg font-medium disabled:opacity-50 disabled:cursor-not-allowed hover:bg-blue-700 transition"
-      >
-        {processing ? 'Procesando...' : 'Pagar ahora'}
-      </button>
-    </form>
-  );
-};
-
 const PaymentForm = () => {
   const [clientSecret, setClientSecret] = useState<string | null>(null);
   const [paymentData, setPaymentData] = useState<PaymentData | null>(null);
   const [loading, setLoading] = useState(true);
+  const [redirecting, setRedirecting] = useState(false);
 
   useEffect(() => {
     const params = new URLSearchParams(window.location.search);
@@ -81,33 +29,62 @@ const PaymentForm = () => {
 
     setPaymentData({ amount, invoice, redirectUrl: redirect });
 
-    // Simular creación de intención de pago
-    fetch('/api/create-payment-intent', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ amount: parseFloat(amount) * 100 }), // Cents
-    })
-      .then(res => res.json())
-      .then(data => setClientSecret(data.clientSecret))
-      .catch(err => {
-        console.error(err);
-        alert('Error al iniciar pago');
-      })
-      .finally(() => setLoading(false));
+    // Redirect to compra-stablecoin instead of processing payment here
+    const compraUrl = process.env.NEXT_PUBLIC_COMPRAS_STABLEBOIN_URL || 'http://localhost:3033';
+    const targetUrl = `${compraUrl}?amount=${amount}&invoice=${invoice}${redirect ? `&redirect=${encodeURIComponent(redirect)}` : ''}`;
+
+    setRedirecting(true);
+
+    // Redirect after showing loading state
+    setTimeout(() => {
+      window.location.href = targetUrl;
+    }, 1000);
   }, []);
 
-  if (loading) return <p>Cargando...</p>;
-  if (!clientSecret) return <p>Error al cargar forma de pago.</p>;
+  if (loading || redirecting) {
+    return (
+      <div className="bg-white p-8 rounded-xl shadow-md w-full max-w-md mx-auto text-center">
+        <div className="mb-6">
+          <div className="inline-block p-4 bg-blue-100 rounded-full mb-4">
+            <svg
+              className="animate-spin h-12 w-12 text-blue-600"
+              xmlns="http://www.w3.org/2000/svg"
+              fill="none"
+              viewBox="0 0 24 24"
+            >
+              <circle
+                className="opacity-25"
+                cx="12"
+                cy="12"
+                r="10"
+                stroke="currentColor"
+                strokeWidth="4"
+              />
+              <path
+                className="opacity-75"
+                fill="currentColor"
+                d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"
+              />
+            </svg>
+          </div>
+        </div>
+        <h2 className="text-xl font-semibold text-gray-800 mb-2">Redirigiendo...</h2>
+        <p className="text-gray-600">Serás redirigido al sistema de compra de stablecoins.</p>
+        {paymentData && (
+          <div className="mt-4 p-4 bg-blue-50 rounded-lg border border-blue-200">
+            <p className="text-sm text-gray-700">
+              <strong>Factura:</strong> {paymentData.invoice}
+            </p>
+            <p className="text-sm text-gray-700">
+              <strong>Monto:</strong> ${paymentData.amount}
+            </p>
+          </div>
+        )}
+      </div>
+    );
+  }
 
-  return (
-    <div className="bg-white p-6 rounded-xl shadow-md w-full max-w-md mx-auto">
-      <h2 className="text-xl font-semibold text-gray-800 mb-4">Pago de {paymentData?.invoice}</h2>
-      <p className="text-gray-600 mb-6">Monto: ${paymentData?.amount}</p>
-      <Elements stripe={stripePromise} options={{ clientSecret }}>
-        <CheckoutForm clientSecret={clientSecret} />
-      </Elements>
-    </div>
-  );
+  return null;
 };
 
 export default PaymentForm;

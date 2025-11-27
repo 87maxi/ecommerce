@@ -1,11 +1,11 @@
 import '@testing-library/jest-dom';
 
 // Mock ResizeObserver
-const ResizeObserverMock = function () {
-  this.observe = jest.fn();
-  this.unobserve = jest.fn();
-  this.disconnect = jest.fn();
-};
+class ResizeObserverMock {
+  observe = jest.fn();
+  unobserve = jest.fn();
+  disconnect = jest.fn();
+}
 
 window.ResizeObserver = ResizeObserverMock;
 

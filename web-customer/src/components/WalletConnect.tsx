@@ -1,30 +1,10 @@
 'use client';
 
-import { useState } from 'react';
+import { useWallet } from '@/hooks/useWallet';
 
 export default function WalletConnect() {
-  const [isConnected, setIsConnected] = useState(false);
-  const [account, setAccount] = useState('');
-
-  const connectWallet = async () => {
-    if (!window.ethereum) {
-      alert('Please install MetaMask!');
-      return;
-    }
-
-    try {
-      const accounts = await window.ethereum.request({ method: 'eth_requestAccounts' });
-      setAccount(accounts[0]);
-      setIsConnected(true);
-    } catch (error) {
-      console.error('Connection error:', error);
-    }
-  };
-
-  const disconnectWallet = () => {
-    setAccount('');
-    setIsConnected(false);
-  };
+  const expectedChainId = process.env.NEXT_PUBLIC_EXPECTED_CHAIN_ID || '0x7a69'; // Default to Anvil chain ID
+  const { isConnected, account, error, connectWallet, disconnectWallet, chainId } = useWallet();
 
   return (
     <div className="flex items-center gap-4">
@@ -50,6 +30,51 @@ export default function WalletConnect() {
         >
           Connect Wallet
         </button>
+      )}
+      {error && (
+        <div className="text-destructive text-sm">
+          {error}
+        </div>
+      )}
+      {chainId && expectedChainId !== chainId && (
+        <div className="mt-2 p-2 bg-warning/10 border border-warning rounded-lg text-warning text-sm">
+          Connected to wrong network. Please switch to chain ID: {expectedChainId}
+          <button
+            onClick={async () => {
+              try {
+                await window.ethereum?.request({
+                  method: 'wallet_switchEthereumChain',
+                  params: [{ chainId: expectedChainId }],
+                });
+              } catch (switchError) {
+                // If the network isn't added, add it
+                if (typeof switchError === 'object' && switchError !== null && 'code' in switchError && switchError.code === 4902) {
+                  await window.ethereum?.request({
+                    method: 'wallet_addEthereumChain',
+                    params: [{
+                      chainId: expectedChainId,
+                      chainName: 'Local Anvil',
+                      nativeCurrency: {
+                        name: 'Ether',
+                        symbol: 'ETH',
+                        decimals: 18
+                      },
+                      rpcUrls: ['http://localhost:8545']
+                    }],
+                  });
+                }
+              }
+            }}
+            className="ml-2 text-warning underline font-medium hover:text-warning/80"
+          >
+            Switch Network
+          </button>
+        </div>
+      )}
+      {error && (
+        <div className="text-destructive text-sm">
+          {error}
+        </div>
       )}
     </div>
   );

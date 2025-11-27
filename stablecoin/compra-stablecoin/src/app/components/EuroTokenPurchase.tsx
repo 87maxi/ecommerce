@@ -21,10 +21,14 @@ export default function EuroTokenPurchase() {
 
     const searchParams = new URLSearchParams(window.location.search);
     const invoice = searchParams.get('invoice') || `EURT_PURCHASE_${Date.now()}`;
-    const redirect = searchParams.get('redirect') || 'http://localhost:3002';
-    
+    const redirect = searchParams.get('redirect') || process.env.NEXT_PUBLIC_PASARELA_PAGO_URL;
+
     if (redirect) {
       setRedirectUrl(redirect);
+      // Store redirect info in sessionStorage for use after Stripe redirect
+      sessionStorage.setItem('redirect_url', redirect);
+      sessionStorage.setItem('invoice', invoice);
+      sessionStorage.setItem('amount', amount.toString());
     }
 
     fetch('/api/create-payment-intent', {
@@ -67,12 +71,12 @@ export default function EuroTokenPurchase() {
         {step === 'connect' && <MetaMaskConnect onWalletConnected={handleWalletConnected} />}
 
         {step === 'pay' && clientSecret && walletAddress && (
-          <CheckoutForm 
-            clientSecret={clientSecret} 
-            walletAddress={walletAddress} 
-            amount={amount} 
-            invoice={new URLSearchParams(window.location.search).get('invoice') || `EURT_PURCHASE_${Date.now()}`} 
-            redirectUrl={redirectUrl} 
+          <CheckoutForm
+            clientSecret={clientSecret}
+            walletAddress={walletAddress}
+            amount={amount}
+            invoice={new URLSearchParams(window.location.search).get('invoice') || `EURT_PURCHASE_${Date.now()}`}
+            redirectUrl={redirectUrl}
           />
         )}
       </div>

@@ -50,4 +50,13 @@ invokable: false
    - **Reporte** generar un u directorio si no existe docs, si es que no existe  donde se describa todas las funcionalidades realizadas y una descripcion funcional del codigo
    - genera un **archivo .env** con todas las variables necesarias para iniciar la aplicacion
    - se consistente con la implementacion de package.json, define claramente todos los comandos necesarios para poder ejecutar la aplicacion **se muy extricto en esta definicion y en el uso** chequea que los comandos funcionen correctamente
-   - dentro del directorio docs crea  un diagrama fucional de la aplicacion, y diagrama uml con las definiciones funcionales%  
+   - dentro del directorio docs crea  un diagrama fucional de la aplicacion, y diagrama uml con las definiciones funcionales
+
+
+## Herramientas que se utilizan 
+ - para la interacion con solidity se utiliza anvil
+ - utiliza siemprecuentas de anvil
+ - utiliza las herramientas que se utilizan con foundry
+ - analiza los abi que estan **./src/contracts/abis/EcommerceABI.json** y utiliza como gia
+ - las coneccion a la wallet es siempre a travez de metamask
+ - utiliza ethers como libreria para el manejo de la wallet

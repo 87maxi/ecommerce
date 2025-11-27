@@ -1,6 +1,17 @@
 'use client';
 
 import { useState, useEffect } from 'react';
+import { useContract } from '@/hooks/useContract';
+import { useWallet } from '@/hooks/useWallet';
+
+interface OrderItem {
+  product: {
+    name: string;
+    price: string;
+    image: string;
+  };
+  quantity: number;
+}
 
 interface Order {
   id: number;
@@ -20,56 +31,45 @@ interface Order {
 export default function OrdersPage() {
   const [orders, setOrders] = useState<Order[]>([]);
   const [loading, setLoading] = useState(true);
+  const { getCustomerInvoices } = useContract();
+  const { isConnected, account } = useWallet();
 
   useEffect(() => {
-    // Simulate loading orders from contract
-    setTimeout(() => {
-      const mockOrders: Order[] = [
-        {
-          id: 1,
-          date: '2025-01-15',
-          total: '180',
-          status: 'Delivered',
-          items: [
-            {
-              product: {
-                name: "Blockchain T-Shirt",
-                price: "50",
-                image: "/placeholder-product.jpg"
-              },
-              quantity: 2
-            },
-            {
-              product: {
-                name: "Crypto Hoodie",
-                price: "80",
-                image: "/placeholder-product.jpg"
-              },
-              quantity: 1
-            }
-          ]
-        },
-        {
-          id: 2,
-          date: '2025-02-01',
-          total: '30',
-          status: 'Shipped',
-          items: [
-            {
-              product: {
-                name: "Web3 Cap",
-                price: "30",
-                image: "/placeholder-product.jpg"
-              },
-              quantity: 1
-            }
-          ]
+    const fetchOrders = async () => {
+      if (isConnected && account) {
+        try {
+          // Get invoices for this customer
+          const invoices = await getCustomerInvoices(account);
+
+          const fetchedOrders = invoices.map((invoice: any) => {
+            return {
+              id: invoice.id,
+              date: invoice.timestamp,
+              total: invoice.totalAmount,
+              status: (invoice.isPaid ? 'Delivered' : 'Pending') as 'Pending' | 'Shipped' | 'Delivered',
+              items: invoice.items.map((item: any) => ({
+                product: {
+                  name: item.productName,
+                  price: item.unitPrice,
+                  image: "/placeholder-product.jpg" // Image not available in invoice items
+                },
+                quantity: item.quantity
+              }))
+            };
+          });
+
+          setOrders(fetchedOrders);
+        } catch (error) {
+          console.error('Error fetching orders:', error);
         }
-      ];
-      setOrders(mockOrders);
+      } else {
+        setOrders([]);
+      }
       setLoading(false);
-    }, 1000);
-  }, []);
+    };
+
+    fetchOrders();
+  }, [getCustomerInvoices, isConnected, account]);
 
   if (loading) {
     return (
@@ -88,8 +88,8 @@ export default function OrdersPage() {
       <div className="container mx-auto px-4 py-8 text-center">
         <h1 className="text-3xl font-bold mb-8 font-display text-foreground">Order History</h1>
         <p className="text-muted-foreground text-xl">You have no order history</p>
-        <a 
-          href="/products" 
+        <a
+          href="/products"
           className="mt-4 inline-block px-6 py-3 bg-primary text-primary-foreground rounded-lg hover:bg-primary/90 transition-all duration-200 transform hover:scale-105 border border-primary/20 shadow-lg hover:shadow-primary/20"
         >
           Start Shopping
@@ -101,7 +101,7 @@ export default function OrdersPage() {
   return (
     <div className="container mx-auto px-4 py-8">
       <h1 className="text-3xl font-bold mb-8 font-display text-foreground">Order History</h1>
-      
+
       {orders.map((order) => (
         <div key={order.id} className="border border-border rounded-2xl p-6 mb-6 shadow-lg hover:shadow-2xl transition-all duration-300 bg-card/50 backdrop-blur-sm">
           <div className="flex flex-wrap justify-between items-start mb-4">
@@ -122,9 +122,9 @@ export default function OrdersPage() {
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 mt-4">
             {order.items.map((item, index) => (
               <div key={index} className="flex items-center gap-3 p-4 bg-secondary/30 rounded-xl border border-border hover:bg-secondary/50 transition-all duration-300">
-                <img 
-                  src={item.product.image} 
-                  alt={item.product.name} 
+                <img
+                  src={item.product.image}
+                  alt={item.product.name}
                   className="w-12 h-12 object-cover rounded-xl"
                 />
                 <div className="flex-1">

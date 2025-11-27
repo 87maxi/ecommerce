@@ -7,6 +7,7 @@ import { useContract } from '../../../hooks/useContract';
 import Link from 'next/link';
 import { formatAddress, formatDate } from '../../../lib/utils';
 import { Company, Product } from '../../../types';
+import { normalizeCompany, normalizeProduct, normalizeArrayResponse } from '../../../lib/contractUtils';
 
 interface ProductFormData {
   name: string;
@@ -43,32 +44,18 @@ export default function CompanyDetailPage() {
       try {
         setLoading(true);
         
-        // Load company details
-        const companyData = await ecommerceContract.getCompany(BigInt(companyId));
-        setCompany({
-          id: companyId,
-          owner: companyData.owner,
-          name: companyData.name,
-          description: companyData.description,
-          isActive: companyData.isActive,
-          createdAt: new Date(Number(companyData.createdAt) * 1000).toISOString(),
-        });
+        // Load company details using normalization
+        const companyResult = await ecommerceContract.getCompany(BigInt(companyId));
+        const normalizedCompany = normalizeCompany(companyResult, companyId);
+        setCompany(normalizedCompany);
 
         // Load company products
-        const productIds = await ecommerceContract.getProductsByCompany(BigInt(companyId));
+        const productIdsResult = await ecommerceContract.getProductsByCompany(BigInt(companyId));
+        const productIds = normalizeArrayResponse(productIdsResult);
         const productData = await Promise.all(
           productIds.map(async (id: bigint) => {
-            const product = await ecommerceContract.getProduct(id);
-            return {
-              id: id.toString(),
-              companyId: product.companyId.toString(),
-              name: product.name,
-              description: product.description,
-              price: product.price.toString(),
-              imageHash: product.imageHash,
-              stock: Number(product.stock),
-              isActive: product.isActive,
-            };
+            const productResult = await ecommerceContract.getProduct(id);
+            return normalizeProduct(productResult, id);
           })
         );
         
@@ -103,20 +90,12 @@ export default function CompanyDetailPage() {
       await tx.wait();
 
       // Refresh products list
-      const productIds = await ecommerceContract.getProductsByCompany(BigInt(companyId));
+      const productIdsResult = await ecommerceContract.getProductsByCompany(BigInt(companyId));
+      const productIds = normalizeArrayResponse(productIdsResult);
       const productData = await Promise.all(
         productIds.map(async (id: bigint) => {
-          const product = await ecommerceContract.getProduct(id);
-          return {
-            id: id.toString(),
-            companyId: product.companyId.toString(),
-            name: product.name,
-            description: product.description,
-            price: product.price.toString(),
-            imageHash: product.imageHash,
-            stock: Number(product.stock),
-            isActive: product.isActive,
-          };
+          const productResult = await ecommerceContract.getProduct(id);
+          return normalizeProduct(productResult, id);
         })
       );
       

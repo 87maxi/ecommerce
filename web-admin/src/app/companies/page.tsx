@@ -6,6 +6,7 @@ import { useContract } from '../../hooks/useContract';
 import Link from 'next/link';
 import { formatAddress, formatDate } from '../../lib/utils';
 import { Company } from '../../types';
+import { normalizeCompany, normalizeArrayResponse } from '../../lib/contractUtils';
 
 interface CompanyFormData {
   address: string;
@@ -16,7 +17,7 @@ interface CompanyFormData {
 export default function CompaniesPage() {
   const { isConnected, provider, signer, chainId } = useWallet();
   const ecommerceContract = useContract('Ecommerce', provider, signer, chainId);
-  
+
   const [companies, setCompanies] = useState<Company[]>([]);
   const [loading, setLoading] = useState(true);
   const [formData, setFormData] = useState<CompanyFormData>({
@@ -29,69 +30,89 @@ export default function CompaniesPage() {
 
   useEffect(() => {
     if (!ecommerceContract) return;
-    
+
     const loadCompanies = async () => {
       try {
         setLoading(true);
-        const companyIds = await ecommerceContract.getAllCompanies();
-        
-        const companyData = await Promise.all(
-          companyIds.map(async (id: bigint) => {
-            const company = await ecommerceContract.getCompany(id);
-            return {
-              id: id.toString(),
-              owner: company.owner,
-              name: company.name,
-              description: company.description,
-              isActive: company.isActive,
-              createdAt: new Date(Number(company.createdAt) * 1000).toISOString(),
-            };
-          })
-        );
-        
+        console.log('Loading companies...');
+
+        const companyIdsResult = await ecommerceContract.getAllCompanies();
+        console.log('Company IDs result:', companyIdsResult);
+
+        // Handle different return types using utility function
+        const companyIds = normalizeArrayResponse(companyIdsResult);
+
+        console.log('Company IDs:', companyIds);
+
+        const companyDataPromises = companyIds.map(async (id: any) => {
+          try {
+            console.log('Fetching company with ID:', id);
+            const companyResult = await ecommerceContract.getCompany(id);
+            console.log('Company result:', companyResult);
+
+            // Normalize company data using utility function
+            const normalizedCompany = normalizeCompany(companyResult, id);
+
+            console.log('Processed company:', normalizedCompany);
+
+            return normalizedCompany;
+          } catch (err) {
+            console.error(`Error loading company ${id}:`, err);
+            return null;
+          }
+        });
+
+        const companyDataResults = await Promise.all(companyDataPromises);
+        const companyData = companyDataResults.filter((c: Company | null): c is Company => c !== null);
+
+        console.log('Final company data:', companyData);
         setCompanies(companyData);
       } catch (err) {
         console.error('Error loading companies:', err);
-        setError('Failed to load companies');
+        setError('Failed to load companies: ' + (err instanceof Error ? err.message : String(err)));
       } finally {
         setLoading(false);
       }
     };
-    
+
     loadCompanies();
   }, [ecommerceContract]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!ecommerceContract) return;
-    
+
     setSubmitting(true);
     setError(null);
-    
+
     try {
+      console.log('Registering company with data:', formData);
       const tx = await ecommerceContract.registerCompany(
         formData.address,
         formData.name,
         formData.description
       );
+      console.log('Transaction sent:', tx);
       await tx.wait();
+      console.log('Transaction confirmed');
 
       // Refresh companies list
-      const companyIds = await ecommerceContract.getAllCompanies();
-      const companyData = await Promise.all(
-        companyIds.map(async (id: bigint) => {
-          const company = await ecommerceContract.getCompany(id);
-          return {
-            id: id.toString(),
-            owner: company.owner,
-            name: company.name,
-            description: company.description,
-            isActive: company.isActive,
-            createdAt: new Date(Number(company.createdAt) * 1000).toISOString(),
-          };
-        })
-      );
-      
+      const companyIdsResult = await ecommerceContract.getAllCompanies();
+      const companyIds = normalizeArrayResponse(companyIdsResult);
+
+      const companyDataPromises = companyIds.map(async (id: any) => {
+        try {
+          const companyResult = await ecommerceContract.getCompany(id);
+          return normalizeCompany(companyResult, id);
+        } catch (err) {
+          console.error(`Error loading company ${id}:`, err);
+          return null;
+        }
+      });
+
+      const companyDataResults = await Promise.all(companyDataPromises);
+      const companyData = companyDataResults.filter((c: Company | null): c is Company => c !== null);
+
       setCompanies(companyData);
       setFormData({ address: '', name: '', description: '' });
     } catch (err: any) {
@@ -137,13 +158,13 @@ export default function CompaniesPage() {
           {/* Formulario de Registro */}
           <div className="bg-white shadow rounded-lg p-6">
             <h2 className="text-xl font-semibold text-gray-900 mb-6">Registrar Nueva Empresa</h2>
-            
+
             {error && (
               <div className="mb-4 p-3 bg-red-100 border border-red-200 text-red-700 rounded-md text-sm">
                 {error}
               </div>
             )}
-            
+
             <form onSubmit={handleSubmit} className="space-y-6">
               <div>
                 <label htmlFor="address" className="block text-sm font-medium text-gray-700">
@@ -184,7 +205,7 @@ export default function CompaniesPage() {
                   value={formData.description}
                   onChange={(e) => setFormData({ ...formData, description: e.target.value })}
                   rows={3}
-                  className="mt-1 block w-full border border-gray-300 rounded-md shadow-sm py-2 px-3 focus:outline-none focus:ring-indigo-500 focus:border-indigo-500"
+                  className="mt-1 block w-full border border-gray-300 rounded-md shadow-sm py-2 px-3 focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 bg-blue-50 text-gray-900"
                   placeholder="Descripción de la empresa"
                 />
               </div>
@@ -204,7 +225,7 @@ export default function CompaniesPage() {
           {/* Lista de Empresas */}
           <div className="bg-white shadow rounded-lg p-6">
             <h2 className="text-xl font-semibold text-gray-900 mb-6">Empresas Registradas</h2>
-            
+
             {loading ? (
               <div className="flex justify-center items-center py-8">
                 <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-indigo-600"></div>
@@ -249,3 +270,4 @@ export default function CompaniesPage() {
     </div>
   );
 }
+

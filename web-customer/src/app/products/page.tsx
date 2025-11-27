@@ -1,54 +1,56 @@
 'use client';
 
 import { useState, useEffect } from 'react';
+import { useContract } from '@/hooks/useContract';
+import { useWallet } from '@/hooks/useWallet';
 
-interface Product {
+type Product = {
   id: number;
+  companyId: number;
   name: string;
   description: string;
   price: string;
+  stock: number;
   image: string;
-}
+  active: boolean;
+};
 
 export default function ProductsPage() {
   const [products, setProducts] = useState<Product[]>([]);
   const [loading, setLoading] = useState(true);
+  const { getAllProducts, addToCart } = useContract();
+  const { isConnected, connectWallet } = useWallet();
 
   useEffect(() => {
-    // Mock products data - will be replaced with contract calls
-    const mockProducts: Product[] = [
-      {
-        id: 1,
-        name: "Blockchain T-Shirt",
-        description: "Comfortable cotton t-shirt with blockchain logo",
-        price: "50",
-        image: "/placeholder-product.jpg"
-      },
-      {
-        id: 2,
-        name: "Crypto Hoodie",
-        description: "Warm hoodie for crypto enthusiasts",
-        price: "80",
-        image: "/placeholder-product.jpg"
-      },
-      {
-        id: 3,
-        name: "Web3 Cap",
-        description: "Stylish cap for web3 developers",
-        price: "30",
-        image: "/placeholder-product.jpg"
+    const fetchProducts = async () => {
+      try {
+        const fetchedProducts = await getAllProducts();
+        setProducts(fetchedProducts);
+      } catch (error) {
+        console.error('Error fetching products:', error);
+      } finally {
+        setLoading(false);
       }
-    ];
-    
-    setTimeout(() => {
-      setProducts(mockProducts);
-      setLoading(false);
-    }, 1000);
-  }, []);
+    };
 
-  const addToCart = (product: Product) => {
-    // This will be implemented with contract interaction
-    console.log('Added to cart:', product);
+    fetchProducts();
+  }, [getAllProducts]);
+
+  const handleAddToCart = async (productId: number) => {
+    if (!isConnected) {
+      connectWallet();
+      return;
+    }
+
+    try {
+      const success = await addToCart(productId, 1);
+      if (success) {
+        // You might want to show a success toast or update UI
+        console.log('Product added to cart successfully');
+      }
+    } catch (error) {
+      console.error('Error adding product to cart:', error);
+    }
   };
 
   if (loading) {
@@ -75,9 +77,9 @@ export default function ProductsPage() {
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
         {products.map((product) => (
           <div key={product.id} className="border border-border rounded-2xl overflow-hidden hover:shadow-2xl transition-all duration-300 transform hover:-translate-y-2 bg-card/50 backdrop-blur-sm group">
-            <img 
-              src={product.image} 
-              alt={product.name} 
+            <img
+              src={product.image}
+              alt={product.name}
               className="w-full h-48 object-cover group-hover:scale-105 transition-transform duration-300"
             />
             <div className="p-6">
@@ -86,7 +88,7 @@ export default function ProductsPage() {
               <div className="flex justify-between items-center">
                 <span className="text-lg font-bold text-primary">{product.price} EURT</span>
                 <button
-                  onClick={() => addToCart(product)}
+                  onClick={() => addToCart(product.id, 1)}
                   className="px-4 py-2 bg-primary text-primary-foreground rounded-lg hover:bg-primary/90 transition-all duration-200 transform hover:scale-105 border border-primary/20 shadow-lg hover:shadow-primary/20"
                 >
                   Add to Cart
