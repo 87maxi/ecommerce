@@ -63,13 +63,13 @@ const MetaMaskConnect = ({ onWalletConnected }: Props) => {
           const address = accounts[0];
           setWalletAddress(address);
           setIsConnected(true);
-          onWalletConnected(address);
+          // Don't call onWalletConnected here - only when user clicks connect
           await updateBalance(address);
         }
       }
     };
     checkIfConnected();
-  }, [onWalletConnected]);
+  }, []);
 
   return (
     <div className="bg-white rounded-xl p-6 shadow-md mb-6 border border-indigo-100">

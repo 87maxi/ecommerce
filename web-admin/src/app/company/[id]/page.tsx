@@ -20,10 +20,10 @@ interface ProductFormData {
 export default function CompanyDetailPage() {
   const params = useParams();
   const companyId = params.id as string;
-  
-  const { isConnected, provider, signer, chainId, address } = useWallet();
+
+  const { isConnected, provider, signer, chainId, address, switchNetwork } = useWallet();
   const ecommerceContract = useContract('Ecommerce', provider, signer, chainId);
-  
+
   const [company, setCompany] = useState<Company | null>(null);
   const [products, setProducts] = useState<Product[]>([]);
   const [loading, setLoading] = useState(true);
@@ -39,27 +39,41 @@ export default function CompanyDetailPage() {
 
   useEffect(() => {
     if (!ecommerceContract || !companyId) return;
-    
+
     const loadCompanyData = async () => {
       try {
         setLoading(true);
-        
+
+        console.log(`Loading data for company ${companyId}...`);
+
         // Load company details using normalization
         const companyResult = await ecommerceContract.getCompany(BigInt(companyId));
+        console.log('Company raw result:', companyResult);
         const normalizedCompany = normalizeCompany(companyResult, companyId);
+        console.log('Company normalized:', normalizedCompany);
         setCompany(normalizedCompany);
 
         // Load company products
         const productIdsResult = await ecommerceContract.getProductsByCompany(BigInt(companyId));
+        console.log('Product IDs raw result:', productIdsResult);
         const productIds = normalizeArrayResponse(productIdsResult);
+        console.log('Product IDs normalized:', productIds);
         const productData = await Promise.all(
           productIds.map(async (id: bigint) => {
-            const productResult = await ecommerceContract.getProduct(id);
-            return normalizeProduct(productResult, id);
+            try {
+              const productResult = await ecommerceContract.getProduct(id);
+              console.log(`Product ${id} raw result:`, productResult);
+              return normalizeProduct(productResult, id);
+            } catch (e) {
+              console.error(`Error loading product ${id}:`, e);
+              return null;
+            }
           })
         );
-        
-        setProducts(productData);
+
+        const validProducts = productData.filter((p): p is Product => p !== null);
+        console.log('Final products list:', validProducts);
+        setProducts(validProducts);
       } catch (err) {
         console.error('Error loading company data:', err);
         setError('Failed to load company data');
@@ -67,17 +81,28 @@ export default function CompanyDetailPage() {
         setLoading(false);
       }
     };
-    
+
     loadCompanyData();
   }, [ecommerceContract, companyId]);
 
   const handleProductSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!ecommerceContract || !companyId) return;
-    
+    if (!ecommerceContract) {
+      if (isConnected && chainId !== 31337) {
+        try {
+          await switchNetwork(31337);
+        } catch (err) {
+          console.error('Failed to switch network:', err);
+          setError('Error al cambiar de red. Por favor, cambia manualmente a Localhost 8545.');
+        }
+      }
+      return;
+    }
+    if (!companyId) return;
+
     setSubmitting(true);
     setError(null);
-    
+
     try {
       const tx = await ecommerceContract.addProduct(
         BigInt(companyId),
@@ -98,7 +123,7 @@ export default function CompanyDetailPage() {
           return normalizeProduct(productResult, id);
         })
       );
-      
+
       setProducts(productData);
       setProductFormData({ name: '', description: '', price: '', imageHash: '', stock: '' });
     } catch (err: any) {
@@ -110,6 +135,18 @@ export default function CompanyDetailPage() {
   };
 
   const isCompanyOwner = company && address && company.owner.toLowerCase() === address.toLowerCase();
+
+  useEffect(() => {
+    if (company && address) {
+      console.log('Ownership Check Details:', {
+        companyOwnerRaw: company.owner,
+        companyOwnerLower: company.owner.toLowerCase(),
+        walletAddressRaw: address,
+        walletAddressLower: address.toLowerCase(),
+        isMatch: isCompanyOwner
+      });
+    }
+  }, [company, address, isCompanyOwner]);
 
   if (!isConnected) {
     return (
@@ -180,12 +217,23 @@ export default function CompanyDetailPage() {
                 <p>Registrada: {formatDate(company.createdAt)}</p>
               </div>
             </div>
-            <Link
-              href="/companies"
-              className="px-4 py-2 border border-gray-300 rounded-md text-sm font-medium text-gray-700 hover:bg-gray-50"
-            >
-              ← Volver
-            </Link>
+            <div className="flex space-x-4">
+              <button
+                onClick={() => window.location.reload()}
+                className="inline-flex items-center px-4 py-2 border border-gray-300 rounded-md shadow-sm text-sm font-medium text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500"
+              >
+                <svg className="-ml-1 mr-2 h-5 w-5 text-gray-500" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor">
+                  <path fillRule="evenodd" d="M4 2a1 1 0 011 1v2.101a7.002 7.002 0 0111.601 2.566 1 1 0 11-1.885.666A5.002 5.002 0 005.999 7H9a1 1 0 010 2H4a1 1 0 01-1-1V3a1 1 0 011-1zm.008 9.057a1 1 0 011.276.61A5.002 5.002 0 0014.001 13H11a1 1 0 110-2h5a1 1 0 011 1v5a1 1 0 11-2 0v-2.101a7.002 7.002 0 01-11.601-2.566 1 1 0 01.61-1.276z" clipRule="evenodd" />
+                </svg>
+                Actualizar
+              </button>
+              <Link
+                href="/companies"
+                className="px-4 py-2 border border-gray-300 rounded-md text-sm font-medium text-gray-700 hover:bg-gray-50 flex items-center"
+              >
+                ← Volver
+              </Link>
+            </div>
           </div>
         </div>
 
@@ -202,13 +250,13 @@ export default function CompanyDetailPage() {
           {isCompanyOwner && (
             <div className="bg-white shadow rounded-lg p-6">
               <h2 className="text-xl font-semibold text-gray-900 mb-6">Agregar Producto</h2>
-              
+
               {error && (
                 <div className="mb-4 p-3 bg-red-100 border border-red-200 text-red-700 rounded-md text-sm">
                   {error}
                 </div>
               )}
-              
+
               <form onSubmit={handleProductSubmit} className="space-y-6">
                 <div>
                   <label htmlFor="name" className="block text-sm font-medium text-gray-700">
@@ -290,9 +338,16 @@ export default function CompanyDetailPage() {
                   <button
                     type="submit"
                     disabled={submitting}
-                    className="w-full flex justify-center py-2 px-4 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 disabled:opacity-50"
+                    className={`w-full flex justify-center py-2 px-4 border border-transparent rounded-md shadow-sm text-sm font-medium text-white ${!ecommerceContract && isConnected
+                      ? 'bg-yellow-600 hover:bg-yellow-700'
+                      : 'bg-indigo-600 hover:bg-indigo-700'
+                      } focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 disabled:opacity-50`}
                   >
-                    {submitting ? 'Agregando...' : 'Agregar Producto'}
+                    {submitting
+                      ? 'Procesando...'
+                      : !ecommerceContract && isConnected
+                        ? 'Cambiar a Red Local'
+                        : 'Agregar Producto'}
                   </button>
                 </div>
               </form>
@@ -302,7 +357,7 @@ export default function CompanyDetailPage() {
           {/* Lista de Productos */}
           <div className="bg-white shadow rounded-lg p-6">
             <h2 className="text-xl font-semibold text-gray-900 mb-6">Productos de la Empresa</h2>
-            
+
             {products.length === 0 ? (
               <div className="text-center py-8 text-gray-500">
                 <svg className="mx-auto h-12 w-12 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -334,7 +389,97 @@ export default function CompanyDetailPage() {
             )}
           </div>
         </div>
+
+        {/* Sección de Ventas (Solo para el propietario) */}
+        {isCompanyOwner && (
+          <div className="mt-8 bg-white shadow rounded-lg p-6">
+            <h2 className="text-xl font-semibold text-gray-900 mb-6">Ventas de la Empresa</h2>
+            <SalesList companyId={companyId} contract={ecommerceContract} />
+          </div>
+        )}
       </div>
+    </div>
+  );
+}
+
+function SalesList({ companyId, contract }: { companyId: string, contract: any }) {
+  const [invoices, setInvoices] = useState<any[]>([]);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    const loadSales = async () => {
+      try {
+        setLoading(true);
+        const invoiceIdsResult = await contract.getCompanyInvoices(BigInt(companyId));
+        const invoiceIds = normalizeArrayResponse(invoiceIdsResult);
+
+        const salesData = await Promise.all(
+          invoiceIds.map(async (id: bigint) => {
+            try {
+              const invoice = await contract.getInvoice(id);
+              const items = await contract.getInvoiceItems(id);
+              return {
+                id: id.toString(),
+                customer: invoice.customerAddress,
+                total: invoice.totalAmount.toString(),
+                date: new Date(Number(invoice.timestamp) * 1000).toLocaleString(),
+                items: items.map((item: any) => ({
+                  productName: item.productName,
+                  quantity: item.quantity.toString(),
+                  totalPrice: item.totalPrice.toString()
+                }))
+              };
+            } catch (e) {
+              console.error(`Error loading invoice ${id}:`, e);
+              return null;
+            }
+          })
+        );
+
+        setInvoices(salesData.filter(s => s !== null).reverse());
+      } catch (err) {
+        console.error('Error loading sales:', err);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    loadSales();
+  }, [companyId, contract]);
+
+  if (loading) return <p className="text-gray-500">Cargando ventas...</p>;
+  if (invoices.length === 0) return <p className="text-gray-500">No hay ventas registradas.</p>;
+
+  return (
+    <div className="overflow-x-auto">
+      <table className="min-w-full divide-y divide-gray-200">
+        <thead className="bg-gray-50">
+          <tr>
+            <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Fecha</th>
+            <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Cliente</th>
+            <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Productos</th>
+            <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Total (EURT)</th>
+          </tr>
+        </thead>
+        <tbody className="bg-white divide-y divide-gray-200">
+          {invoices.map((sale) => (
+            <tr key={sale.id}>
+              <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{sale.date}</td>
+              <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{formatAddress(sale.customer)}</td>
+              <td className="px-6 py-4 text-sm text-gray-500">
+                <ul className="list-disc list-inside">
+                  {sale.items.map((item: any, idx: number) => (
+                    <li key={idx}>{item.quantity}x {item.productName}</li>
+                  ))}
+                </ul>
+              </td>
+              <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">
+                {(Number(sale.total) / 100).toFixed(2)}
+              </td>
+            </tr>
+          ))}
+        </tbody>
+      </table>
     </div>
   );
 }

@@ -6,24 +6,48 @@ import { useContract } from '../../hooks/useContract';
 import Link from 'next/link';
 import { formatAddress } from '../../lib/utils';
 import { Product } from '../../types';
+import { normalizeProduct, normalizeArrayResponse } from '../../lib/contractUtils';
 
 export default function ProductsPage() {
   const { isConnected, provider, signer, chainId } = useWallet();
   const ecommerceContract = useContract('Ecommerce', provider, signer, chainId);
-  
+
   const [products, setProducts] = useState<Product[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
-    if (!ecommerceContract) return;
-    
+    if (!ecommerceContract) {
+      setLoading(false);
+      return;
+    }
+
     const loadProducts = async () => {
       try {
         setLoading(true);
-        // Esta función necesita ser implementada en el contrato
-        // Por ahora mostramos un mensaje indicando que se implementará
-        setError('Funcionalidad pendiente de implementación en el contrato');
+        console.log('Loading all products...');
+
+        const productIdsResult = await ecommerceContract.getAllProducts();
+        console.log('All product IDs raw:', productIdsResult);
+
+        const productIds = normalizeArrayResponse(productIdsResult);
+        console.log('All product IDs normalized:', productIds);
+
+        const productData = await Promise.all(
+          productIds.map(async (id: bigint) => {
+            try {
+              const productResult = await ecommerceContract.getProduct(id);
+              return normalizeProduct(productResult, id);
+            } catch (err) {
+              console.error(`Error loading product ${id}:`, err);
+              return null;
+            }
+          })
+        );
+
+        const validProducts = productData.filter((p: Product | null): p is Product => p !== null);
+        console.log('Final products list:', validProducts);
+        setProducts(validProducts);
       } catch (err) {
         console.error('Error loading products:', err);
         setError('Failed to load products');
@@ -31,7 +55,7 @@ export default function ProductsPage() {
         setLoading(false);
       }
     };
-    
+
     loadProducts();
   }, [ecommerceContract]);
 
@@ -59,11 +83,22 @@ export default function ProductsPage() {
   return (
     <div className="min-h-screen bg-gray-50 py-12 px-4 sm:px-6 lg:px-8">
       <div className="max-w-7xl mx-auto">
-        <div className="mb-8">
-          <h1 className="text-3xl font-bold text-gray-900">Gestión de Productos</h1>
-          <p className="mt-2 text-sm text-gray-600">
-            Gestiona todos los productos registrados en el e-commerce descentralizado.
-          </p>
+        <div className="flex justify-between items-center mb-8">
+          <div>
+            <h1 className="text-3xl font-bold text-gray-900">Gestión de Productos</h1>
+            <p className="mt-2 text-sm text-gray-600">
+              Gestiona todos los productos registrados en el e-commerce descentralizado.
+            </p>
+          </div>
+          <button
+            onClick={() => window.location.reload()}
+            className="inline-flex items-center px-4 py-2 border border-gray-300 rounded-md shadow-sm text-sm font-medium text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500"
+          >
+            <svg className="-ml-1 mr-2 h-5 w-5 text-gray-500" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor">
+              <path fillRule="evenodd" d="M4 2a1 1 0 011 1v2.101a7.002 7.002 0 0111.601 2.566 1 1 0 11-1.885.666A5.002 5.002 0 005.999 7H9a1 1 0 010 2H4a1 1 0 01-1-1V3a1 1 0 011-1zm.008 9.057a1 1 0 011.276.61A5.002 5.002 0 0014.001 13H11a1 1 0 110-2h5a1 1 0 011 1v5a1 1 0 11-2 0v-2.101a7.002 7.002 0 01-11.601-2.566 1 1 0 01.61-1.276z" clipRule="evenodd" />
+            </svg>
+            Actualizar
+          </button>
         </div>
 
         <div className="bg-white shadow rounded-lg p-6">

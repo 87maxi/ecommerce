@@ -17,7 +17,7 @@ echo "============================================"
 # Start Anvil local node
 echo ""
 echo "🔧 Starting Anvil local blockchain..."
-anvil > /dev/null 2>&1 &
+anvil > anvil.log &
 ANVIL_PID=$!
 sleep 3
 
@@ -37,7 +37,7 @@ echo ""
 echo "📦 Deploying Ecommerce Contract with EuroToken..."
 cd $ROOT/sc-ecommerce
 # Compile contracts
-forge build --force > /dev/null 2>&1
+forge build --force
 
 # Deploy Ecommerce contract with EuroToken
 echo "💸 Deploying Ecommerce contracts..."
@@ -147,3 +147,5 @@ echo "   cd web-customer && npm run dev"
 echo "   cd web-admin && npm run dev"
 echo "   cd stablecoin/compra-stablecoin && npm run dev"
 echo "   cd stablecoin/pasarela-de-pago && npm run dev"
+cd $ROOT;
+tail anvil.log;

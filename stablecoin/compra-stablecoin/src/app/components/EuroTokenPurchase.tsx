@@ -1,45 +1,36 @@
 "use client";
 
-import { useState, useEffect } from 'react';
+import { useState } from 'react';
 import MetaMaskConnect from './MetaMaskConnect';
-import CheckoutForm from './CheckoutForm';
 
 export default function EuroTokenPurchase() {
   const [amount, setAmount] = useState<number>(100);
-  const [walletAddress, setWalletAddress] = useState<string>('');
-  const [clientSecret, setClientSecret] = useState<string>('');
-  const [step, setStep] = useState<'connect' | 'pay' | 'success'>('connect');
-  const [redirectUrl, setRedirectUrl] = useState<string | null>(null);
 
   const handleWalletConnected = (address: string) => {
-    setWalletAddress(address);
-    setStep('pay');
+    console.log('Wallet connected:', address);
+
+    // Redirect to payment gateway with parameters
+    const pasarelaUrl = process.env.NEXT_PUBLIC_PASARELA_PAGO_URL || 'http://localhost:3034';
+    const webCustomerUrl = process.env.NEXT_PUBLIC_WEB_CUSTOMER_URL || 'http://localhost:3031';
+
+    const params = new URLSearchParams({
+      amount: amount.toString(),
+      walletAddress: address,
+      redirect: webCustomerUrl,
+      invoice: `EURT_PURCHASE_${Date.now()}`
+    });
+
+    const finalUrl = `${pasarelaUrl}?${params.toString()}`;
+    console.log('Redirecting to:', finalUrl);
+    console.log('Params:', {
+      amount: amount.toString(),
+      walletAddress: address,
+      redirect: webCustomerUrl,
+      invoice: `EURT_PURCHASE_${Date.now()}`
+    });
+
+    window.location.href = finalUrl;
   };
-
-  useEffect(() => {
-    if (!walletAddress || !amount) return;
-
-    const searchParams = new URLSearchParams(window.location.search);
-    const invoice = searchParams.get('invoice') || `EURT_PURCHASE_${Date.now()}`;
-    const redirect = searchParams.get('redirect') || process.env.NEXT_PUBLIC_PASARELA_PAGO_URL;
-
-    if (redirect) {
-      setRedirectUrl(redirect);
-      // Store redirect info in sessionStorage for use after Stripe redirect
-      sessionStorage.setItem('redirect_url', redirect);
-      sessionStorage.setItem('invoice', invoice);
-      sessionStorage.setItem('amount', amount.toString());
-    }
-
-    fetch('/api/create-payment-intent', {
-      method: 'POST',
-      body: JSON.stringify({ amount, walletAddress, invoice }),
-      headers: { 'Content-Type': 'application/json' },
-    })
-      .then((res) => res.json())
-      .then((data) => setClientSecret(data.clientSecret))
-      .catch((err) => console.error('Error:', err));
-  }, [walletAddress, amount]);
 
   return (
     <div className="w-full max-w-md">
@@ -47,6 +38,7 @@ export default function EuroTokenPurchase() {
         <div className="text-center">
           <h2 className="text-2xl font-bold text-gray-800">Compra EURT</h2>
           <p className="text-gray-600 mt-2">1 EUR = 1 EURT</p>
+          <p className="text-xs text-gray-400 mt-1">v2.0 - Nueva versión</p>
         </div>
 
         <div className="p-4 bg-indigo-50 rounded-lg border border-indigo-200">
@@ -68,17 +60,7 @@ export default function EuroTokenPurchase() {
           </p>
         </div>
 
-        {step === 'connect' && <MetaMaskConnect onWalletConnected={handleWalletConnected} />}
-
-        {step === 'pay' && clientSecret && walletAddress && (
-          <CheckoutForm
-            clientSecret={clientSecret}
-            walletAddress={walletAddress}
-            amount={amount}
-            invoice={new URLSearchParams(window.location.search).get('invoice') || `EURT_PURCHASE_${Date.now()}`}
-            redirectUrl={redirectUrl}
-          />
-        )}
+        <MetaMaskConnect onWalletConnected={handleWalletConnected} />
       </div>
     </div>
   );

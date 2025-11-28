@@ -15,7 +15,7 @@ interface CompanyFormData {
 }
 
 export default function CompaniesPage() {
-  const { isConnected, provider, signer, chainId } = useWallet();
+  const { isConnected, provider, signer, chainId, switchNetwork } = useWallet();
   const ecommerceContract = useContract('Ecommerce', provider, signer, chainId);
 
   const [companies, setCompanies] = useState<Company[]>([]);
@@ -29,31 +29,39 @@ export default function CompaniesPage() {
   const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
-    if (!ecommerceContract) return;
+    if (!ecommerceContract) {
+      setLoading(false);
+      return;
+    }
 
     const loadCompanies = async () => {
       try {
         setLoading(true);
         console.log('Loading companies...');
+        console.log('Contract address:', await ecommerceContract.getAddress());
 
         const companyIdsResult = await ecommerceContract.getAllCompanies();
-        console.log('Company IDs result:', companyIdsResult);
+        console.log('Company IDs raw result:', companyIdsResult);
 
         // Handle different return types using utility function
         const companyIds = normalizeArrayResponse(companyIdsResult);
+        console.log('Normalized Company IDs:', companyIds);
 
-        console.log('Company IDs:', companyIds);
+        if (companyIds.length === 0) {
+          console.log('No companies found.');
+          setCompanies([]);
+          return;
+        }
 
         const companyDataPromises = companyIds.map(async (id: any) => {
           try {
             console.log('Fetching company with ID:', id);
             const companyResult = await ecommerceContract.getCompany(id);
-            console.log('Company result:', companyResult);
+            console.log(`Company ${id} raw result:`, companyResult);
 
             // Normalize company data using utility function
             const normalizedCompany = normalizeCompany(companyResult, id);
-
-            console.log('Processed company:', normalizedCompany);
+            console.log(`Company ${id} normalized:`, normalizedCompany);
 
             return normalizedCompany;
           } catch (err) {
@@ -65,7 +73,7 @@ export default function CompaniesPage() {
         const companyDataResults = await Promise.all(companyDataPromises);
         const companyData = companyDataResults.filter((c: Company | null): c is Company => c !== null);
 
-        console.log('Final company data:', companyData);
+        console.log('Final company data array:', companyData);
         setCompanies(companyData);
       } catch (err) {
         console.error('Error loading companies:', err);
@@ -80,7 +88,18 @@ export default function CompaniesPage() {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!ecommerceContract) return;
+
+    if (!ecommerceContract) {
+      if (isConnected && chainId !== 31337) {
+        try {
+          await switchNetwork(31337);
+        } catch (err) {
+          console.error('Failed to switch network:', err);
+          setError('Error al cambiar de red. Por favor, cambia manualmente a Localhost 8545.');
+        }
+      }
+      return;
+    }
 
     setSubmitting(true);
     setError(null);
@@ -147,11 +166,22 @@ export default function CompaniesPage() {
   return (
     <div className="min-h-screen bg-gray-50 py-12 px-4 sm:px-6 lg:px-8">
       <div className="max-w-7xl mx-auto">
-        <div className="mb-8">
-          <h1 className="text-3xl font-bold text-gray-900">Gestión de Empresas</h1>
-          <p className="mt-2 text-sm text-gray-600">
-            Registra nuevas empresas y gestiona las existentes en el e-commerce descentralizado.
-          </p>
+        <div className="flex justify-between items-center mb-8">
+          <div>
+            <h1 className="text-3xl font-bold text-gray-900">Gestión de Empresas</h1>
+            <p className="mt-2 text-sm text-gray-600">
+              Registra nuevas empresas y gestiona las existentes en el e-commerce descentralizado.
+            </p>
+          </div>
+          <button
+            onClick={() => window.location.reload()}
+            className="inline-flex items-center px-4 py-2 border border-gray-300 rounded-md shadow-sm text-sm font-medium text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500"
+          >
+            <svg className="-ml-1 mr-2 h-5 w-5 text-gray-500" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor">
+              <path fillRule="evenodd" d="M4 2a1 1 0 011 1v2.101a7.002 7.002 0 0111.601 2.566 1 1 0 11-1.885.666A5.002 5.002 0 005.999 7H9a1 1 0 010 2H4a1 1 0 01-1-1V3a1 1 0 011-1zm.008 9.057a1 1 0 011.276.61A5.002 5.002 0 0014.001 13H11a1 1 0 110-2h5a1 1 0 011 1v5a1 1 0 11-2 0v-2.101a7.002 7.002 0 01-11.601-2.566 1 1 0 01.61-1.276z" clipRule="evenodd" />
+            </svg>
+            Actualizar
+          </button>
         </div>
 
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
@@ -214,9 +244,16 @@ export default function CompaniesPage() {
                 <button
                   type="submit"
                   disabled={submitting}
-                  className="w-full flex justify-center py-2 px-4 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 disabled:opacity-50"
+                  className={`w-full flex justify-center py-2 px-4 border border-transparent rounded-md shadow-sm text-sm font-medium text-white ${!ecommerceContract && isConnected
+                    ? 'bg-yellow-600 hover:bg-yellow-700'
+                    : 'bg-indigo-600 hover:bg-indigo-700'
+                    } focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 disabled:opacity-50`}
                 >
-                  {submitting ? 'Registrando...' : 'Registrar Empresa'}
+                  {submitting
+                    ? 'Procesando...'
+                    : !ecommerceContract && isConnected
+                      ? 'Cambiar a Red Local'
+                      : 'Registrar Empresa'}
                 </button>
               </div>
             </form>
@@ -236,7 +273,11 @@ export default function CompaniesPage() {
                 <svg className="mx-auto h-12 w-12 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-8m8 0v-4a2 2 0 00-2-2H5a2 2 0 00-2 2v4h18z" />
                 </svg>
-                <p className="mt-2">No hay empresas registradas</p>
+                <p className="mt-2">
+                  {!ecommerceContract && isConnected
+                    ? 'Conecta a la red Localhost para ver las empresas'
+                    : 'No hay empresas registradas'}
+                </p>
               </div>
             ) : (
               <div className="space-y-4">

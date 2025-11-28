@@ -1,7 +1,7 @@
 import { useMemo } from 'react';
 import { Contract } from 'ethers';
 import { BrowserProvider, JsonRpcSigner } from 'ethers';
-import { getContractAddress } from '../lib/contracts/addresses';
+import { getContractAddress, CONTRACT_ADDRESSES } from '../lib/contracts/addresses';
 import { ABIS, ContractName } from '../lib/contracts/abis';
 
 export function useContract(
@@ -14,6 +14,13 @@ export function useContract(
     if (!provider || !signer || !chainId) return null;
 
     try {
+      // Verificar si la red está soportada antes de intentar obtener la dirección
+      const supportedNetworks = Object.keys(CONTRACT_ADDRESSES).map(Number);
+      if (!supportedNetworks.includes(chainId)) {
+        console.warn(`Network ${chainId} not supported. Supported: ${supportedNetworks.join(', ')}`);
+        return null;
+      }
+
       const address = getContractAddress(chainId, contractName);
       const abi = ABIS[contractName];
       return new Contract(address, abi, signer);
