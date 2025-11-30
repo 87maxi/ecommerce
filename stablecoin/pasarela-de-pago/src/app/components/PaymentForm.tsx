@@ -60,7 +60,7 @@ function CheckoutForm({ paymentData }: { paymentData: PaymentData }) {
       </div>
 
       <div className="p-4 bg-slate-800/50 rounded-xl border border-slate-700/50 backdrop-blur-sm">
-                      <PaymentElement options={{
+        <PaymentElement options={{
           layout: 'accordion',
           fields: {
             billingDetails: {
@@ -120,17 +120,17 @@ const PaymentForm = () => {
     const invoiceParam = params.get('invoice');
     const redirect = params.get('redirect');
 
-    if (amountParam && walletParam && invoiceParam) {
+    if (amountParam && walletParam) {
       const data: PaymentData = {
         amount: amountParam,
         walletAddress: walletParam,
-        invoice: invoiceParam,
+        invoice: invoiceParam || `EURT_${Date.now()}`,
         redirectUrl: redirect || (process.env.NEXT_PUBLIC_WEB_CUSTOMER_URL || 'http://localhost:3030') + '/payment-success'
       };
       setPaymentData(data);
       setAmount(parseFloat(amountParam));
       setWalletAddress(walletParam);
-      setInvoice(invoiceParam);
+      setInvoice(data.invoice);
 
       // Iniciar creación del PaymentIntent inmediatamente
       createPaymentIntent(data);

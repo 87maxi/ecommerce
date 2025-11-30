@@ -1,10 +1,49 @@
-'use client';
-
 import { useWallet } from '@/hooks/useWallet';
+import { useState, useEffect } from 'react';
+import { ethers } from 'ethers';
+
+const EURO_TOKEN_ABI = [
+  "function balanceOf(address owner) view returns (uint256)",
+  "function decimals() view returns (uint8)",
+  "function symbol() view returns (string)"
+];
 
 export default function WalletConnect() {
   const expectedChainId = process.env.NEXT_PUBLIC_EXPECTED_CHAIN_ID || '0x7a69'; // Default to Anvil chain ID
   const { isConnected, account, error, connectWallet, disconnectWallet, chainId } = useWallet();
+  const [balance, setBalance] = useState<string | null>('...');
+
+  useEffect(() => {
+    const fetchBalance = async () => {
+      console.log('Fetching balance...', { isConnected, account, hasEthereum: !!window.ethereum });
+      if (isConnected && account && window.ethereum) {
+        try {
+          const provider = new ethers.BrowserProvider(window.ethereum);
+          const contractAddress = process.env.NEXT_PUBLIC_EUROTOKEN_CONTRACT_ADDRESS;
+          console.log('Contract Address:', contractAddress);
+
+          if (!contractAddress) {
+            console.error('EuroToken contract address not found in env');
+            return;
+          }
+
+          const contract = new ethers.Contract(contractAddress, EURO_TOKEN_ABI, provider);
+          const balanceBN = await contract.balanceOf(account);
+          console.log('Balance BN:', balanceBN.toString());
+          const formatted = ethers.formatUnits(balanceBN, 18);
+          console.log('Formatted Balance:', formatted);
+          setBalance(parseFloat(formatted).toFixed(2));
+        } catch (err) {
+          console.error('Error fetching balance:', err);
+          setBalance("Error");
+        }
+      } else {
+        setBalance(null);
+      }
+    };
+
+    fetchBalance();
+  }, [isConnected, account, chainId]);
 
   return (
     <div className="flex items-center gap-4">
@@ -16,6 +55,13 @@ export default function WalletConnect() {
               {account.slice(0, 6)}...{account.slice(-4)}
             </span>
           </div>
+          {balance !== null && (
+            <div className="flex items-center gap-2 bg-primary/10 px-3 py-1 rounded-lg border border-primary/20">
+              <span className="text-sm font-bold text-primary">
+                €{balance} EURT
+              </span>
+            </div>
+          )}
           <button
             onClick={disconnectWallet}
             className="px-3 py-1 bg-muted text-muted-foreground rounded-lg text-sm hover:bg-destructive/20 hover:text-destructive transition-all duration-200 border border-border"
@@ -69,11 +115,6 @@ export default function WalletConnect() {
           >
             Switch Network
           </button>
-        </div>
-      )}
-      {error && (
-        <div className="text-destructive text-sm">
-          {error}
         </div>
       )}
     </div>

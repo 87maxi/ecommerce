@@ -20,7 +20,7 @@ const MetaMaskConnect = ({ onWalletConnected }: Props) => {
 
   const connectWallet = async () => {
     if (!window.ethereum) {
-      console.warn("MetaMask no detectado. Abriendo página de instalación.");
+      console.warn("Wallet no detectada. Abriendo página de instalación.");
       window.open("https://metamask.io/download.html", "_blank");
       return;
     }
@@ -36,26 +36,55 @@ const MetaMaskConnect = ({ onWalletConnected }: Props) => {
         setIsConnected(true);
         onWalletConnected(address);
         await updateBalance(address);
+        // Intentar agregar el token automáticamente
+        addTokenToWallet();
       }
     } catch (error) {
-      console.error("Error al conectar con MetaMask:", error);
+      console.error("Error al conectar con Wallet:", error);
     }
   };
 
   const updateBalance = async (address: string) => {
     try {
-      // Esto requiere el ABI del contrato EuroToken
-      const provider = new ethers.BrowserProvider(window.ethereum);
-      // const contract = new ethers.Contract(EUROTOKEN_ADDRESS, EUROTOKEN_ABI, provider);
-      // const balanceBN = await contract.balanceOf(address);
-      // const formatted = ethers.formatUnits(balanceBN, 18);
-      // setBalance(formatted);
+      const pasarelaUrl = process.env.NEXT_PUBLIC_PASARELA_PAGO_URL || 'http://localhost:3034';
+      const response = await fetch(`${pasarelaUrl}/api/balance/${address}`);
 
-      // Por ahora simulamos
-      setBalance("0");
+      if (response.ok) {
+        const data = await response.json();
+        setBalance(data.balance);
+      } else {
+        console.error("Error fetching balance:", await response.text());
+        setBalance("error");
+      }
     } catch (error) {
       console.error("Error al obtener saldo:", error);
       setBalance("error");
+    }
+  };
+
+  const addTokenToWallet = async () => {
+    if (!window.ethereum) return;
+
+    try {
+      const tokenAddress = process.env.NEXT_PUBLIC_EUROTOKEN_CONTRACT_ADDRESS;
+      if (!tokenAddress) {
+        console.error("Contract address not found");
+        return;
+      }
+
+      await window.ethereum.request({
+        method: 'wallet_watchAsset',
+        params: {
+          type: 'ERC20',
+          options: {
+            address: tokenAddress,
+            symbol: 'EURT',
+            decimals: 18,
+          },
+        },
+      });
+    } catch (error) {
+      console.error('Error adding token to wallet:', error);
     }
   };
 
@@ -90,7 +119,7 @@ const MetaMaskConnect = ({ onWalletConnected }: Props) => {
               <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"></path>
               </svg>
-              <span>Conectar MetaMask</span>
+              <span>Conectar Wallet</span>
               <svg className="w-5 h-5 opacity-70 group-hover:translate-x-1 transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M17 8l4 4m0 0l-4 4m4-4H3"></path>
               </svg>
@@ -120,10 +149,21 @@ const MetaMaskConnect = ({ onWalletConnected }: Props) => {
               </div>
             </div>
             <div className="mt-3 pt-3 border-t border-slate-700/50 flex justify-between items-center">
-              <span className="flex items-center gap-1.5 text-[10px] text-emerald-400 bg-emerald-900/20 px-2 py-0.5 rounded-full border border-emerald-500/20">
-                <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse"></span>
-                Online
-              </span>
+              <div className="flex gap-2">
+                <span className="flex items-center gap-1.5 text-[10px] text-emerald-400 bg-emerald-900/20 px-2 py-0.5 rounded-full border border-emerald-500/20">
+                  <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse"></span>
+                  Online
+                </span>
+                <button
+                  onClick={addTokenToWallet}
+                  className="flex items-center gap-1 text-[10px] text-indigo-400 hover:text-indigo-300 transition-colors bg-indigo-900/20 px-2 py-0.5 rounded-full border border-indigo-500/20"
+                >
+                  <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 6v6m0 0v6m0-6h6m-6 0H6" />
+                  </svg>
+                  Agregar EURT
+                </button>
+              </div>
               <button onClick={() => window.location.reload()} className="text-[10px] text-slate-500 hover:text-indigo-400 transition-colors">
                 Desconectar
               </button>

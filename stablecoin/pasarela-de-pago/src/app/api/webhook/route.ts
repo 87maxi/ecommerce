@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
+import { mintTokens } from '@/lib/contracts';
 
 const stripe = require('stripe')(process.env.STRIPE_SECRET_KEY!);
 
@@ -51,43 +52,16 @@ export async function POST(request: NextRequest) {
                 invoice
             });
 
-            // Llamar a compra-stablecoin para mintear tokens
-            const compraStablecoinUrl = process.env.COMPRA_STABLECOIN_URL || 'http://localhost:3033';
-            const mintUrl = `${compraStablecoinUrl}/api/mint-tokens`;
-
-            console.log('[WEBHOOK] Calling mint-tokens API:', mintUrl);
+            // Llamar a la función local para mintear tokens
+            console.log('[WEBHOOK] Calling local mintTokens function');
 
             try {
-                const mintResponse = await fetch(mintUrl, {
-                    method: 'POST',
-                    headers: {
-                        'Content-Type': 'application/json',
-                    },
-                    body: JSON.stringify({
-                        walletAddress,
-                        amount,
-                        invoice,
-                        paymentIntentId: paymentIntent.id
-                    }),
-                });
+                const mintResult = await mintTokens(walletAddress, amount, invoice);
 
-                const mintData = await mintResponse.json();
-
-                if (!mintResponse.ok) {
-                    console.error('[WEBHOOK] Error minting tokens:', mintData);
-                    // No retornar error a Stripe, solo loguear
-                    // Stripe reintentará el webhook si falla
-                    return NextResponse.json({
-                        received: true,
-                        mintError: mintData.error || 'Failed to mint tokens'
-                    });
-                }
-
-                console.log('[WEBHOOK] Tokens minted successfully:', mintData);
+                console.log('[WEBHOOK] Tokens minted successfully:', mintResult);
 
                 // Guardar transaction hash en metadata (opcional, para futuras referencias)
-                // Podrías guardar esto en una base de datos
-                const transactionHash = mintData.data?.transactionHash;
+                const transactionHash = mintResult.transactionHash;
 
                 return NextResponse.json({
                     received: true,
@@ -97,10 +71,10 @@ export async function POST(request: NextRequest) {
                 });
 
             } catch (mintError: any) {
-                console.error('[WEBHOOK] Exception calling mint-tokens:', mintError);
+                console.error('[WEBHOOK] Exception calling mintTokens:', mintError);
                 return NextResponse.json({
                     received: true,
-                    mintError: mintError.message || 'Failed to call mint service'
+                    mintError: mintError.message || 'Failed to mint tokens'
                 });
             }
         }

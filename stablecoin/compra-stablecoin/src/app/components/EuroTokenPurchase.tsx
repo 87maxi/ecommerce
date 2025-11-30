@@ -2,20 +2,15 @@
 
 import { useState, useEffect } from 'react';
 import MetaMaskConnect from './MetaMaskConnect';
-import CheckoutFormNew from './CheckoutFormNew';
 import PurchaseSteps from './PurchaseSteps';
 import AmountSelector from './AmountSelector';
-import ProcessingOverlay from './ProcessingOverlay';
 
 export default function EuroTokenPurchase() {
   // State for amount to purchase in euros
   const [amount, setAmount] = useState<number>(100);
-  const [clientSecret, setClientSecret] = useState<string | null>(null);
   const [walletAddress, setWalletAddress] = useState<string | null>(null);
-  const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [currentStep, setCurrentStep] = useState(1);
-  const [processingStage, setProcessingStage] = useState<'creating' | 'processing' | 'confirming' | 'minting'>('creating');
 
   useEffect(() => {
     // Check for URL parameters (from web-customer redirection)
@@ -47,41 +42,24 @@ export default function EuroTokenPurchase() {
   const handleWalletConnected = async (address: string) => {
     console.log('Wallet connected:', address);
     setWalletAddress(address);
-    setCurrentStep(3);
-    setLoading(true);
-    setError(null);
-    setProcessingStage('creating');
 
-    try {
-      const response = await fetch('/api/create-payment-intent', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-          amount,
-          walletAddress: address,
-          invoice: `EURT_PURCHASE_${Date.now()}`
-        }),
-      });
+    // Redirect to pasarela-de-pago for payment processing
+    const pasarelaUrl = process.env.NEXT_PUBLIC_PASARELA_PAGO_URL || 'http://localhost:3034';
+    const redirectUrl = sessionStorage.getItem('redirect_url') || '';
+    const invoice = sessionStorage.getItem('invoice') || '';
 
-      if (!response.ok) {
-        throw new Error('Error al iniciar el pago');
-      }
+    // Build redirect URL with parameters
+    const params = new URLSearchParams({
+      amount: amount.toString(),
+      walletAddress: address,
+      ...(redirectUrl && { redirect: redirectUrl }),
+      ...(invoice && { invoice: invoice })
+    });
 
-      const data = await response.json();
-      setClientSecret(data.clientSecret);
-    } catch (err) {
-      console.error('Error fetching payment intent:', err);
-      setError('No se pudo iniciar el proceso de pago. Por favor intenta nuevamente.');
-      setCurrentStep(2);
-    } finally {
-      setLoading(false);
-    }
+    window.location.href = `${pasarelaUrl}?${params.toString()}`;
   };
 
   const handleReset = () => {
-    setClientSecret(null);
     setWalletAddress(null);
     setError(null);
     setCurrentStep(1);
@@ -96,45 +74,11 @@ export default function EuroTokenPurchase() {
     }
   };
 
-  // Step 3: Payment Form (Stripe)
-  if (clientSecret && walletAddress) {
-    return (
-      <div className="w-full max-w-lg mx-auto px-4 sm:px-0 animate-in fade-in duration-500">
-        <ProcessingOverlay isVisible={loading} stage={processingStage} />
-
-        <PurchaseSteps currentStep={currentStep} />
-
-        <div className="bg-slate-900/80 backdrop-blur-2xl border border-slate-700/50 shadow-[0_0_50px_rgba(99,102,241,0.15)] rounded-3xl p-6 sm:p-8 space-y-6 relative overflow-hidden">
-          {/* Decorative background elements */}
-          <div className="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-indigo-500 via-purple-500 to-cyan-500 opacity-50"></div>
-
-          <button
-            onClick={handleReset}
-            className="text-slate-400 hover:text-white flex items-center gap-2 text-sm transition-colors mb-4 group"
-          >
-            <svg className="w-4 h-4 group-hover:-translate-x-1 transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M10 19l-7-7m0 0l7-7m-7 7h18" />
-            </svg>
-            Volver
-          </button>
-
-          <CheckoutFormNew
-            clientSecret={clientSecret}
-            walletAddress={walletAddress}
-            amount={amount}
-            invoice={`EURT_PURCHASE_${Date.now()}`}
-          />
-        </div>
-      </div>
-    );
-  }
 
   // Step 2: Wallet Connection
   if (currentStep === 2) {
     return (
       <div className="w-full max-w-lg mx-auto px-4 sm:px-0 animate-in fade-in duration-500">
-        <ProcessingOverlay isVisible={loading} stage={processingStage} />
-
         <PurchaseSteps currentStep={currentStep} />
 
         <div className="bg-slate-900/80 backdrop-blur-2xl border border-slate-700/50 shadow-[0_0_50px_rgba(99,102,241,0.15)] rounded-3xl p-6 sm:p-8 space-y-8 transition-all duration-500 hover:shadow-[0_0_80px_rgba(99,102,241,0.25)] hover:border-indigo-500/30 relative overflow-hidden">

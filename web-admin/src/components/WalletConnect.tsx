@@ -28,7 +28,7 @@ export function WalletConnect() {
   const walletInfo = {
     provider: 'metamask' as const,
     info: {
-      label: 'MetaMask',
+      label: 'Wallet',
       icon: 'https://upload.wikimedia.org/wikipedia/commons/3/36/MetaMask_Fox.svg',
     },
   };
@@ -106,7 +106,7 @@ export function WalletConnect() {
                 </svg>
                 Conectando...
               </>
-            ) : 'Conectar MetaMask'}
+            ) : 'Conectar Wallet'}
           </button>
           <p className="mt-3 text-sm text-gray-500">
             Conecta tu billetera para acceder al panel de administración
@@ -164,7 +164,7 @@ export function WalletConnect() {
                 <button
                   onClick={addTokenToWallet}
                   className="flex items-center space-x-1 px-3 py-1.5 bg-indigo-50 text-indigo-700 rounded-md hover:bg-indigo-100 transition-colors text-xs font-medium border border-indigo-200"
-                  title="Agregar EURT a MetaMask"
+                  title="Agregar EURT a Wallet"
                 >
                   <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 6v6m0 0v6m0-6h6m-6 0H6" />

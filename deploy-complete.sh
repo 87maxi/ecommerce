@@ -4,7 +4,7 @@ set -euo pipefail
 ROOT=$PWD
 RPC_URL="http://127.0.0.1:8545"
 DEPLOYER_PRIVATE_KEY="0xac0974bec39a17e36ba4a6b4d238ff944bacb478cbed5efcae784d7bf4f2ff80"
-OWNER_PRIVATE_KEY="0xf39Fd6e51aad88F6F4ce6aB8827279cffFb92266" # Account 1 from Anvil
+OWNER_ADDRESS_KEY="0xf39Fd6e51aad88F6F4ce6aB8827279cffFb92266" # Account 1 from Anvil
 
 # Stripe Keys (decoded)
 STRIPE_SK=$(echo "U1RSSVBFX1NFQ1JFVF9LRVk9c2tfdGVzdF81MVNXd2pJMk1JYkw0UG9GRk5pVDUyVDJzenZTU1pSa0xYbUcwODZvQjBwS0FxZkZsd2U0a3Fhc2loSmMwZFBOUkFMbFdrR2pmak90bkk2dWtXNWR6aTZoSTAwNktjSzFyQVMK" | base64 --decode);
@@ -36,8 +36,7 @@ trap cleanup EXIT
 echo ""
 echo "📦 Deploying Ecommerce Contract with EuroToken..."
 cd $ROOT/sc-ecommerce
-# Compile contracts
-forge build --force
+
 
 # Deploy Ecommerce contract with EuroToken
 echo "💸 Deploying Ecommerce contracts..."
@@ -51,13 +50,13 @@ else
 fi
 
 # Extract addresses from deployment files
-ECOMMERCE_ADDRESS=$(jq -r '.transactions[] | select(.contractName == "Ecommerce") | .contractAddress' ./broadcast/DeployEcommerce.s.sol/31337/run-latest.json | tail -n 1)
+
 ECOMMERCE_ABI_JSON=$(forge inspect "Ecommerce" abi --json)
 
 # Extract EuroToken address from the Ecommerce deployment (ERC20Mock)
-EUROTOKEN_ADDRESS=$(jq -r '.transactions[] | select(.contractName == "Ecommerce") | .contractAddress' ./broadcast/DeployEcommerce.s.sol/31337/run-latest.json | tail -n 1)
+ECOMMERCE_ADDRESS=$(jq -r '.transactions[] | select(.contractName == "Ecommerce") | .contractAddress' ./broadcast/DeployEcommerce.s.sol/31337/run-latest.json | tail -n 1)
 echo "📍 Ecommerce Address: $ECOMMERCE_ADDRESS"
-echo "📍 EuroToken Address: $EUROTOKEN_ADDRESS"
+
 
 # 2. Configure Web-Customer (Port 3030)
 echo ""
@@ -82,27 +81,51 @@ echo $ECOMMERCE_ABI_JSON | jq '.' > src/contracts/abis/EcommerceABI.json
 
 cat > .env.local << EOF
 NEXT_PUBLIC_ECOMMERCE_CONTRACT_ADDRESS=$ECOMMERCE_ADDRESS
-NEXT_PUBLIC_EUROTOKEN_CONTRACT_ADDRESS=$EUROTOKEN_ADDRESS
 NEXT_PUBLIC_CHAIN_ID=31337
 EOF
 
 echo "✅ Web-Admin configured with addresses:"
 echo "   Ecommerce: $ECOMMERCE_ADDRESS"
-echo "   EuroToken: $EUROTOKEN_ADDRESS"
+
 
 # 4. Configure Compra-Stablecoin (Port 3033)
+
+
 echo ""
 echo "⚙️  Configuring Compra-Stablecoin..."
-cd $ROOT/stablecoin/compra-stablecoin
+ROOT_STABLECOIN=$ROOT/stablecoin
+
+cd $ROOT_STABLECOIN/sc
+
+
+
+DEPLOY_OUTPUT=$(forge script script/DeployEuroToken.s.sol --rpc-url $RPC_URL --private-key $DEPLOYER_PRIVATE_KEY --broadcast --silent)
+
+EUROTOKEN_ABI_JSON=$(forge inspect "EuroToken" abi --json)
+
+
+EUROTOKEN_ADDRESS=$(jq -r '.transactions[] | select(.contractName == "EuroToken") | .contractAddress' ./broadcast/DeployEuroToken.s.sol/31337/run-latest.json | tail -n 1)
+
+echo "📍 EuroToken Address: $EUROTOKEN_ADDRESS"
+
+
+# 5. Configure compra-stablecoin (Port 3033)
+
+
+cd $ROOT_STABLECOIN/compra-stablecoin
+rm -rf src/contracts/abis
 mkdir -p src/contracts/abis 2>/dev/null || true
-echo $ECOMMERCE_ABI_JSON | jq '.' > src/contracts/abis/StableCoinABI.json
+
+echo $EUROTOKEN_ABI_JSON | jq '.' > src/contracts/abis/EuroTokenABI.json
+
+echo $EUROTOKEN_ABI_JSON
 
 cat > .env << EOF
-NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY=$STRIPE_PK
-STRIPE_SECRET_KEY=$STRIPE_SK
-STRIPE_WEBHOOK_SECRET=whsec_your_webhook_secret_here
+$STRIPE_PK
+$STRIPE_SK
 NEXT_PUBLIC_EUROTOKEN_CONTRACT_ADDRESS=$EUROTOKEN_ADDRESS
-OWNER_PRIVATE_KEY=$OWNER_PRIVATE_KEY
+DEPLOYER_PRIVATE_KEY=$DEPLOYER_PRIVATE_KEY
+OWNER_ADDRESS_KEY=$OWNER_ADDRESS_KEY
 RPC_URL=http://127.0.0.1:8545
 NEXT_PUBLIC_NETWORK_NAME=localhost
 NEXT_PUBLIC_SITE_URL=http://localhost:3033
@@ -115,18 +138,24 @@ echo "✅ Compra-Stablecoin configured"
 # 5. Configure Pasarela-de-Pago (Port 3034)
 echo ""
 echo "⚙️  Configuring Pasarela-de-Pago..."
-cd $ROOT/stablecoin/pasarela-de-pago
+cd $ROOT_STABLECOIN/pasarela-de-pago
 mkdir -p src/contracts/abis 2>/dev/null || true
-echo $ECOMMERCE_ABI_JSON | jq '.' > src/contracts/abis/StableCoinABI.json
+echo $EUROTOKEN_ABI_JSON | jq '.' > src/contracts/abis/EuroTokenABI.json
 
 cat > .env << EOF
-NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY=$STRIPE_PK
-STRIPE_SECRET_KEY=$STRIPE_SK
+$STRIPE_PK
+$STRIPE_SK
 TURSO_DATABASE_URL=http://localhost:3032
 NEXT_PUBLIC_EUROTOKEN_CONTRACT_ADDRESS=$EUROTOKEN_ADDRESS
+OWNER_ADDRESS_KEY=$OWNER_ADDRESS_KEY
 TURSO_AUTH_TOKEN=abc123
 NEXT_PUBLIC_COMPRAS_STABLECOIN_URL=http://localhost:3033
+RPC_URL=http://127.0.0.1:8545
+MERCHANT_WALLET_ADDRESS=$OWNER_ADDRESS_KEY
 EOF
+
+
+
 echo "✅ Pasarela-de-Pago configured"
 
 echo ""
