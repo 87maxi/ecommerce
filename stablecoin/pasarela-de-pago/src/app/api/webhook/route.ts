@@ -1,0 +1,119 @@
+import { NextRequest, NextResponse } from 'next/server';
+
+const stripe = require('stripe')(process.env.STRIPE_SECRET_KEY!);
+
+/**
+ * Webhook de Stripe para procesar eventos de pago
+ * Este endpoint recibe notificaciones cuando un pago es exitoso
+ * y llama a compra-stablecoin para mintear los tokens
+ */
+export async function POST(request: NextRequest) {
+    try {
+        const sig = request.headers.get('stripe-signature');
+        const payload = await request.text();
+
+        if (!sig) {
+            console.error('[WEBHOOK] Missing Stripe signature');
+            return NextResponse.json(
+                { error: 'Missing Stripe signature' },
+                { status: 400 }
+            );
+        }
+
+        // Verificar la firma del webhook de Stripe
+        let event;
+        try {
+            event = stripe.webhooks.constructEvent(
+                payload,
+                sig,
+                process.env.STRIPE_WEBHOOK_SECRET!
+            );
+        } catch (err: any) {
+            console.error('[WEBHOOK] Error verifying webhook signature:', err.message);
+            return NextResponse.json(
+                { error: `Webhook Error: ${err.message}` },
+                { status: 400 }
+            );
+        }
+
+        console.log('[WEBHOOK] Received event:', event.type);
+
+        // Procesar evento de pago exitoso
+        if (event.type === 'payment_intent.succeeded') {
+            const paymentIntent = event.data.object;
+            const { walletAddress, invoice } = paymentIntent.metadata;
+            const amount = paymentIntent.amount / 100; // Convertir de céntimos a euros
+
+            console.log('[WEBHOOK] Payment succeeded:', {
+                paymentIntentId: paymentIntent.id,
+                walletAddress,
+                amount,
+                invoice
+            });
+
+            // Llamar a compra-stablecoin para mintear tokens
+            const compraStablecoinUrl = process.env.COMPRA_STABLECOIN_URL || 'http://localhost:3033';
+            const mintUrl = `${compraStablecoinUrl}/api/mint-tokens`;
+
+            console.log('[WEBHOOK] Calling mint-tokens API:', mintUrl);
+
+            try {
+                const mintResponse = await fetch(mintUrl, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({
+                        walletAddress,
+                        amount,
+                        invoice,
+                        paymentIntentId: paymentIntent.id
+                    }),
+                });
+
+                const mintData = await mintResponse.json();
+
+                if (!mintResponse.ok) {
+                    console.error('[WEBHOOK] Error minting tokens:', mintData);
+                    // No retornar error a Stripe, solo loguear
+                    // Stripe reintentará el webhook si falla
+                    return NextResponse.json({
+                        received: true,
+                        mintError: mintData.error || 'Failed to mint tokens'
+                    });
+                }
+
+                console.log('[WEBHOOK] Tokens minted successfully:', mintData);
+
+                // Guardar transaction hash en metadata (opcional, para futuras referencias)
+                // Podrías guardar esto en una base de datos
+                const transactionHash = mintData.data?.transactionHash;
+
+                return NextResponse.json({
+                    received: true,
+                    success: true,
+                    transactionHash,
+                    message: 'Payment processed and tokens minted'
+                });
+
+            } catch (mintError: any) {
+                console.error('[WEBHOOK] Exception calling mint-tokens:', mintError);
+                return NextResponse.json({
+                    received: true,
+                    mintError: mintError.message || 'Failed to call mint service'
+                });
+            }
+        }
+
+        // Otros tipos de eventos
+        console.log('[WEBHOOK] Event type not handled:', event.type);
+        return NextResponse.json({ received: true });
+
+    } catch (error: any) {
+        console.error('[WEBHOOK] Unexpected error:', error);
+        return NextResponse.json(
+            { error: 'Webhook handler failed', details: error.message },
+            { status: 500 }
+        );
+    }
+}

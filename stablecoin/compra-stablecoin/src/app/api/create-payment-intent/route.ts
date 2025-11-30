@@ -1,6 +1,4 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { getServerSession } from 'next-auth';
-import { authOptions } from '@/lib/auth';
 
 const stripe = require('stripe')(process.env.STRIPE_SECRET_KEY!);
 
@@ -8,12 +6,22 @@ export async function POST(request: NextRequest) {
   try {
     const { amount, walletAddress, invoice } = await request.json();
 
+    if (!amount || !walletAddress) {
+      return NextResponse.json(
+        { error: 'Monto y dirección de billetera son requeridos' },
+        { status: 400 }
+      );
+    }
+
     const paymentIntent = await stripe.paymentIntents.create({
       amount: Math.round(amount * 100), // Céntimos
       currency: 'eur',
       metadata: {
         walletAddress,
-        invoice: invoice || 'STABLECOIN_PURCHASE',
+        invoice: invoice || `EURT_PURCHASE_${Date.now()}`,
+      },
+      automatic_payment_methods: {
+        enabled: true,
       },
     });
 

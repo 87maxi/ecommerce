@@ -1,20 +1,29 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useWallet } from '../hooks/useWallet';
+import { BrowserProvider, Contract, formatUnits } from 'ethers';
+import { getContractAddress } from '../lib/contracts/addresses';
+
+const EURO_TOKEN_ABI = [
+  "function balanceOf(address owner) view returns (uint256)",
+  "function decimals() view returns (uint8)",
+  "function symbol() view returns (string)"
+];
 
 export function WalletConnect() {
-  const { 
-    connect, 
-    disconnect, 
-    isConnected, 
-    address, 
-    chainId, 
-    connecting, 
-    error 
+  const {
+    connect,
+    disconnect,
+    isConnected,
+    address,
+    chainId,
+    connecting,
+    error
   } = useWallet();
-  
+
   const [showNetworkSelector, setShowNetworkSelector] = useState(false);
+  const [euroBalance, setEuroBalance] = useState<string | null>(null);
 
   const walletInfo = {
     provider: 'metamask' as const,
@@ -30,11 +39,55 @@ export function WalletConnect() {
 
   const handleDisconnect = () => {
     disconnect();
+    setEuroBalance(null);
   };
 
   const formatAddress = (addr: string) => {
     return `${addr.slice(0, 6)}...${addr.slice(-4)}`;
   };
+
+  const fetchBalance = async () => {
+    if (!address || !window.ethereum || !chainId) return;
+
+    try {
+      const provider = new BrowserProvider(window.ethereum);
+      const euroTokenAddress = getContractAddress(chainId, 'EuroToken');
+      const contract = new Contract(euroTokenAddress, EURO_TOKEN_ABI, provider);
+      const balance = await contract.balanceOf(address);
+      const formatted = formatUnits(balance, 18); // Assuming 18 decimals
+      setEuroBalance(parseFloat(formatted).toFixed(2));
+    } catch (err) {
+      console.error('Error fetching balance:', err);
+      setEuroBalance(null);
+    }
+  };
+
+  const addTokenToWallet = async () => {
+    if (!window.ethereum || !chainId) return;
+
+    try {
+      const euroTokenAddress = getContractAddress(chainId, 'EuroToken');
+      await window.ethereum.request({
+        method: 'wallet_watchAsset',
+        params: {
+          type: 'ERC20',
+          options: {
+            address: euroTokenAddress,
+            symbol: 'EURT',
+            decimals: 18,
+          },
+        },
+      });
+    } catch (error) {
+      console.error('Error adding token to wallet:', error);
+    }
+  };
+
+  useEffect(() => {
+    if (isConnected && address) {
+      fetchBalance();
+    }
+  }, [isConnected, address, chainId]);
 
   return (
     <div className="space-y-4">
@@ -61,45 +114,69 @@ export function WalletConnect() {
         </div>
       ) : (
         <div className="space-y-3">
-          <div className="flex items-center justify-between p-3 bg-gray-50 rounded-md">
-            <div className="flex items-center space-x-3">
-              <div className="w-8 h-8 rounded-full bg-indigo-100 flex items-center justify-center">
-                <svg viewBox="0 0 24 24" className="w-5 h-5 text-indigo-600">
-                  <path
-                    fill="currentColor"
-                    d="M12 2C6.486 2 2 6.486 2 12s4.486 10 10 10 10-4.486 10-10S17.514 2 12 2zm0 18c-4.411 0-8-3.589-8-8s3.589-8 8-8 8 3.589 8 8-3.589 8-8 8z"
-                  />
-                  <circle cx="12" cy="12" r="3" fill="currentColor" />
-                </svg>
+          <div className="flex flex-col space-y-3 p-4 bg-gray-50 rounded-lg border border-gray-200">
+            <div className="flex items-center justify-between">
+              <div className="flex items-center space-x-3">
+                <div className="w-10 h-10 rounded-full bg-indigo-100 flex items-center justify-center">
+                  <svg viewBox="0 0 24 24" className="w-6 h-6 text-indigo-600">
+                    <path
+                      fill="currentColor"
+                      d="M12 2C6.486 2 2 6.486 2 12s4.486 10 10 10 10-4.486 10-10S17.514 2 12 2zm0 18c-4.411 0-8-3.589-8-8s3.589-8 8-8 8 3.589 8 8-3.589 8-8 8z"
+                    />
+                    <circle cx="12" cy="12" r="3" fill="currentColor" />
+                  </svg>
+                </div>
+                <div>
+                  <p className="text-sm font-medium text-gray-900">
+                    {formatAddress(address!)}
+                  </p>
+                  <p className="text-xs text-gray-500">
+                    Red: {chainId}
+                  </p>
+                </div>
               </div>
-              <div>
-                <p className="text-sm font-medium text-gray-900">
-                  {formatAddress(address!)}
-                </p>
-                <p className="text-xs text-gray-500">
-                  Red: {chainId}
-                </p>
+
+              <div className="flex space-x-2">
+                <button
+                  onClick={() => setShowNetworkSelector(!showNetworkSelector)}
+                  className="px-3 py-1.5 text-xs font-medium border border-gray-300 rounded-md text-gray-700 hover:bg-gray-100 transition-colors"
+                >
+                  Red
+                </button>
+                <button
+                  onClick={handleDisconnect}
+                  className="px-3 py-1.5 text-xs font-medium border border-red-200 rounded-md text-red-700 hover:bg-red-50 transition-colors"
+                >
+                  Salir
+                </button>
               </div>
             </div>
-            
-            <div className="flex space-x-2">
-              <button
-                onClick={() => setShowNetworkSelector(!showNetworkSelector)}
-                className="px-2 py-1 text-xs border border-gray-300 rounded-md text-gray-700 hover:bg-gray-50"
-              >
-                Cambiar
-              </button>
-              <button
-                onClick={handleDisconnect}
-                className="px-2 py-1 text-xs border border-gray-300 rounded-md text-red-700 hover:bg-red-50"
-              >
-                Salir
-              </button>
+
+            {/* EuroToken Balance Section */}
+            <div className="pt-3 border-t border-gray-200">
+              <div className="flex justify-between items-center">
+                <div>
+                  <p className="text-xs text-gray-500 uppercase tracking-wider font-semibold">Saldo EuroToken</p>
+                  <p className="text-lg font-bold text-emerald-600 font-mono">
+                    {euroBalance !== null ? `€${euroBalance}` : 'Cargando...'}
+                  </p>
+                </div>
+                <button
+                  onClick={addTokenToWallet}
+                  className="flex items-center space-x-1 px-3 py-1.5 bg-indigo-50 text-indigo-700 rounded-md hover:bg-indigo-100 transition-colors text-xs font-medium border border-indigo-200"
+                  title="Agregar EURT a MetaMask"
+                >
+                  <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 6v6m0 0v6m0-6h6m-6 0H6" />
+                  </svg>
+                  <span>Agregar a Wallet</span>
+                </button>
+              </div>
             </div>
           </div>
 
           {showNetworkSelector && (
-            <div className="p-3 bg-gray-50 rounded-md space-y-2">
+            <div className="p-3 bg-white border border-gray-200 rounded-md shadow-sm space-y-2">
               <p className="text-xs font-medium text-gray-700">Seleccionar Red:</p>
               <div className="grid grid-cols-1 gap-2">
                 <button
@@ -108,7 +185,7 @@ export function WalletConnect() {
                     console.log('Switching to network 31337');
                     setShowNetworkSelector(false);
                   }}
-                  className="px-3 py-2 text-xs border border-gray-300 rounded-md text-gray-700 hover:bg-gray-100 text-left"
+                  className="px-3 py-2 text-xs border border-gray-300 rounded-md text-gray-700 hover:bg-gray-50 text-left w-full"
                 >
                   <div className="font-medium">Ethereum Local</div>
                   <div className="text-gray-500">Chain ID: 31337</div>

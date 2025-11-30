@@ -53,10 +53,9 @@ export default function RootLayout({
                       Orders
                     </a>
                     <a
-                      href="/buy-eurocoins"
-                      className="text-foreground/70 hover:text-accent transition-all duration-200 hover:scale-105 font-medium flex items-center gap-1"
+                      href="http://localhost:3033?redirect=http://localhost:3030"
+                      className="bg-indigo-600 text-white px-4 py-2 rounded-md text-sm font-medium hover:bg-indigo-700 transition-colors"
                     >
-                      <span>💰</span>
                       Buy Eurocoins
                     </a>
                   </nav>

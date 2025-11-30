@@ -1,5 +1,10 @@
 import './globals.css';
 
+export const metadata = {
+  title: 'Compra EuroToken | EuroToken EURT',
+  description: 'Compra tokens EuroToken (EURT) con tarjeta de crédito. 1 EUR = 1 EURT. Stablecoin respaldada 1:1.',
+};
+
 export default function RootLayout({
   children,
 }: {
@@ -7,10 +12,10 @@ export default function RootLayout({
 }) {
   return (
     <html lang="es">
-  <body className="min-h-screen antialiased">
-    {children}
-    <script src="/metamask-detection.js"></script>
-  </body>
-</html>
+      <body className="min-h-screen antialiased">
+        {children}
+        <script src="/metamask-detection.js"></script>
+      </body>
+    </html>
   );
 }

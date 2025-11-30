@@ -3,6 +3,7 @@
 import { useEffect, useState } from 'react';
 import { loadStripe } from '@stripe/stripe-js';
 import { Elements, PaymentElement, useStripe, useElements } from '@stripe/react-stripe-js';
+import MetaMaskConnect from './MetaMaskConnect';
 
 const stripePromise = loadStripe(process.env.NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY || '');
 
@@ -40,34 +41,63 @@ function CheckoutForm({ paymentData }: { paymentData: PaymentData }) {
   };
 
   return (
-    <form onSubmit={handleSubmit} className="space-y-6">
-      <div className="p-4 bg-blue-50 rounded-lg border border-blue-200">
-        <p className="text-sm text-gray-700">
-          <strong>Monto:</strong> €{paymentData.amount}
-        </p>
-        <p className="text-sm text-gray-700">
-          <strong>Recibirás:</strong> {paymentData.amount} EURT
-        </p>
-        <p className="text-sm text-gray-700">
-          <strong>Billetera:</strong> {paymentData.walletAddress.slice(0, 6)}...{paymentData.walletAddress.slice(-4)}
-        </p>
+    <form onSubmit={handleSubmit} className="space-y-6 animate-fade-in">
+      <div className="bg-slate-800/50 p-5 rounded-xl border border-slate-700 mb-6 backdrop-blur-sm">
+        <div className="flex justify-between items-center mb-3">
+          <span className="text-sm text-slate-400 font-medium uppercase tracking-wider">A Pagar</span>
+          <span className="text-2xl font-bold text-white font-mono">€{paymentData.amount}</span>
+        </div>
+        <div className="flex justify-between items-center mb-4">
+          <span className="text-sm text-slate-400 font-medium uppercase tracking-wider">Recibirás</span>
+          <span className="text-xl font-bold text-emerald-400 font-mono">{paymentData.amount} EURT</span>
+        </div>
+        <div className="mt-3 pt-3 border-t border-slate-700 flex justify-between items-center">
+          <span className="text-xs text-slate-500 uppercase tracking-wider">Wallet Conectada</span>
+          <span className="text-xs font-mono text-indigo-300 bg-indigo-900/30 px-3 py-1.5 rounded-full border border-indigo-500/30">
+            {paymentData.walletAddress.slice(0, 6)}...{paymentData.walletAddress.slice(-4)}
+          </span>
+        </div>
       </div>
 
-      <PaymentElement />
+      <div className="p-4 bg-slate-800/50 rounded-xl border border-slate-700/50 backdrop-blur-sm">
+                      <PaymentElement options={{
+          layout: 'accordion',
+          fields: {
+            billingDetails: {
+              name: 'auto',
+              email: 'auto',
+              address: 'auto'
+            }
+          }
+        }} />
+      </div>
 
       {message && (
-        <div className="p-3 bg-red-100 border border-red-200 text-red-700 rounded-md text-sm">
-          {message}
+        <div className="p-4 bg-red-900/20 border border-red-500/30 text-red-400 rounded-xl text-sm flex items-start backdrop-blur-sm">
+          <span className="mr-2">⚠️</span>
+          <span>{message}</span>
         </div>
       )}
 
       <button
         type="submit"
         disabled={isProcessing || !stripe || !elements}
-        className="w-full bg-indigo-600 text-white py-3 px-4 rounded-lg font-medium hover:bg-indigo-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+        className="w-full bg-gradient-to-r from-indigo-600 to-purple-600 hover:from-indigo-500 hover:to-purple-500 text-white shadow-[0_0_20px_rgba(99,102,241,0.3)] hover:shadow-[0_0_30px_rgba(99,102,241,0.5)] transition-all duration-300 py-4 px-6 rounded-xl font-bold text-lg disabled:opacity-50 disabled:cursor-not-allowed disabled:shadow-none transform hover:-translate-y-0.5"
       >
-        {isProcessing ? 'Procesando...' : `Pagar €${paymentData.amount}`}
+        {isProcessing ? (
+          <div className="flex items-center justify-center gap-2">
+            <div className="animate-spin rounded-full h-5 w-5 border-2 border-white border-t-transparent"></div>
+            <span>Procesando...</span>
+          </div>
+        ) : (
+          `Confirmar Pago • €${paymentData.amount}`
+        )}
       </button>
+
+      <div className="flex items-center justify-center gap-2 mt-4 opacity-50">
+        <span className="text-xs text-slate-500">Secured by</span>
+        <span className="font-bold text-slate-400 italic">Stripe</span>
+      </div>
     </form>
   );
 }
@@ -77,70 +107,129 @@ const PaymentForm = () => {
   const [paymentData, setPaymentData] = useState<PaymentData | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [walletAddress, setWalletAddress] = useState<string>('');
+  const [amount, setAmount] = useState<number>(100);
+  const [redirectUrl, setRedirectUrl] = useState<string>('');
+  const [invoice, setInvoice] = useState<string>('');
 
+  // Inicializar directamente con los datos de la URL
   useEffect(() => {
     const params = new URLSearchParams(window.location.search);
-    const amount = params.get('amount');
-    const walletAddress = params.get('walletAddress');
-    const invoice = params.get('invoice');
+    const amountParam = params.get('amount');
+    const walletParam = params.get('walletAddress');
+    const invoiceParam = params.get('invoice');
     const redirect = params.get('redirect');
 
-    if (!amount || !walletAddress || !invoice || !redirect) {
-      setError('Parámetros inválidos. Se requieren: amount, walletAddress, invoice, redirect');
+    if (amountParam && walletParam && invoiceParam) {
+      const data: PaymentData = {
+        amount: amountParam,
+        walletAddress: walletParam,
+        invoice: invoiceParam,
+        redirectUrl: redirect || (process.env.NEXT_PUBLIC_WEB_CUSTOMER_URL || 'http://localhost:3030') + '/payment-success'
+      };
+      setPaymentData(data);
+      setAmount(parseFloat(amountParam));
+      setWalletAddress(walletParam);
+      setInvoice(invoiceParam);
+
+      // Iniciar creación del PaymentIntent inmediatamente
+      createPaymentIntent(data);
+    } else {
+      setError('Faltan datos de pago. Por favor inicia el proceso desde la tienda.');
       setLoading(false);
-      return;
     }
-
-    const data: PaymentData = { amount, walletAddress, invoice, redirectUrl: redirect };
-    setPaymentData(data);
-
-    // Create payment intent
-    fetch('/api/create-payment-intent', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ amount: parseFloat(amount), walletAddress, invoice }),
-    })
-      .then((res) => res.json())
-      .then((data) => {
-        setClientSecret(data.clientSecret);
-        setLoading(false);
-      })
-      .catch((err) => {
-        console.error('Error:', err);
-        setError('Error al crear la intención de pago');
-        setLoading(false);
-      });
   }, []);
+
+  const createPaymentIntent = async (data: PaymentData) => {
+    try {
+      const res = await fetch('/api/create-payment-intent', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          amount: parseFloat(data.amount),
+          walletAddress: data.walletAddress,
+          invoice: data.invoice
+        }),
+      });
+
+      const responseData = await res.json();
+
+      if (responseData.error) {
+        throw new Error(responseData.error);
+      }
+
+      setClientSecret(responseData.clientSecret);
+    } catch (err: any) {
+      console.error('Error:', err);
+      setError('Error al crear la intención de pago: ' + err.message);
+    } finally {
+      setLoading(false);
+    }
+  };
 
   if (loading) {
     return (
-      <div className="bg-white p-8 rounded-xl shadow-md w-full max-w-md mx-auto text-center">
-        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-indigo-600 mx-auto"></div>
-        <p className="mt-4 text-gray-600">Preparando pago...</p>
+      <div className="bg-slate-900/70 backdrop-blur-xl border border-slate-700/50 shadow-2xl p-8 rounded-2xl w-full max-w-lg mx-auto text-center">
+        <div className="animate-spin rounded-full h-12 w-12 border-4 border-indigo-900 border-t-indigo-500 mx-auto"></div>
+        <p className="mt-4 text-slate-400 font-medium">Iniciando pasarela segura...</p>
       </div>
     );
   }
 
   if (error) {
     return (
-      <div className="bg-white p-8 rounded-xl shadow-md w-full max-w-md mx-auto">
-        <div className="p-4 bg-red-100 border border-red-200 text-red-700 rounded-md">
-          {error}
+      <div className="bg-slate-900/70 backdrop-blur-xl border border-slate-700/50 shadow-2xl p-8 rounded-2xl w-full max-w-lg mx-auto">
+        <div className="p-4 bg-red-900/20 border border-red-500/30 text-red-400 rounded-xl flex items-center gap-3">
+          <span className="text-2xl">❌</span>
+          <div>
+            <h3 className="font-bold">Error</h3>
+            <p className="text-sm opacity-80">{error}</p>
+          </div>
         </div>
       </div>
     );
   }
 
-  if (!clientSecret || !paymentData) return null;
-
-  const options = { clientSecret };
-
   return (
-    <div className="bg-white p-8 rounded-xl shadow-md w-full max-w-md mx-auto">
-      <h2 className="text-2xl font-bold text-gray-800 mb-6">Completar Pago</h2>
-      <Elements stripe={stripePromise} options={options}>
-        <CheckoutForm paymentData={paymentData} />
-      </Elements>
+    <div className="bg-slate-900/70 backdrop-blur-xl border border-slate-700/50 shadow-2xl rounded-2xl w-full max-w-lg mx-auto overflow-hidden transition-all duration-300 min-h-[500px]">
+      <div className="bg-slate-900/50 p-6 border-b border-slate-700/50 flex justify-between items-center">
+        <h2 className="text-xl font-bold text-white">Confirmar Pago</h2>
+        <div className="flex items-center gap-2">
+          <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse"></span>
+          <span className="text-xs text-emerald-400 font-mono">SECURE</span>
+        </div>
+      </div>
+
+      <div className="p-6 md:p-8">
+        <div className="animate-fade-in">
+          {!clientSecret ? (
+            <div className="flex flex-col items-center justify-center py-12">
+              <div className="animate-spin rounded-full h-12 w-12 border-4 border-indigo-900 border-t-indigo-500"></div>
+              <p className="mt-4 text-slate-500 text-sm animate-pulse">Conectando con Stripe...</p>
+            </div>
+          ) : (
+            <Elements
+              stripe={stripePromise}
+              options={{
+                clientSecret: clientSecret!,
+                appearance: {
+                  theme: 'night',
+                  variables: {
+                    colorPrimary: '#6366f1',
+                    colorBackground: '#1e293b',
+                    colorText: '#f8fafc',
+                    colorDanger: '#ef4444',
+                    fontFamily: 'system-ui, sans-serif',
+                    borderRadius: '0.5rem',
+                  }
+                }
+              }}
+            >
+              <CheckoutForm paymentData={paymentData as PaymentData} />
+            </Elements>
+          )}
+        </div>
+      </div>
     </div>
   );
 };

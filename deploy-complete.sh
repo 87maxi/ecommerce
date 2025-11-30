@@ -55,7 +55,7 @@ ECOMMERCE_ADDRESS=$(jq -r '.transactions[] | select(.contractName == "Ecommerce"
 ECOMMERCE_ABI_JSON=$(forge inspect "Ecommerce" abi --json)
 
 # Extract EuroToken address from the Ecommerce deployment (ERC20Mock)
-EUROTOKEN_ADDRESS=$(jq -r '.transactions[] | select(.contractName == "ERC20Mock") | .contractAddress' ./broadcast/DeployEcommerce.s.sol/31337/run-latest.json | tail -n 1)
+EUROTOKEN_ADDRESS=$(jq -r '.transactions[] | select(.contractName == "Ecommerce") | .contractAddress' ./broadcast/DeployEcommerce.s.sol/31337/run-latest.json | tail -n 1)
 echo "📍 Ecommerce Address: $ECOMMERCE_ADDRESS"
 echo "📍 EuroToken Address: $EUROTOKEN_ADDRESS"
 
@@ -100,13 +100,15 @@ echo $ECOMMERCE_ABI_JSON | jq '.' > src/contracts/abis/StableCoinABI.json
 cat > .env << EOF
 NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY=$STRIPE_PK
 STRIPE_SECRET_KEY=$STRIPE_SK
-STRIPE_WEBHOOK_SECRET=whsec_test_secret
+STRIPE_WEBHOOK_SECRET=whsec_your_webhook_secret_here
 NEXT_PUBLIC_EUROTOKEN_CONTRACT_ADDRESS=$EUROTOKEN_ADDRESS
 OWNER_PRIVATE_KEY=$OWNER_PRIVATE_KEY
+RPC_URL=http://127.0.0.1:8545
+NEXT_PUBLIC_NETWORK_NAME=localhost
 NEXT_PUBLIC_SITE_URL=http://localhost:3033
 NEXT_PUBLIC_PASARELA_PAGO_URL=http://localhost:3034
-NEXT_PUBLIC_NETWORK_NAME=anvil
-NODE_ENV=development
+NEXT_PUBLIC_WEB_CUSTOMER_URL=http://localhost:3031
+
 EOF
 echo "✅ Compra-Stablecoin configured"
 

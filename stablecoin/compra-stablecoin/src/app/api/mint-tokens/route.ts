@@ -1,76 +1,81 @@
 import { NextRequest, NextResponse } from 'next/server';
+import { mintTokens } from '@/lib/minting';
 import { ethers } from 'ethers';
 
-// Este endpoint será llamado por el webhook, no directamente por el frontend
-// Por seguridad, no debe exponerse como GET ni permitirse CORS
-import EuroTokenABI from '@/lib/EuroTokenABI';
-
+/**
+ * API Endpoint para mintear EuroTokens
+ * Este endpoint es llamado por pasarela-de-pago después de un pago exitoso
+ * 
+ * Request Body:
+ * {
+ *   walletAddress: string,
+ *   amount: number,
+ *   invoice: string,
+ *   paymentIntentId: string
+ * }
+ */
 export async function POST(request: NextRequest) {
   try {
-    // Extraer los datos del webhook de Stripe
-    const stripeSignature = request.headers.get('stripe-signature');
-    const payload = await request.text();
-    
-    if (!stripeSignature) {
-      console.error('Falta la firma de Stripe');
-      return NextResponse.json({ error: 'Missing Stripe signature' }, { status: 400 });
-    }
-    
-    // Process the Stripe event
-    let event;
-    try {
-      const stripe = require('stripe')(process.env.STRIPE_SECRET_KEY!);
-      event = stripe.webhooks.constructEvent(
-        payload,
-        stripeSignature,
-        process.env.STRIPE_WEBHOOK_SECRET!
+    const body = await request.json();
+    const { walletAddress, amount, invoice, paymentIntentId } = body;
+
+    // Validar campos requeridos
+    if (!walletAddress || !amount || !invoice) {
+      console.error('Missing required fields:', { walletAddress, amount, invoice });
+      return NextResponse.json(
+        {
+          success: false,
+          error: 'Missing required fields: walletAddress, amount, invoice'
+        },
+        { status: 400 }
       );
-    } catch (err: any) {
-      console.error(`Error verifying webhook signature: ${err.message}`);
-      return NextResponse.json({ error: `Webhook Error: ${err.message}` }, { status: 400 });
     }
 
-    // Extraer los datos del evento
-    if (event.type === 'payment_intent.succeeded') {
-      const paymentIntent = event.data.object;
-      const walletAddress = paymentIntent.metadata.walletAddress;
-      const amount = paymentIntent.amount / 100; // Convertir de céntimos a euros
+    // Validar que walletAddress sea una dirección válida de Ethereum
+    if (!ethers.isAddress(walletAddress)) {
+      console.error('Invalid wallet address:', walletAddress);
+      return NextResponse.json(
+        {
+          success: false,
+          error: 'Invalid Ethereum wallet address'
+        },
+        { status: 400 }
+      );
+    }
 
-      console.log(`Minting tokens for ${walletAddress}: ${amount} EUR`);
+    // Validar que amount sea un número positivo
+    const amountNum = parseFloat(amount);
+    if (isNaN(amountNum) || amountNum <= 0) {
+      console.error('Invalid amount:', amount);
+      return NextResponse.json(
+        {
+          success: false,
+          error: 'Amount must be a positive number'
+        },
+        { status: 400 }
+      );
+    }
 
-    // Conexión a la red local (anvil)
-      // Conexión a la red local (anvil)
-      const provider = new ethers.JsonRpcProvider('http://127.0.0.1:8545');
-      const wallet = new ethers.Wallet(process.env.OWNER_PRIVATE_KEY!, provider);
+    const result = await mintTokens(walletAddress, amountNum, invoice);
 
-      if (!process.env.NEXT_PUBLIC_EUROTOKEN_CONTRACT_ADDRESS) {
-        return NextResponse.json({ error: 'Contract address not configured' }, { status: 500 });
+    return NextResponse.json({
+      success: true,
+      message: `Successfully minted ${amountNum} EURT to ${walletAddress}`,
+      data: {
+        ...result,
+        paymentIntentId
       }
+    });
 
-      const contract = new ethers.Contract(
-        process.env.NEXT_PUBLIC_EUROTOKEN_CONTRACT_ADDRESS!,
-        EuroTokenABI,
-        wallet
-      );
+  } catch (error: any) {
+    console.error('[MINT-TOKENS] Error minting tokens:', error);
 
-      const tx = await contract.mint(walletAddress, ethers.parseUnits(amount.toString(), 18));
-      const receipt = await tx.wait();
-
-      console.log(`Tokens minted successfully. Hash: ${receipt?.hash}`);
-
-      return NextResponse.json({
-        success: true,
-        message: `Tokens minteados exitosamente para ${walletAddress}`,
-        transactionHash: receipt?.hash
-      });
-    }
-
-    // Return a response for other event types
-    return NextResponse.json({ received: true });
-  } catch (error) {
-    console.error('Error minteando tokens:', error);
     return NextResponse.json(
-      { error: 'Failed to mint tokens' }, 
+      {
+        success: false,
+        error: 'Failed to mint tokens',
+        details: error.message || 'Unknown error'
+      },
       { status: 500 }
     );
   }
