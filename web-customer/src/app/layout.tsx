@@ -11,20 +11,27 @@ export default function RootLayout({
   children: React.ReactNode;
 }) {
   const [cartItemCount, setCartItemCount] = useState(0);
-  const { getCartItemCount } = useContract();
+  const { getCartItemCount, contract } = useContract();
 
   useEffect(() => {
     const fetchCartCount = async () => {
+      // Only fetch cart count if contract is initialized (wallet connected)
+      if (!contract) {
+        setCartItemCount(0);
+        return;
+      }
+
       try {
         const count = await getCartItemCount();
         setCartItemCount(count);
       } catch (error) {
         console.error('Error fetching cart count:', error);
+        setCartItemCount(0);
       }
     };
 
     fetchCartCount();
-  }, [getCartItemCount]);
+  }, [getCartItemCount, contract]);
 
   return (
     <>

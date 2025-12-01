@@ -5,7 +5,9 @@ import { loadStripe } from '@stripe/stripe-js';
 import { Elements, PaymentElement, useStripe, useElements } from '@stripe/react-stripe-js';
 import MetaMaskConnect from './MetaMaskConnect';
 
-const stripePromise = loadStripe(process.env.NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY || '');
+const publishableKey = process.env.NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY || '';
+console.log('[PaymentForm] Stripe publishable key loaded:', publishableKey ? 'YES' : 'NO');
+const stripePromise = loadStripe(publishableKey);
 
 interface PaymentData {
   amount: string;
@@ -114,11 +116,14 @@ const PaymentForm = () => {
 
   // Inicializar directamente con los datos de la URL
   useEffect(() => {
+    console.log('[PaymentForm] Initializing...');
     const params = new URLSearchParams(window.location.search);
     const amountParam = params.get('amount');
     const walletParam = params.get('walletAddress');
     const invoiceParam = params.get('invoice');
     const redirect = params.get('redirect');
+
+    console.log('[PaymentForm] URL params:', { amountParam, walletParam, invoiceParam, redirect });
 
     if (amountParam && walletParam) {
       const data: PaymentData = {
@@ -127,14 +132,17 @@ const PaymentForm = () => {
         invoice: invoiceParam || `EURT_${Date.now()}`,
         redirectUrl: redirect || (process.env.NEXT_PUBLIC_WEB_CUSTOMER_URL || 'http://localhost:3030') + '/payment-success'
       };
+      console.log('[PaymentForm] Payment data:', data);
       setPaymentData(data);
       setAmount(parseFloat(amountParam));
       setWalletAddress(walletParam);
       setInvoice(data.invoice);
 
       // Iniciar creación del PaymentIntent inmediatamente
+      console.log('[PaymentForm] Creating payment intent...');
       createPaymentIntent(data);
     } else {
+      console.error('[PaymentForm] Missing required params:', { amountParam, walletParam });
       setError('Faltan datos de pago. Por favor inicia el proceso desde la tienda.');
       setLoading(false);
     }
@@ -142,6 +150,7 @@ const PaymentForm = () => {
 
   const createPaymentIntent = async (data: PaymentData) => {
     try {
+      console.log('[PaymentForm] Fetching payment intent from API...');
       const res = await fetch('/api/create-payment-intent', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
@@ -152,15 +161,18 @@ const PaymentForm = () => {
         }),
       });
 
+      console.log('[PaymentForm] API response status:', res.status);
       const responseData = await res.json();
+      console.log('[PaymentForm] API response data:', responseData);
 
       if (responseData.error) {
         throw new Error(responseData.error);
       }
 
+      console.log('[PaymentForm] Client secret received:', responseData.clientSecret ? 'YES' : 'NO');
       setClientSecret(responseData.clientSecret);
     } catch (err: any) {
-      console.error('Error:', err);
+      console.error('[PaymentForm] Error creating payment intent:', err);
       setError('Error al crear la intención de pago: ' + err.message);
     } finally {
       setLoading(false);
@@ -211,18 +223,8 @@ const PaymentForm = () => {
             <Elements
               stripe={stripePromise}
               options={{
-                clientSecret: clientSecret!,
-                appearance: {
-                  theme: 'night',
-                  variables: {
-                    colorPrimary: '#6366f1',
-                    colorBackground: '#1e293b',
-                    colorText: '#f8fafc',
-                    colorDanger: '#ef4444',
-                    fontFamily: 'system-ui, sans-serif',
-                    borderRadius: '0.5rem',
-                  }
-                }
+                clientSecret: clientSecret,
+                locale: 'es'
               }}
             >
               <CheckoutForm paymentData={paymentData as PaymentData} />
