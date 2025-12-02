@@ -1,9 +1,12 @@
 "use client";
 
-import { useEffect, useState } from 'react';
+import { useEffect, useState, Suspense } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
 
-export default function SuccessPage() {
+// Force dynamic rendering to avoid SSR issues with window/sessionStorage
+export const dynamic = 'force-dynamic';
+
+function SuccessPageContent() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const [payment, setPayment] = useState<any>(null);
@@ -20,6 +23,7 @@ export default function SuccessPage() {
     const storedRedirect = sessionStorage.getItem('redirect_url');
     const storedInvoice = sessionStorage.getItem('invoice');
     const storedAmount = sessionStorage.getItem('amount');
+    const storedWallet = sessionStorage.getItem('wallet_address');
 
     // Get params from URL (Stripe return)
     const urlWallet = params.get('wallet');
@@ -27,24 +31,51 @@ export default function SuccessPage() {
     const urlInvoice = params.get('invoice');
 
     if (storedRedirect) {
-      // Payment was successful, redirect back to web-customer
+      // Payment was successful, verify minting before redirecting
       setRedirecting(true);
 
       const finalAmount = storedAmount || urlTokens || '0';
       const finalInvoice = storedInvoice || urlInvoice || '';
+      const finalWallet = storedWallet || urlWallet || '';
 
-      const redirectUrl = `${storedRedirect}?success=true&tokens=${finalAmount}&invoice=${finalInvoice}`;
+      // Verificar si los tokens fueron minteados exitosamente
+      const verifyMinting = async () => {
+        try {
+          const pasarelaUrl = process.env.NEXT_PUBLIC_PASARELA_PAGO_URL || 'http://localhost:3034';
+          const response = await fetch(
+            `${pasarelaUrl}/api/verify-minting?invoice=${finalInvoice}&wallet=${finalWallet}`
+          );
+          
+          if (response.ok) {
+            const data = await response.json();
+            
+            if (data.minted) {
+              console.log('✅ Tokens minteados exitosamente:', data);
+            } else {
+              console.warn('⚠️ Tokens no minteados aún:', data);
+              // Podrías mostrar una advertencia al usuario aquí
+            }
+          }
+        } catch (error) {
+          console.error('Error verificando minting:', error);
+        }
 
-      // Clean up session storage
-      sessionStorage.removeItem('redirect_url');
-      sessionStorage.removeItem('invoice');
-      sessionStorage.removeItem('amount');
+        // Redirigir de todos modos después de la verificación
+        const redirectUrl = `${storedRedirect}?success=true&tokens=${finalAmount}&invoice=${finalInvoice}`;
 
-      // Redirect after short delay
-      setTimeout(() => {
-        window.location.href = redirectUrl;
-      }, 2000);
+        // Clean up session storage
+        sessionStorage.removeItem('redirect_url');
+        sessionStorage.removeItem('invoice');
+        sessionStorage.removeItem('amount');
+        sessionStorage.removeItem('wallet_address');
 
+        // Redirect after short delay
+        setTimeout(() => {
+          window.location.href = redirectUrl;
+        }, 2000);
+      };
+
+      verifyMinting();
       setPayment({ amount: finalAmount, invoice: finalInvoice });
       return;
     }
@@ -174,5 +205,17 @@ export default function SuccessPage() {
         </div>
       </div>
     </div>
+  );
+}
+
+export default function SuccessPage() {
+  return (
+    <Suspense fallback={
+      <div className="min-h-screen bg-slate-900 flex items-center justify-center">
+        <div className="text-white">Cargando...</div>
+      </div>
+    }>
+      <SuccessPageContent />
+    </Suspense>
   );
 }

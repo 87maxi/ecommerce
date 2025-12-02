@@ -39,10 +39,21 @@ export async function mintTokens(walletAddress: string, amount: number, invoice:
     // Crear instancia del contrato
     const contract = new ethers.Contract(contractAddress, EuroTokenABI, wallet);
 
-    // Mintear tokens (convertir a wei - 18 decimales)
-    const amountInWei = ethers.parseUnits(amount.toString(), 18);
+    // Mintear tokens (convertir a wei - 6 decimales como el contrato EuroToken)
+    const amountInWei = ethers.parseUnits(amount.toString(), 6);
+
+    // Verificar que la wallet que mintea sea el owner del contrato
+    const contractOwner = await contract.owner();
+    console.log(`[MINT-TOKENS] Contract Owner: ${contractOwner}`);
+    console.log(`[MINT-TOKENS] Minting Wallet: ${wallet.address}`);
+    
+    if (wallet.address.toLowerCase() !== contractOwner.toLowerCase()) {
+        throw new Error(`Wallet ${wallet.address} is not contract owner ${contractOwner}`);
+    }
 
     console.log(`[MINT-TOKENS] Sending transaction to blockchain...`);
+    console.log(`[MINT-TOKENS] Amount in Wei: ${amountInWei} (${amount} EURT with 6 decimals)`);
+    
     const tx = await (contract.mint as any)(walletAddress, amountInWei);
 
     console.log(`[MINT-TOKENS] Transaction sent, waiting for confirmation...`, {
@@ -83,7 +94,7 @@ export async function getBalance(walletAddress: string) {
     const contract = new ethers.Contract(contractAddress, EuroTokenABI, provider);
 
     const balanceBN = await (contract.balanceOf as any)(walletAddress);
-    const formatted = ethers.formatUnits(balanceBN, 18);
+    const formatted = ethers.formatUnits(balanceBN, 6); // 6 decimales como el contrato
 
     return formatted;
 }

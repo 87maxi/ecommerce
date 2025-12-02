@@ -5,7 +5,7 @@ import { orders } from '@/lib/orderStorage';
 export async function POST(request: NextRequest) {
     try {
         const body = await request.json();
-        const { productId, quantity, buyerAddress, totalAmount } = body;
+        const { productId, quantity, buyerAddress, totalAmount, invoice } = body;
 
         if (!productId || !quantity || !buyerAddress || !totalAmount) {
             return NextResponse.json(
@@ -25,6 +25,7 @@ export async function POST(request: NextRequest) {
             buyerAddress,
             totalAmount,
             tokenAmount,
+            invoice: invoice || `INV_${Date.now()}`,
             status: 'pending',
             createdAt: new Date(),
             expiresAt

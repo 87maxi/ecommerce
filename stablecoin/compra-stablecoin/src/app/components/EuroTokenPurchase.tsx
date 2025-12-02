@@ -43,6 +43,9 @@ export default function EuroTokenPurchase() {
     console.log('Wallet connected:', address);
     setWalletAddress(address);
 
+    // Store wallet address for verification
+    sessionStorage.setItem('wallet_address', address);
+
     // Redirect to pasarela-de-pago for payment processing
     const pasarelaUrl = process.env.NEXT_PUBLIC_PASARELA_PAGO_URL || 'http://localhost:3034';
     const redirectUrl = sessionStorage.getItem('redirect_url') || '';

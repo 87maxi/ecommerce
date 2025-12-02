@@ -139,7 +139,7 @@ const PurchaseSteps: FC<PurchaseStepsProps> = ({ currentStep }) => {
                                         <div
                                             className={`
                         h-full rounded-full transition-all duration-700 ease-out
-                        ${getConnectorStyles(step.status, steps[index + 1].status)}
+                        ${getConnectorStyles(step.status, steps[index + 1]?.status || 'pending')}
                       `}
                                         />
                                     </div>
@@ -179,7 +179,7 @@ const PurchaseSteps: FC<PurchaseStepsProps> = ({ currentStep }) => {
                                         <div
                                             className={`
                         h-full rounded-full transition-all duration-700 ease-out
-                        ${getConnectorStyles(step.status, steps[index + 1].status)}
+                        ${getConnectorStyles(step.status, steps[index + 1]?.status || 'pending')}
                       `}
                                         />
                                     </div>

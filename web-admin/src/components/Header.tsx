@@ -1,11 +1,13 @@
 'use client';
 
 import { useWallet } from '../hooks/useWallet';
+import { useBalance } from '../hooks/useBalance';
 import { useState } from 'react';
 import Link from 'next/link';
 
 export function Header() {
   const { isConnected, address, chainId, disconnect } = useWallet();
+  const { balance, loading, error } = useBalance(address);
   const [showDropdown, setShowDropdown] = useState(false);
 
   const formatAddress = (addr: string) => {
@@ -73,6 +75,17 @@ export function Header() {
                       <p className="text-sm font-medium text-gray-900">Conectado</p>
                       <p className="text-xs text-gray-500">{formatAddress(address!)}</p>
                       <p className="text-xs text-gray-500 mt-1">Red: {chainId}</p>
+                      
+                      {/* EURT Balance Display */}
+                      <div className="mt-2 pt-2 border-t border-gray-100">
+                        <p className="text-xs font-medium text-gray-700 uppercase tracking-wider">Saldo EURT</p>
+                        <p className="text-sm font-bold text-emerald-600 font-mono">
+                          {loading ? 'Cargando...' : balance !== null ? `€${balance}` : 'N/A'}
+                        </p>
+                        {error && (
+                          <p className="text-xs text-red-500 mt-1">{error}</p>
+                        )}
+                      </div>
                     </div>
                     <button
                       onClick={() => {

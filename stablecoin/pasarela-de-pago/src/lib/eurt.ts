@@ -48,7 +48,7 @@ export async function verifyTransfer(
         const to = transferEvent?.args?.to || '';
         const value = transferEvent?.args?.value || ethers.toBigInt(0);
 
-        const amount = ethers.formatUnits(value, 18);
+        const amount = ethers.formatUnits(value, 6); // 6 decimales como el contrato
         const valid =
             to.toLowerCase() === expectedRecipient.toLowerCase() &&
             parseFloat(amount) >= parseFloat(expectedAmount);
@@ -104,7 +104,7 @@ export async function burnTokens(amount: string): Promise<{ success: boolean; tx
         const wallet = new ethers.Wallet(privateKey, provider);
         const contract = new ethers.Contract(contractAddress, EuroTokenABI, wallet);
 
-        const amountInWei = ethers.parseUnits(amount, 18);
+        const amountInWei = ethers.parseUnits(amount, 6); // 6 decimales como el contrato
         const tx = await (contract.burn as any)(amountInWei);
         await tx.wait();
 

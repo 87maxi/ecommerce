@@ -57,6 +57,34 @@ ECOMMERCE_ABI_JSON=$(forge inspect "Ecommerce" abi --json)
 ECOMMERCE_ADDRESS=$(jq -r '.transactions[] | select(.contractName == "Ecommerce") | .contractAddress' ./broadcast/DeployEcommerce.s.sol/31337/run-latest.json | tail -n 1)
 echo "📍 Ecommerce Address: $ECOMMERCE_ADDRESS"
 
+# Deploy EuroToken separately to get its ABI and address
+
+cd $ROOT/stablecoin/sc
+
+
+
+DEPLOY_OUTPUT=$(forge script script/DeployEuroToken.s.sol --rpc-url $RPC_URL --private-key $DEPLOYER_PRIVATE_KEY --broadcast --silent)
+
+
+if [ $? -eq 0 ]; then
+    echo "✅ EuroToken contracts deployed successfully."
+else
+    echo "❌ EuroToken deployment failed."
+    exit 1;
+fi
+
+
+EUROTOKEN_ABI_JSON=$(forge inspect "EuroToken" abi --json)
+
+
+EUROTOKEN_ADDRESS=$(jq -r '.transactions[] | select(.contractName == "EuroToken") | .contractAddress' ./broadcast/DeployEuroToken.s.sol/31337/run-latest.json | tail -n 1)
+
+echo "📍 EuroToken Address: $EUROTOKEN_ADDRESS"
+
+cd $ROOT
+# Configure Applications with deployed contract addresses
+
+
 
 # 2. Configure Web-Customer (Port 3030)
 echo ""
@@ -82,6 +110,7 @@ echo $ECOMMERCE_ABI_JSON | jq '.' > src/contracts/abis/EcommerceABI.json
 cat > .env.local << EOF
 NEXT_PUBLIC_ECOMMERCE_CONTRACT_ADDRESS=$ECOMMERCE_ADDRESS
 NEXT_PUBLIC_CHAIN_ID=31337
+NEXT_PUBLIC_EUROTOKEN_CONTRACT_ADDRESS=$EUROTOKEN_ADDRESS
 EOF
 
 echo "✅ Web-Admin configured with addresses:"
@@ -95,18 +124,6 @@ echo ""
 echo "⚙️  Configuring Compra-Stablecoin..."
 ROOT_STABLECOIN=$ROOT/stablecoin
 
-cd $ROOT_STABLECOIN/sc
-
-
-
-DEPLOY_OUTPUT=$(forge script script/DeployEuroToken.s.sol --rpc-url $RPC_URL --private-key $DEPLOYER_PRIVATE_KEY --broadcast --silent)
-
-EUROTOKEN_ABI_JSON=$(forge inspect "EuroToken" abi --json)
-
-
-EUROTOKEN_ADDRESS=$(jq -r '.transactions[] | select(.contractName == "EuroToken") | .contractAddress' ./broadcast/DeployEuroToken.s.sol/31337/run-latest.json | tail -n 1)
-
-echo "📍 EuroToken Address: $EUROTOKEN_ADDRESS"
 
 
 # 5. Configure compra-stablecoin (Port 3033)
@@ -120,7 +137,7 @@ echo $EUROTOKEN_ABI_JSON | jq '.' > src/contracts/abis/EuroTokenABI.json
 
 echo $EUROTOKEN_ABI_JSON
 
-cat > .env << EOF
+cat > .env.local << EOF
 $STRIPE_PK
 $STRIPE_SK
 NEXT_PUBLIC_EUROTOKEN_CONTRACT_ADDRESS=$EUROTOKEN_ADDRESS
@@ -142,7 +159,7 @@ cd $ROOT_STABLECOIN/pasarela-de-pago
 mkdir -p src/contracts/abis 2>/dev/null || true
 echo $EUROTOKEN_ABI_JSON | jq '.' > src/contracts/abis/EuroTokenABI.json
 
-cat > .env << EOF
+cat > .env.local << EOF
 $STRIPE_PK
 $STRIPE_SK
 TURSO_DATABASE_URL=http://localhost:3032
@@ -165,6 +182,7 @@ echo "============================================"
 echo "Contracts:"
 echo " - Ecommerce: $ECOMMERCE_ADDRESS"
 echo " - EuroToken: $EUROTOKEN_ADDRESS"
+echo "OWNER_ADDRESS_KEY = $OWNER_ADDRESS_KEY"
 echo ""
 echo "Applications Configured:"
 echo " - Web Customer: http://localhost:3030"
@@ -174,9 +192,4 @@ echo " - Pasarela:     http://localhost:3034"
 echo ""
 echo "⚠️  Make sure to restart your Next.js servers to pick up the new .env changes!"
 echo "💡 To run the applications, execute:"
-echo "   cd web-customer && npm run dev"
-echo "   cd web-admin && npm run dev"
-echo "   cd stablecoin/compra-stablecoin && npm run dev"
-echo "   cd stablecoin/pasarela-de-pago && npm run dev"
 cd $ROOT;
-tail anvil.log;

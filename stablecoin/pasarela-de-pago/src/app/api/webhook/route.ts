@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { mintTokens } from '@/lib/contracts';
+import { orders } from '@/lib/orderStorage';
 
 const stripe = require('stripe')(process.env.STRIPE_SECRET_KEY!);
 
@@ -52,6 +53,20 @@ export async function POST(request: NextRequest) {
                 invoice
             });
 
+            // Buscar la orden correspondiente
+            let orderToUpdate = null;
+            for (const [orderId, order] of orders.entries()) {
+                if (order.buyerAddress.toLowerCase() === walletAddress.toLowerCase() && 
+                    order.invoice === invoice) {
+                    orderToUpdate = order;
+                    break;
+                }
+            }
+
+            if (!orderToUpdate) {
+                console.log('[WEBHOOK] No order found for:', { walletAddress, invoice });
+            }
+
             // Llamar a la función local para mintear tokens
             console.log('[WEBHOOK] Calling local mintTokens function');
 
@@ -62,6 +77,15 @@ export async function POST(request: NextRequest) {
 
                 // Guardar transaction hash en metadata (opcional, para futuras referencias)
                 const transactionHash = mintResult.transactionHash;
+
+                // Actualizar la orden con el hash de transacción y estado
+                if (orderToUpdate) {
+                    orderToUpdate.status = 'completed';
+                    orderToUpdate.txHash = transactionHash;
+                    orderToUpdate.completedAt = new Date();
+                    orders.set(orderToUpdate.orderId, orderToUpdate);
+                    console.log('[WEBHOOK] Order updated with transaction hash:', orderToUpdate.orderId);
+                }
 
                 return NextResponse.json({
                     received: true,

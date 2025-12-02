@@ -48,28 +48,57 @@ npm run dev
 ## Flujo de Pago
 
 1. Usuario selecciona monto y conecta MetaMask
-2. Frontend crea `PaymentIntent` en Stripe
-3. Usuario completa pago en formulario seguro
-4. Webhook recibe `payment_intent.succeeded`
-5. Servidor llama a `mint-tokens` para enviar EURT al usuario
+2. Frontend redirige a `pasarela-de-pago` con parámetros (amount, walletAddress, invoice, redirect)
+3. `pasarela-de-pago` crea `PaymentIntent` en Stripe y procesa el pago
+4. Webhook recibe `payment_intent.succeeded` en pasarela-de-pago
+5. Servidor de pasarela-de-pago llama a API para mintear EURT al usuario
+6. Redirección automática a URL de éxito
+
+> **Nota Importante**: Esta aplicación es un **frontend** que recolecta información del usuario y redirige a `pasarela-de-pago` para el procesamiento real del pago. No contiene rutas API propias.
 
 ## Estructura del Proyecto
 
 ```
 src/
 ├── app/
-│   ├── api/
-│   │   ├── create-payment-intent/
-│   │   ├── mint-tokens/
-│   │   ├── verify-payment/
-│   │   └── webhook/
 │   ├── components/
-│   │   ├── EuroTokenPurchase.tsx
-│   │   ├── MetaMaskConnect.tsx
-│   │   └── CheckoutForm.tsx
+│   │   ├── AmountSelector.tsx      # Selector de cantidad de EURT
+│   │   ├── EuroTokenPurchase.tsx   # Componente principal de compra
+│   │   ├── MetaMaskConnect.tsx     # Conexión con MetaMask
+│   │   ├── PaymentSummary.tsx      # Resumen de pago
+│   │   └── PurchaseSteps.tsx       # Indicador de pasos
+│   ├── success/
+│   │   └── page.tsx                # Página de éxito (con redirección)
 │   ├── layout.tsx
-│   └── page.tsx
+│   ├── page.tsx
+│   └── globals.css
+├── contracts/
+│   └── abis/
+│       └── EuroTokenABI.json       # ABI del contrato EuroToken
+└── lib/
+    └── EuroTokenABI.ts             # TypeScript types para el ABI
 ```
+
+## Configuración Automatizada
+
+Este proyecto forma parte de un sistema multi-aplicación. Para configurarlo correctamente:
+
+1. **Desde la raíz del proyecto ecommerce**, ejecuta el script de deployment:
+   ```bash
+   cd /ruta/a/ecommerce
+   ./deploy.sh
+   ```
+
+2. El script automáticamente:
+   - Despliega los contratos inteligentes (Ecommerce y EuroToken)
+   - Genera el archivo `.env` con todas las variables necesarias
+   - Copia los ABIs de los contratos a las ubicaciones correctas
+   - Configura todas las aplicaciones del ecosistema
+
+3. Una vez completado, inicia el servidor de desarrollo:
+   ```bash
+   npm run dev
+   ```
 
 ## Integración con Pasarela de Pago
 

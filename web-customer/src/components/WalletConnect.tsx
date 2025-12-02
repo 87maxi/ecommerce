@@ -18,7 +18,7 @@ export default function WalletConnect() {
       console.log('Fetching balance...', { isConnected, account, hasEthereum: !!window.ethereum });
       if (isConnected && account && window.ethereum) {
         try {
-          const provider = new ethers.BrowserProvider(window.ethereum);
+          const provider = new ethers.providers.Web3Provider(window.ethereum);
           const contractAddress = process.env.NEXT_PUBLIC_EUROTOKEN_CONTRACT_ADDRESS;
           console.log('Contract Address:', contractAddress);
 
@@ -30,7 +30,8 @@ export default function WalletConnect() {
           const contract = new ethers.Contract(contractAddress, EURO_TOKEN_ABI, provider);
           const balanceBN = await contract.balanceOf(account);
           console.log('Balance BN:', balanceBN.toString());
-          const formatted = ethers.formatUnits(balanceBN, 18);
+          const decimals = await contract.decimals();
+          const formatted = ethers.utils.formatUnits(balanceBN, decimals);
           console.log('Formatted Balance:', formatted);
           setBalance(parseFloat(formatted).toFixed(2));
         } catch (err) {

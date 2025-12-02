@@ -5,7 +5,7 @@ export async function GET() {
         // For a stablecoin, the rate is 1:1 with EUR
         return NextResponse.json({
             rate: 1,
-            decimals: 18,
+            decimals: 6, // 6 decimales como el contrato EuroToken
             symbol: 'EURT'
         });
     } catch (error) {
