@@ -1,4 +1,5 @@
 import { render, screen, fireEvent } from '@testing-library/react';
+
 import WalletConnect from '../components/WalletConnect';
 
 // Mock the useWallet hook
@@ -21,7 +22,9 @@ describe('WalletConnect', () => {
   });
   it('renders connect button when not connected', () => {
     render(<WalletConnect />);
-    expect(screen.getByRole('button', { name: /connect wallet/i })).toBeInTheDocument();
+    expect(
+      screen.getByRole('button', { name: /connect wallet/i })
+    ).toBeInTheDocument();
   });
 
   it('calls connect function when button is clicked', () => {
@@ -44,7 +47,7 @@ describe('WalletConnect', () => {
   });
   it('renders wallet info when connected', () => {
     const mockAddress = '0x1234567890123456789012345678901234567890';
-    
+
     jest.spyOn(require('../hooks/useWallet'), 'useWallet').mockReturnValue({
       connect: jest.fn(),
       disconnect: jest.fn(),
@@ -54,17 +57,19 @@ describe('WalletConnect', () => {
       connecting: false,
       error: null,
     });
-    
+
     render(<WalletConnect />);
     expect(screen.getByText(/0x1234/i)).toBeInTheDocument();
     expect(screen.getByText(/chain: 31337/i)).toBeInTheDocument();
-    expect(screen.getByRole('button', { name: /disconnect/i })).toBeInTheDocument();
+    expect(
+      screen.getByRole('button', { name: /disconnect/i })
+    ).toBeInTheDocument();
   });
 
   it('calls disconnect when disconnect button is clicked', () => {
     const mockDisconnect = jest.fn();
     const mockAddress = '0x1234567890123456789012345678901234567890';
-    
+
     jest.spyOn(require('../hooks/useWallet'), 'useWallet').mockReturnValue({
       connect: jest.fn(),
       disconnect: mockDisconnect,

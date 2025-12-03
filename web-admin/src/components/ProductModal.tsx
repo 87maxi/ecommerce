@@ -2,22 +2,22 @@
 
 import { useState } from 'react';
 
-interface ProductFormData {
+type ProductFormData = {
   name: string;
   description: string;
   price: string;
   imageHash: string;
   stock: string;
   isActive: boolean;
-}
+};
 
-interface ProductModalProps {
+type ProductModalProps = {
   isOpen: boolean;
   onClose: () => void;
   onSubmit: (data: ProductFormData) => void;
   initialData?: Partial<ProductFormData>;
   isSubmitting: boolean;
-}
+};
 
 export default function ProductModal({
   isOpen,
@@ -35,11 +35,15 @@ export default function ProductModal({
     isActive: initialData?.isActive !== undefined ? initialData.isActive : true,
   });
 
-  const [errors, setErrors] = useState<Partial<Record<keyof ProductFormData, string>>>({});
+  const [errors, setErrors] = useState<
+    Partial<Record<keyof ProductFormData, string>>
+  >({});
 
   if (!isOpen) return null;
 
-  const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
+  const handleChange = (
+    e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>
+  ) => {
     const { name, value } = e.target;
     setFormData(prev => ({ ...prev, [name]: value }));
   };
@@ -90,15 +94,28 @@ export default function ProductModal({
             onClick={onClose}
             className="text-gray-400 hover:text-gray-600 focus:outline-none"
           >
-            <svg className="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+            <svg
+              className="h-6 w-6"
+              fill="none"
+              viewBox="0 0 24 24"
+              stroke="currentColor"
+            >
+              <path
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                strokeWidth={2}
+                d="M6 18L18 6M6 6l12 12"
+              />
             </svg>
           </button>
         </div>
 
         <form onSubmit={handleSubmit} className="space-y-6">
           <div>
-            <label htmlFor="name" className="block text-sm font-medium text-gray-700">
+            <label
+              htmlFor="name"
+              className="block text-sm font-medium text-gray-700"
+            >
               Nombre del Producto
             </label>
             <input
@@ -107,15 +124,20 @@ export default function ProductModal({
               name="name"
               value={formData.name}
               onChange={handleChange}
-              className={`mt-1 block w-full border ${errors.name ? 'border-red-300' : 'border-gray-300'} rounded-md shadow-sm py-2 px-3 focus:outline-none focus:ring-indigo-500 focus:border-indigo-500`}
+              className={`mt-1 block w-full border ${errors.name ? 'border-red-300' : 'border-[var(--muted-light)]'} rounded-md shadow-sm py-2 px-3 focus:outline-none focus:ring-[var(--primary)] focus:border-[var(--primary)] bg-[var(--card)] text-[var(--foreground)]`}
               placeholder="Nombre del producto"
               required
             />
-            {errors.name && <p className="mt-1 text-sm text-red-600">{errors.name}</p>}
+            {errors.name && (
+              <p className="mt-1 text-sm text-red-600">{errors.name}</p>
+            )}
           </div>
 
           <div>
-            <label htmlFor="description" className="block text-sm font-medium text-gray-700">
+            <label
+              htmlFor="description"
+              className="block text-sm font-medium text-gray-700"
+            >
               Descripción
             </label>
             <textarea
@@ -124,13 +146,16 @@ export default function ProductModal({
               value={formData.description}
               onChange={handleChange}
               rows={3}
-              className="mt-1 block w-full border border-gray-300 rounded-md shadow-sm py-2 px-3 focus:outline-none focus:ring-indigo-500 focus:border-indigo-500"
+              className="mt-1 block w-full border border-[var(--muted-light)] rounded-md shadow-sm py-2 px-3 focus:outline-none focus:ring-[var(--primary)] focus:border-[var(--primary)] bg-[var(--card)] text-[var(--foreground)]"
               placeholder="Descripción del producto"
             />
           </div>
 
           <div>
-            <label htmlFor="price" className="block text-sm font-medium text-gray-700">
+            <label
+              htmlFor="price"
+              className="block text-sm font-medium text-gray-700"
+            >
               Precio (EURT)
             </label>
             <input
@@ -141,15 +166,20 @@ export default function ProductModal({
               min="0"
               value={formData.price}
               onChange={handleChange}
-              className={`mt-1 block w-full border ${errors.price ? 'border-red-300' : 'border-gray-300'} rounded-md shadow-sm py-2 px-3 focus:outline-none focus:ring-indigo-500 focus:border-indigo-500`}
+              className={`mt-1 block w-full border ${errors.price ? 'border-red-300' : 'border-[var(--muted-light)]'} rounded-md shadow-sm py-2 px-3 focus:outline-none focus:ring-[var(--primary)] focus:border-[var(--primary)] bg-[var(--card)] text-[var(--foreground)]`}
               placeholder="0.00"
               required
             />
-            {errors.price && <p className="mt-1 text-sm text-red-600">{errors.price}</p>}
+            {errors.price && (
+              <p className="mt-1 text-sm text-red-600">{errors.price}</p>
+            )}
           </div>
 
           <div>
-            <label htmlFor="stock" className="block text-sm font-medium text-gray-700">
+            <label
+              htmlFor="stock"
+              className="block text-sm font-medium text-gray-700"
+            >
               Stock
             </label>
             <input
@@ -159,15 +189,20 @@ export default function ProductModal({
               min="0"
               value={formData.stock}
               onChange={handleChange}
-              className={`mt-1 block w-full border ${errors.stock ? 'border-red-300' : 'border-gray-300'} rounded-md shadow-sm py-2 px-3 focus:outline-none focus:ring-indigo-500 focus:border-indigo-500`}
+              className={`mt-1 block w-full border ${errors.stock ? 'border-red-300' : 'border-[var(--muted-light)]'} rounded-md shadow-sm py-2 px-3 focus:outline-none focus:ring-[var(--primary)] focus:border-[var(--primary)] bg-[var(--card)] text-[var(--foreground)]`}
               placeholder="0"
               required
             />
-            {errors.stock && <p className="mt-1 text-sm text-red-600">{errors.stock}</p>}
+            {errors.stock && (
+              <p className="mt-1 text-sm text-red-600">{errors.stock}</p>
+            )}
           </div>
 
           <div>
-            <label htmlFor="imageHash" className="block text-sm font-medium text-gray-700">
+            <label
+              htmlFor="imageHash"
+              className="block text-sm font-medium text-gray-700"
+            >
               Hash de Imagen (IPFS)
             </label>
             <input
@@ -176,7 +211,7 @@ export default function ProductModal({
               name="imageHash"
               value={formData.imageHash}
               onChange={handleChange}
-              className="mt-1 block w-full border border-gray-300 rounded-md shadow-sm py-2 px-3 focus:outline-none focus:ring-indigo-500 focus:border-indigo-500"
+              className="mt-1 block w-full border border-[var(--muted-light)] rounded-md shadow-sm py-2 px-3 focus:outline-none focus:ring-[var(--primary)] focus:border-[var(--primary)] bg-[var(--card)] text-[var(--foreground)]"
               placeholder="Qm..."
             />
           </div>
@@ -190,7 +225,10 @@ export default function ProductModal({
               onChange={handleCheckboxChange}
               className="h-4 w-4 text-indigo-600 focus:ring-indigo-500 border-gray-300 rounded"
             />
-            <label htmlFor="isActive" className="ml-2 block text-sm text-gray-700">
+            <label
+              htmlFor="isActive"
+              className="ml-2 block text-sm text-gray-700"
+            >
               Producto Activo
             </label>
           </div>
@@ -200,14 +238,14 @@ export default function ProductModal({
               type="button"
               onClick={onClose}
               disabled={isSubmitting}
-              className="px-4 py-2 border border-gray-300 rounded-md shadow-sm text-sm font-medium text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 disabled:opacity-50"
+              className="px-4 py-2 border border-[var(--muted-light)] rounded-md shadow-sm text-sm font-medium text-[var(--foreground)] bg-[var(--card)] hover:bg-[var(--muted-light)] hover:bg-opacity-10 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-[var(--primary)] disabled:opacity-50"
             >
               Cancelar
             </button>
             <button
               type="submit"
               disabled={isSubmitting}
-              className="px-4 py-2 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 disabled:opacity-50"
+              className="px-4 py-2 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-[var(--primary)] hover:bg-[var(--primary-dark)] focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-[var(--primary)] disabled:opacity-50"
             >
               {initialData ? 'Actualizar' : 'Agregar'}
             </button>

@@ -1,9 +1,9 @@
 import { getContractAddress } from './src/lib/contracts/addresses.ts';
 
 try {
-    const address = getContractAddress(31337, 'Ecommerce');
-    console.log('Success! Address:', address);
+  const address = getContractAddress(31337, 'Ecommerce');
+  console.log('Success! Address:', address);
 } catch (error) {
-    console.error('Error:', error);
-    process.exit(1);
+  console.error('Error:', error);
+  process.exit(1);
 }

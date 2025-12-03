@@ -2,13 +2,14 @@
 
 import { useState, useEffect } from 'react';
 
-const PASARELA_PAGO_URL = process.env.NEXT_PUBLIC_PASARELA_PAGO_URL || 'http://localhost:3034';
+const PASARELA_PAGO_URL =
+  process.env.NEXT_PUBLIC_PASARELA_PAGO_URL || 'http://localhost:3034';
 
-export interface BalanceData {
+export type BalanceData = {
   balance: string;
   address: string;
   currency: string;
-}
+};
 
 export function useBalance(walletAddress: string | null) {
   const [balance, setBalance] = useState<string | null>(null);
@@ -24,14 +25,17 @@ export function useBalance(walletAddress: string | null) {
 
       setLoading(true);
       setError(null);
-      
+
       try {
-        const response = await fetch(`${PASARELA_PAGO_URL}/api/balance/${walletAddress}`, {
-          method: 'GET',
-          headers: {
-            'Content-Type': 'application/json',
-          },
-        });
+        const response = await fetch(
+          `${PASARELA_PAGO_URL}/api/balance/${walletAddress}`,
+          {
+            method: 'GET',
+            headers: {
+              'Content-Type': 'application/json',
+            },
+          }
+        );
 
         if (!response.ok) {
           throw new Error(`Error al obtener balance: ${response.status}`);

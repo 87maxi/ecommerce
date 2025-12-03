@@ -1,4 +1,5 @@
 import { render, screen } from '@testing-library/react';
+
 import { TransactionList } from '../../src/components/TransactionList';
 
 describe('TransactionList', () => {
@@ -24,7 +25,12 @@ describe('TransactionList', () => {
   ];
 
   it('renders transaction list with correct title', () => {
-    render(<TransactionList transactions={mockTransactions} title="Actividad Reciente" />);
+    render(
+      <TransactionList
+        transactions={mockTransactions}
+        title="Actividad Reciente"
+      />
+    );
     expect(screen.getByText('Actividad Reciente')).toBeInTheDocument();
   });
 
@@ -36,9 +42,11 @@ describe('TransactionList', () => {
 
   it('renders empty state when no transactions', () => {
     render(<TransactionList transactions={[]} />);
-    expect(screen.getByText('No hay transacciones recientes')).toBeInTheDocument();
+    expect(
+      screen.getByText('No hay transacciones recientes')
+    ).toBeInTheDocument();
   });
-    
+
   it('displays correct status colors', () => {
     render(<TransactionList transactions={mockTransactions} />);
     const statusElements = screen.getAllByText('completed');
@@ -46,11 +54,13 @@ describe('TransactionList', () => {
   });
   it('format of transaction data is preserved', () => {
     render(<TransactionList transactions={mockTransactions} />);
-    
+
     // Check that addresses are displayed as monospace
-    const addressElement = screen.getByText('0x742d35Cc6634C0532925a3b8D4C0532925a3b8D4');
+    const addressElement = screen.getByText(
+      '0x742d35Cc6634C0532925a3b8D4C0532925a3b8D4'
+    );
     expect(addressElement).toHaveClass('font-mono');
-    
+
     // Check that amounts are displayed correctly
     expect(screen.getByText('-')).toBeInTheDocument();
   });

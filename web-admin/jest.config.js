@@ -8,7 +8,7 @@ module.exports = {
     '**/?(*.)+(spec|test).{ts,tsx,js,jsx}',
   ],
   transform: {
-    '^.+\\.[tj]sx?$': ['babel-jest', { presets: ['next/babel'] }]
+    '^.+\\.[tj]sx?$': ['babel-jest', { presets: ['next/babel'] }],
   },
   transformIgnorePatterns: [
     '/node_modules/',

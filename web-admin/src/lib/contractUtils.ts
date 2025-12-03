@@ -1,7 +1,6 @@
-
 import { Product } from '../types';
 
-export interface ProductData {
+export type ProductData = {
   name: string;
   description: string;
   price: bigint | string;
@@ -9,16 +8,29 @@ export interface ProductData {
   stock: bigint | number;
   active: boolean;
   companyId: bigint | string;
-}
+};
 
-export function normalizeProduct(productResult: ProductData, productId: bigint): Product {
+export function normalizeProduct(
+  productResult: ProductData,
+  productId: bigint
+): Product {
   // Handle possible BigNumber values from ethers
-  const price = typeof productResult.price === 'bigint' ? productResult.price.toString() : productResult.price;
-  const companyId = typeof productResult.companyId === 'bigint' ? productResult.companyId.toString() : productResult.companyId;
+  const price =
+    typeof productResult.price === 'bigint'
+      ? productResult.price.toString()
+      : productResult.price;
+  const companyId =
+    typeof productResult.companyId === 'bigint'
+      ? productResult.companyId.toString()
+      : productResult.companyId;
 
   // Ensure values are strings, not arrays
-  const cleanedPrice = Array.isArray(price) ? price[0].toString() : price.toString();
-  const cleanedCompanyId = Array.isArray(companyId) ? companyId[0].toString() : companyId.toString();
+  const cleanedPrice = Array.isArray(price)
+    ? price[0].toString()
+    : price.toString();
+  const cleanedCompanyId = Array.isArray(companyId)
+    ? companyId[0].toString()
+    : companyId.toString();
 
   return {
     id: productId.toString(),
@@ -52,7 +64,8 @@ export function normalizeArrayResponse(response: any): bigint[] {
 }
 
 export function normalizeCompany(companyResult: any, companyId: string): any {
-  const owner = companyResult.owner?.toString() || companyResult[1]?.toString() || '';
+  const owner =
+    companyResult.owner?.toString() || companyResult[1]?.toString() || '';
 
   return {
     id: companyId,
@@ -60,6 +73,8 @@ export function normalizeCompany(companyResult: any, companyId: string): any {
     name: companyResult.name,
     description: companyResult.description,
     isActive: companyResult.active,
-    createdAt: companyResult.createdAt ? new Date(Number(companyResult.createdAt) * 1000).toISOString() : new Date().toISOString(),
+    createdAt: companyResult.createdAt
+      ? new Date(Number(companyResult.createdAt) * 1000).toISOString()
+      : new Date().toISOString(),
   };
 }

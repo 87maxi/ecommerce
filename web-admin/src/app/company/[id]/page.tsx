@@ -1,27 +1,33 @@
 'use client';
 
-import { useState, useEffect } from 'react';
-import { useParams } from 'next/navigation';
-import { useWallet } from '../../../hooks/useWallet';
-import { useContract } from '../../../hooks/useContract';
 import Link from 'next/link';
+import { useParams } from 'next/navigation';
+import { useState, useEffect } from 'react';
+
+import { useContract } from '../../../hooks/useContract';
+import { useWallet } from '../../../hooks/useWallet';
+import {
+  normalizeCompany,
+  normalizeProduct,
+  normalizeArrayResponse,
+} from '../../../lib/contractUtils';
 import { formatAddress, formatDate } from '../../../lib/utils';
 import { Company, Product } from '../../../types';
-import { normalizeCompany, normalizeProduct, normalizeArrayResponse } from '../../../lib/contractUtils';
 
-interface ProductFormData {
+type ProductFormData = {
   name: string;
   description: string;
   price: string;
   imageHash: string;
   stock: string;
-}
+};
 
 export default function CompanyDetailPage() {
   const params = useParams();
   const companyId = params.id as string;
 
-  const { isConnected, provider, signer, chainId, address, switchNetwork } = useWallet();
+  const { isConnected, provider, signer, chainId, address, switchNetwork } =
+    useWallet();
   const ecommerceContract = useContract('Ecommerce', provider, signer, chainId);
 
   const [company, setCompany] = useState<Company | null>(null);
@@ -47,14 +53,18 @@ export default function CompanyDetailPage() {
         console.log(`Loading data for company ${companyId}...`);
 
         // Load company details using normalization
-        const companyResult = await ecommerceContract.getCompany(BigInt(companyId));
+        const companyResult = await ecommerceContract.getCompany(
+          BigInt(companyId)
+        );
         console.log('Company raw result:', companyResult);
         const normalizedCompany = normalizeCompany(companyResult, companyId);
         console.log('Company normalized:', normalizedCompany);
         setCompany(normalizedCompany);
 
         // Load company products
-        const productIdsResult = await ecommerceContract.getProductsByCompany(BigInt(companyId));
+        const productIdsResult = await ecommerceContract.getProductsByCompany(
+          BigInt(companyId)
+        );
         console.log('Product IDs raw result:', productIdsResult);
         const productIds = normalizeArrayResponse(productIdsResult);
         console.log('Product IDs normalized:', productIds);
@@ -71,7 +81,9 @@ export default function CompanyDetailPage() {
           })
         );
 
-        const validProducts = productData.filter((p): p is Product => p !== null);
+        const validProducts = productData.filter(
+          (p): p is Product => p !== null
+        );
         console.log('Final products list:', validProducts);
         setProducts(validProducts);
       } catch (err) {
@@ -88,12 +100,15 @@ export default function CompanyDetailPage() {
   const handleProductSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!ecommerceContract) {
-      if (isConnected && chainId !== 31337) {
+      if (isConnected && chainId !== 31337 && chainId !== 1) {
         try {
+          // Try to switch to local network first, if that fails, show error
           await switchNetwork(31337);
         } catch (err) {
           console.error('Failed to switch network:', err);
-          setError('Error al cambiar de red. Por favor, cambia manualmente a Localhost 8545.');
+          setError(
+            'Error al cambiar de red. Por favor, cambia manualmente a Localhost 8545 o Ethereum Mainnet.'
+          );
         }
       }
       return;
@@ -115,7 +130,9 @@ export default function CompanyDetailPage() {
       await tx.wait();
 
       // Refresh products list
-      const productIdsResult = await ecommerceContract.getProductsByCompany(BigInt(companyId));
+      const productIdsResult = await ecommerceContract.getProductsByCompany(
+        BigInt(companyId)
+      );
       const productIds = normalizeArrayResponse(productIdsResult);
       const productData = await Promise.all(
         productIds.map(async (id: bigint) => {
@@ -125,7 +142,13 @@ export default function CompanyDetailPage() {
       );
 
       setProducts(productData);
-      setProductFormData({ name: '', description: '', price: '', imageHash: '', stock: '' });
+      setProductFormData({
+        name: '',
+        description: '',
+        price: '',
+        imageHash: '',
+        stock: '',
+      });
     } catch (err: any) {
       console.error('Error adding product:', err);
       setError(err.message || 'Failed to add product');
@@ -134,7 +157,8 @@ export default function CompanyDetailPage() {
     }
   };
 
-  const isCompanyOwner = company && address && company.owner.toLowerCase() === address.toLowerCase();
+  const isCompanyOwner =
+    company && address && company.owner.toLowerCase() === address.toLowerCase();
 
   useEffect(() => {
     if (company && address) {
@@ -143,7 +167,7 @@ export default function CompanyDetailPage() {
         companyOwnerLower: company.owner.toLowerCase(),
         walletAddressRaw: address,
         walletAddressLower: address.toLowerCase(),
-        isMatch: isCompanyOwner
+        isMatch: isCompanyOwner,
       });
     }
   }, [company, address, isCompanyOwner]);
@@ -152,9 +176,12 @@ export default function CompanyDetailPage() {
     return (
       <div className="min-h-screen bg-gray-50 py-12 px-4 sm:px-6 lg:px-8">
         <div className="max-w-3xl mx-auto text-center">
-          <h1 className="text-3xl font-bold text-gray-900">Acceso Restringido</h1>
+          <h1 className="text-3xl font-bold text-gray-900">
+            Acceso Restringido
+          </h1>
           <p className="mt-4 text-lg text-gray-500">
-            Por favor, conecta tu billetera para acceder al panel de administración.
+            Por favor, conecta tu billetera para acceder al panel de
+            administración.
           </p>
           <div className="mt-8">
             <Link
@@ -174,7 +201,9 @@ export default function CompanyDetailPage() {
       <div className="min-h-screen bg-gray-50 py-12 px-4 sm:px-6 lg:px-8">
         <div className="max-w-4xl mx-auto text-center">
           <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-indigo-600 mx-auto"></div>
-          <p className="mt-4 text-gray-600">Cargando información de la empresa...</p>
+          <p className="mt-4 text-gray-600">
+            Cargando información de la empresa...
+          </p>
         </div>
       </div>
     );
@@ -184,7 +213,9 @@ export default function CompanyDetailPage() {
     return (
       <div className="min-h-screen bg-gray-50 py-12 px-4 sm:px-6 lg:px-8">
         <div className="max-w-3xl mx-auto text-center">
-          <h1 className="text-3xl font-bold text-gray-900">Empresa no encontrada</h1>
+          <h1 className="text-3xl font-bold text-gray-900">
+            Empresa no encontrada
+          </h1>
           <p className="mt-4 text-lg text-gray-500">
             La empresa solicitada no existe o no tienes acceso a ella.
           </p>
@@ -208,7 +239,9 @@ export default function CompanyDetailPage() {
         <div className="mb-8">
           <div className="flex items-center justify-between">
             <div>
-              <h1 className="text-3xl font-bold text-gray-900">{company.name}</h1>
+              <h1 className="text-3xl font-bold text-gray-900">
+                {company.name}
+              </h1>
               <p className="mt-2 text-gray-600">{company.description}</p>
               <div className="mt-2 text-sm text-gray-500 space-y-1">
                 <p>ID: {company.id}</p>
@@ -222,8 +255,17 @@ export default function CompanyDetailPage() {
                 onClick={() => window.location.reload()}
                 className="inline-flex items-center px-4 py-2 border border-gray-300 rounded-md shadow-sm text-sm font-medium text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500"
               >
-                <svg className="-ml-1 mr-2 h-5 w-5 text-gray-500" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor">
-                  <path fillRule="evenodd" d="M4 2a1 1 0 011 1v2.101a7.002 7.002 0 0111.601 2.566 1 1 0 11-1.885.666A5.002 5.002 0 005.999 7H9a1 1 0 010 2H4a1 1 0 01-1-1V3a1 1 0 011-1zm.008 9.057a1 1 0 011.276.61A5.002 5.002 0 0014.001 13H11a1 1 0 110-2h5a1 1 0 011 1v5a1 1 0 11-2 0v-2.101a7.002 7.002 0 01-11.601-2.566 1 1 0 01.61-1.276z" clipRule="evenodd" />
+                <svg
+                  className="-ml-1 mr-2 h-5 w-5 text-gray-500"
+                  xmlns="http://www.w3.org/2000/svg"
+                  viewBox="0 0 20 20"
+                  fill="currentColor"
+                >
+                  <path
+                    fillRule="evenodd"
+                    d="M4 2a1 1 0 011 1v2.101a7.002 7.002 0 0111.601 2.566 1 1 0 11-1.885.666A5.002 5.002 0 005.999 7H9a1 1 0 010 2H4a1 1 0 01-1-1V3a1 1 0 011-1zm.008 9.057a1 1 0 011.276.61A5.002 5.002 0 0014.001 13H11a1 1 0 110-2h5a1 1 0 011 1v5a1 1 0 11-2 0v-2.101a7.002 7.002 0 01-11.601-2.566 1 1 0 01.61-1.276z"
+                    clipRule="evenodd"
+                  />
                 </svg>
                 Actualizar
               </button>
@@ -248,8 +290,10 @@ export default function CompanyDetailPage() {
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
           {/* Formulario de Producto (solo para el propietario) */}
           {isCompanyOwner && (
-            <div className="bg-white shadow rounded-lg p-6">
-              <h2 className="text-xl font-semibold text-gray-900 mb-6">Agregar Producto</h2>
+            <div className="bg-[var(--card)] shadow rounded-lg p-6">
+              <h2 className="text-xl font-semibold text-gray-900 mb-6">
+                Agregar Producto
+              </h2>
 
               {error && (
                 <div className="mb-4 p-3 bg-red-100 border border-red-200 text-red-700 rounded-md text-sm">
@@ -259,36 +303,55 @@ export default function CompanyDetailPage() {
 
               <form onSubmit={handleProductSubmit} className="space-y-6">
                 <div>
-                  <label htmlFor="name" className="block text-sm font-medium text-gray-700">
+                  <label
+                    htmlFor="name"
+                    className="block text-sm font-medium text-gray-700"
+                  >
                     Nombre del Producto
                   </label>
                   <input
                     type="text"
                     id="name"
                     value={productFormData.name}
-                    onChange={(e) => setProductFormData({ ...productFormData, name: e.target.value })}
-                    className="mt-1 block w-full border border-gray-300 rounded-md shadow-sm py-2 px-3 focus:outline-none focus:ring-indigo-500 focus:border-indigo-500"
+                    onChange={e =>
+                      setProductFormData({
+                        ...productFormData,
+                        name: e.target.value,
+                      })
+                    }
+                    className="mt-1 block w-full border border-[var(--muted-light)] rounded-md shadow-sm py-2 px-3 focus:outline-none focus:ring-[var(--primary)] focus:border-[var(--primary)] bg-[var(--card)] text-[var(--foreground)]"
                     placeholder="Nombre del producto"
                     required
                   />
                 </div>
 
                 <div>
-                  <label htmlFor="description" className="block text-sm font-medium text-gray-700">
+                  <label
+                    htmlFor="description"
+                    className="block text-sm font-medium text-gray-700"
+                  >
                     Descripción
                   </label>
                   <textarea
                     id="description"
                     value={productFormData.description}
-                    onChange={(e) => setProductFormData({ ...productFormData, description: e.target.value })}
+                    onChange={e =>
+                      setProductFormData({
+                        ...productFormData,
+                        description: e.target.value,
+                      })
+                    }
                     rows={3}
-                    className="mt-1 block w-full border border-gray-300 rounded-md shadow-sm py-2 px-3 focus:outline-none focus:ring-indigo-500 focus:border-indigo-500"
+                    className="mt-1 block w-full border border-[var(--muted-light)] rounded-md shadow-sm py-2 px-3 focus:outline-none focus:ring-[var(--primary)] focus:border-[var(--primary)] bg-[var(--card)] text-[var(--foreground)]"
                     placeholder="Descripción del producto"
                   />
                 </div>
 
                 <div>
-                  <label htmlFor="price" className="block text-sm font-medium text-gray-700">
+                  <label
+                    htmlFor="price"
+                    className="block text-sm font-medium text-gray-700"
+                  >
                     Precio (EURT)
                   </label>
                   <input
@@ -297,15 +360,23 @@ export default function CompanyDetailPage() {
                     step="0.01"
                     min="0"
                     value={productFormData.price}
-                    onChange={(e) => setProductFormData({ ...productFormData, price: e.target.value })}
-                    className="mt-1 block w-full border border-gray-300 rounded-md shadow-sm py-2 px-3 focus:outline-none focus:ring-indigo-500 focus:border-indigo-500"
+                    onChange={e =>
+                      setProductFormData({
+                        ...productFormData,
+                        price: e.target.value,
+                      })
+                    }
+                    className="mt-1 block w-full border border-[var(--muted-light)] rounded-md shadow-sm py-2 px-3 focus:outline-none focus:ring-[var(--primary)] focus:border-[var(--primary)] bg-[var(--card)] text-[var(--foreground)]"
                     placeholder="0.00"
                     required
                   />
                 </div>
 
                 <div>
-                  <label htmlFor="stock" className="block text-sm font-medium text-gray-700">
+                  <label
+                    htmlFor="stock"
+                    className="block text-sm font-medium text-gray-700"
+                  >
                     Stock
                   </label>
                   <input
@@ -313,23 +384,36 @@ export default function CompanyDetailPage() {
                     id="stock"
                     min="0"
                     value={productFormData.stock}
-                    onChange={(e) => setProductFormData({ ...productFormData, stock: e.target.value })}
-                    className="mt-1 block w-full border border-gray-300 rounded-md shadow-sm py-2 px-3 focus:outline-none focus:ring-indigo-500 focus:border-indigo-500"
+                    onChange={e =>
+                      setProductFormData({
+                        ...productFormData,
+                        stock: e.target.value,
+                      })
+                    }
+                    className="mt-1 block w-full border border-[var(--muted-light)] rounded-md shadow-sm py-2 px-3 focus:outline-none focus:ring-[var(--primary)] focus:border-[var(--primary)] bg-[var(--card)] text-[var(--foreground)]"
                     placeholder="0"
                     required
                   />
                 </div>
 
                 <div>
-                  <label htmlFor="imageHash" className="block text-sm font-medium text-gray-700">
+                  <label
+                    htmlFor="imageHash"
+                    className="block text-sm font-medium text-gray-700"
+                  >
                     Hash de Imagen (IPFS)
                   </label>
                   <input
                     type="text"
                     id="imageHash"
                     value={productFormData.imageHash}
-                    onChange={(e) => setProductFormData({ ...productFormData, imageHash: e.target.value })}
-                    className="mt-1 block w-full border border-gray-300 rounded-md shadow-sm py-2 px-3 focus:outline-none focus:ring-indigo-500 focus:border-indigo-500"
+                    onChange={e =>
+                      setProductFormData({
+                        ...productFormData,
+                        imageHash: e.target.value,
+                      })
+                    }
+                    className="mt-1 block w-full border border-[var(--muted-light)] rounded-md shadow-sm py-2 px-3 focus:outline-none focus:ring-[var(--primary)] focus:border-[var(--primary)] bg-[var(--card)] text-[var(--foreground)]"
                     placeholder="Qm..."
                   />
                 </div>
@@ -338,15 +422,16 @@ export default function CompanyDetailPage() {
                   <button
                     type="submit"
                     disabled={submitting}
-                    className={`w-full flex justify-center py-2 px-4 border border-transparent rounded-md shadow-sm text-sm font-medium text-white ${!ecommerceContract && isConnected
+                                      className={`w-full flex justify-center py-2 px-4 border border-transparent rounded-md shadow-sm text-sm font-medium text-white ${
+                    !ecommerceContract && isConnected
                       ? 'bg-yellow-600 hover:bg-yellow-700'
-                      : 'bg-indigo-600 hover:bg-indigo-700'
-                      } focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 disabled:opacity-50`}
+                      : 'bg-[var(--primary)] hover:bg-[var(--primary-dark)]'
+                  } focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-[var(--primary)] disabled:opacity-50`}
                   >
                     {submitting
                       ? 'Procesando...'
                       : !ecommerceContract && isConnected
-                        ? 'Cambiar a Red Local'
+                        ? 'Cambiar a Red Soportada'
                         : 'Agregar Producto'}
                   </button>
                 </div>
@@ -355,28 +440,49 @@ export default function CompanyDetailPage() {
           )}
 
           {/* Lista de Productos */}
-          <div className="bg-white shadow rounded-lg p-6">
-            <h2 className="text-xl font-semibold text-gray-900 mb-6">Productos de la Empresa</h2>
+          <div className="bg-[var(--card)] shadow rounded-lg p-6">
+            <h2 className="text-xl font-semibold text-gray-900 mb-6">
+              Productos de la Empresa
+            </h2>
 
             {products.length === 0 ? (
               <div className="text-center py-8 text-gray-500">
-                <svg className="mx-auto h-12 w-12 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M20 13V6a2 2 0 00-2-2H6a2 2 0 00-2 2v7m16 0v5a2 2 0 01-2 2H6a2 2 0 01-2-2v-5m16 0h-16" />
+                <svg
+                  className="mx-auto h-12 w-12 text-gray-400"
+                  fill="none"
+                  viewBox="0 0 24 24"
+                  stroke="currentColor"
+                >
+                  <path
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    strokeWidth={2}
+                    d="M20 13V6a2 2 0 00-2-2H6a2 2 0 00-2 2v7m16 0v5a2 2 0 01-2 2H6a2 2 0 01-2-2v-5m16 0h-16"
+                  />
                 </svg>
                 <p className="mt-2">No hay productos registrados</p>
               </div>
             ) : (
               <div className="space-y-4">
-                {products.map((product) => (
-                  <div key={product.id} className="border border-gray-200 rounded-lg p-4 hover:bg-gray-50">
+                {products.map(product => (
+                                  <div
+                  key={product.id}
+                  className="border border-[var(--border)] rounded-lg p-4 hover:bg-[var(--muted-light)]"
+                >
                     <div className="flex justify-between items-start">
                       <div className="flex-1">
-                        <h3 className="font-medium text-gray-900">{product.name}</h3>
-                        <p className="text-sm text-gray-600 mt-1">{product.description}</p>
+                        <h3 className="font-medium text-gray-900">
+                          {product.name}
+                        </h3>
+                        <p className="text-sm text-gray-600 mt-1">
+                          {product.description}
+                        </p>
                         <div className="mt-2 text-xs text-gray-500 space-y-1">
                           <p>Precio: {product.price} EURT</p>
                           <p>Stock: {product.stock}</p>
-                          <p>Estado: {product.isActive ? 'Activo' : 'Inactivo'}</p>
+                          <p>
+                            Estado: {product.isActive ? 'Activo' : 'Inactivo'}
+                          </p>
                           {product.imageHash && (
                             <p>Imagen: {product.imageHash.slice(0, 12)}...</p>
                           )}
@@ -392,8 +498,10 @@ export default function CompanyDetailPage() {
 
         {/* Sección de Ventas (Solo para el propietario) */}
         {isCompanyOwner && (
-          <div className="mt-8 bg-white shadow rounded-lg p-6">
-            <h2 className="text-xl font-semibold text-gray-900 mb-6">Ventas de la Empresa</h2>
+          <div className="mt-8 bg-[var(--card)] shadow rounded-lg p-6">
+            <h2 className="text-xl font-semibold text-gray-900 mb-6">
+              Ventas de la Empresa
+            </h2>
             <SalesList companyId={companyId} contract={ecommerceContract} />
           </div>
         )}
@@ -402,7 +510,13 @@ export default function CompanyDetailPage() {
   );
 }
 
-function SalesList({ companyId, contract }: { companyId: string, contract: any }) {
+function SalesList({
+  companyId,
+  contract,
+}: {
+  companyId: string;
+  contract: any;
+}) {
   const [invoices, setInvoices] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
 
@@ -410,7 +524,9 @@ function SalesList({ companyId, contract }: { companyId: string, contract: any }
     const loadSales = async () => {
       try {
         setLoading(true);
-        const invoiceIdsResult = await contract.getCompanyInvoices(BigInt(companyId));
+        const invoiceIdsResult = await contract.getCompanyInvoices(
+          BigInt(companyId)
+        );
         const invoiceIds = normalizeArrayResponse(invoiceIdsResult);
 
         const salesData = await Promise.all(
@@ -422,12 +538,14 @@ function SalesList({ companyId, contract }: { companyId: string, contract: any }
                 id: id.toString(),
                 customer: invoice.customerAddress,
                 total: invoice.totalAmount.toString(),
-                date: new Date(Number(invoice.timestamp) * 1000).toLocaleString(),
+                date: new Date(
+                  Number(invoice.timestamp) * 1000
+                ).toLocaleString(),
                 items: items.map((item: any) => ({
                   productName: item.productName,
                   quantity: item.quantity.toString(),
-                  totalPrice: item.totalPrice.toString()
-                }))
+                  totalPrice: item.totalPrice.toString(),
+                })),
               };
             } catch (e) {
               console.error(`Error loading invoice ${id}:`, e);
@@ -448,28 +566,43 @@ function SalesList({ companyId, contract }: { companyId: string, contract: any }
   }, [companyId, contract]);
 
   if (loading) return <p className="text-gray-500">Cargando ventas...</p>;
-  if (invoices.length === 0) return <p className="text-gray-500">No hay ventas registradas.</p>;
+  if (invoices.length === 0)
+    return <p className="text-gray-500">No hay ventas registradas.</p>;
 
   return (
     <div className="overflow-x-auto">
       <table className="min-w-full divide-y divide-gray-200">
         <thead className="bg-gray-50">
           <tr>
-            <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Fecha</th>
-            <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Cliente</th>
-            <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Productos</th>
-            <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Total (EURT)</th>
+            <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+              Fecha
+            </th>
+            <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+              Cliente
+            </th>
+            <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+              Productos
+            </th>
+            <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+              Total (EURT)
+            </th>
           </tr>
         </thead>
         <tbody className="bg-white divide-y divide-gray-200">
-          {invoices.map((sale) => (
+          {invoices.map(sale => (
             <tr key={sale.id}>
-              <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{sale.date}</td>
-              <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{formatAddress(sale.customer)}</td>
+              <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                {sale.date}
+              </td>
+              <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                {formatAddress(sale.customer)}
+              </td>
               <td className="px-6 py-4 text-sm text-gray-500">
                 <ul className="list-disc list-inside">
                   {sale.items.map((item: any, idx: number) => (
-                    <li key={idx}>{item.quantity}x {item.productName}</li>
+                    <li key={idx}>
+                      {item.quantity}x {item.productName}
+                    </li>
                   ))}
                 </ul>
               </td>

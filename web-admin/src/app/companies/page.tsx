@@ -1,18 +1,22 @@
 'use client';
 
-import { useState, useEffect } from 'react';
-import { useWallet } from '../../hooks/useWallet';
-import { useContract } from '../../hooks/useContract';
 import Link from 'next/link';
+import { useState, useEffect } from 'react';
+
+import { useContract } from '../../hooks/useContract';
+import { useWallet } from '../../hooks/useWallet';
+import {
+  normalizeCompany,
+  normalizeArrayResponse,
+} from '../../lib/contractUtils';
 import { formatAddress, formatDate } from '../../lib/utils';
 import { Company } from '../../types';
-import { normalizeCompany, normalizeArrayResponse } from '../../lib/contractUtils';
 
-interface CompanyFormData {
+type CompanyFormData = {
   address: string;
   name: string;
   description: string;
-}
+};
 
 export default function CompaniesPage() {
   const { isConnected, provider, signer, chainId, switchNetwork } = useWallet();
@@ -39,7 +43,7 @@ export default function CompaniesPage() {
       try {
         setLoading(true);
         console.log('Loading companies...');
-        
+
         // Get and store contract address
         const address = await ecommerceContract.getAddress();
         setContractAddress(address);
@@ -49,11 +53,11 @@ export default function CompaniesPage() {
         console.log('Company IDs raw result:', companyIdsResult);
         console.log('Type of companyIdsResult:', typeof companyIdsResult);
         console.log('Keys of companyIdsResult:', Object.keys(companyIdsResult));
-        
+
         // Handle different return types using utility function
         const companyIds = normalizeArrayResponse(companyIdsResult);
         console.log('Normalized Company IDs:', companyIds);
-        
+
         // Validate company IDs
         if (companyIds.length === 0) {
           console.log('No company IDs returned from contract');
@@ -72,15 +76,21 @@ export default function CompaniesPage() {
             console.log('Fetching company with ID:', id);
             console.log('ID type:', typeof id);
             console.log('ID value:', id);
-            
+
             // Ensure ID is in correct format
             const companyId = typeof id === 'bigint' ? id : BigInt(id);
             console.log('Using companyId:', companyId);
-            
+
             const companyResult = await ecommerceContract.getCompany(companyId);
             console.log(`Company ${companyId} raw result:`, companyResult);
-            console.log(`Company ${companyId} result type:`, typeof companyResult);
-            console.log(`Company ${companyId} result keys:`, Object.keys(companyResult));
+            console.log(
+              `Company ${companyId} result type:`,
+              typeof companyResult
+            );
+            console.log(
+              `Company ${companyId} result keys:`,
+              Object.keys(companyResult)
+            );
 
             // Normalize company data using utility function
             const normalizedCompany = normalizeCompany(companyResult, id);
@@ -94,13 +104,18 @@ export default function CompaniesPage() {
         });
 
         const companyDataResults = await Promise.all(companyDataPromises);
-        const companyData = companyDataResults.filter((c: Company | null): c is Company => c !== null);
+        const companyData = companyDataResults.filter(
+          (c: Company | null): c is Company => c !== null
+        );
 
         console.log('Final company data array:', companyData);
         setCompanies(companyData);
       } catch (err) {
         console.error('Error loading companies:', err);
-        setError('Failed to load companies: ' + (err instanceof Error ? err.message : String(err)));
+        setError(
+          'Failed to load companies: ' +
+            (err instanceof Error ? err.message : String(err))
+        );
       } finally {
         setLoading(false);
       }
@@ -113,12 +128,15 @@ export default function CompaniesPage() {
     e.preventDefault();
 
     if (!ecommerceContract) {
-      if (isConnected && chainId !== 31337) {
+      if (isConnected && chainId !== 31337 && chainId !== 1) {
         try {
+          // Try to switch to local network first, if that fails, show error
           await switchNetwork(31337);
         } catch (err) {
           console.error('Failed to switch network:', err);
-          setError('Error al cambiar de red. Por favor, cambia manualmente a Localhost 8545.');
+          setError(
+            'Error al cambiar de red. Por favor, cambia manualmente a Localhost 8545 o Ethereum Mainnet.'
+          );
         }
       }
       return;
@@ -153,7 +171,9 @@ export default function CompaniesPage() {
       });
 
       const companyDataResults = await Promise.all(companyDataPromises);
-      const companyData = companyDataResults.filter((c: Company | null): c is Company => c !== null);
+      const companyData = companyDataResults.filter(
+        (c: Company | null): c is Company => c !== null
+      );
 
       setCompanies(companyData);
       setFormData({ address: '', name: '', description: '' });
@@ -169,9 +189,12 @@ export default function CompaniesPage() {
     return (
       <div className="min-h-screen bg-gray-50 py-12 px-4 sm:px-6 lg:px-8">
         <div className="max-w-3xl mx-auto text-center">
-          <h1 className="text-3xl font-bold text-gray-900">Acceso Restringido</h1>
+          <h1 className="text-3xl font-bold text-gray-900">
+            Acceso Restringido
+          </h1>
           <p className="mt-4 text-lg text-gray-500">
-            Por favor, conecta tu billetera para acceder al panel de administración.
+            Por favor, conecta tu billetera para acceder al panel de
+            administración.
           </p>
           <div className="mt-8">
             <Link
@@ -191,17 +214,29 @@ export default function CompaniesPage() {
       <div className="max-w-7xl mx-auto">
         <div className="flex justify-between items-center mb-8">
           <div>
-            <h1 className="text-3xl font-bold text-gray-900">Gestión de Empresas</h1>
+            <h1 className="text-3xl font-bold text-gray-900">
+              Gestión de Empresas
+            </h1>
             <p className="mt-2 text-sm text-gray-600">
-              Registra nuevas empresas y gestiona las existentes en el e-commerce descentralizado.
+              Registra nuevas empresas y gestiona las existentes en el
+              e-commerce descentralizado.
             </p>
           </div>
           <button
             onClick={() => window.location.reload()}
             className="inline-flex items-center px-4 py-2 border border-gray-300 rounded-md shadow-sm text-sm font-medium text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500"
           >
-            <svg className="-ml-1 mr-2 h-5 w-5 text-gray-500" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor">
-              <path fillRule="evenodd" d="M4 2a1 1 0 011 1v2.101a7.002 7.002 0 0111.601 2.566 1 1 0 11-1.885.666A5.002 5.002 0 005.999 7H9a1 1 0 010 2H4a1 1 0 01-1-1V3a1 1 0 011-1zm.008 9.057a1 1 0 011.276.61A5.002 5.002 0 0014.001 13H11a1 1 0 110-2h5a1 1 0 011 1v5a1 1 0 11-2 0v-2.101a7.002 7.002 0 01-11.601-2.566 1 1 0 01.61-1.276z" clipRule="evenodd" />
+            <svg
+              className="-ml-1 mr-2 h-5 w-5 text-gray-500"
+              xmlns="http://www.w3.org/2000/svg"
+              viewBox="0 0 20 20"
+              fill="currentColor"
+            >
+              <path
+                fillRule="evenodd"
+                d="M4 2a1 1 0 011 1v2.101a7.002 7.002 0 0111.601 2.566 1 1 0 11-1.885.666A5.002 5.002 0 005.999 7H9a1 1 0 010 2H4a1 1 0 01-1-1V3a1 1 0 011-1zm.008 9.057a1 1 0 011.276.61A5.002 5.002 0 0014.001 13H11a1 1 0 110-2h5a1 1 0 011 1v5a1 1 0 11-2 0v-2.101a7.002 7.002 0 01-11.601-2.566 1 1 0 01.61-1.276z"
+                clipRule="evenodd"
+              />
             </svg>
             Actualizar
           </button>
@@ -209,8 +244,10 @@ export default function CompaniesPage() {
 
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
           {/* Formulario de Registro */}
-          <div className="bg-white shadow rounded-lg p-6">
-            <h2 className="text-xl font-semibold text-gray-900 mb-6">Registrar Nueva Empresa</h2>
+          <div className="bg-[var(--card)] shadow rounded-lg p-6">
+            <h2 className="text-xl font-semibold text-gray-900 mb-6">
+              Registrar Nueva Empresa
+            </h2>
 
             {error && (
               <div className="mb-4 p-3 bg-red-100 border border-red-200 text-red-700 rounded-md text-sm">
@@ -220,62 +257,78 @@ export default function CompaniesPage() {
 
             <form onSubmit={handleSubmit} className="space-y-6">
               <div>
-                <label htmlFor="address" className="block text-sm font-medium text-gray-700">
+                <label
+                  htmlFor="address"
+                  className="block text-sm font-medium text-gray-700"
+                >
                   Dirección de la Empresa
                 </label>
-                <input
-                  type="text"
-                  id="address"
-                  value={formData.address}
-                  onChange={(e) => setFormData({ ...formData, address: e.target.value })}
-                  className="mt-1 block w-full border border-gray-300 rounded-md shadow-sm py-2 px-3 focus:outline-none focus:ring-indigo-500 focus:border-indigo-500"
-                  placeholder="0x..."
-                  required
-                />
+                                  <input
+                    type="text"
+                    id="address"
+                    value={formData.address}
+                    onChange={e =>
+                      setFormData({ ...formData, address: e.target.value })
+                    }
+                    className="mt-1 block w-full border border-[var(--muted-light)] rounded-md shadow-sm py-2 px-3 focus:outline-none focus:ring-[var(--primary)] focus:border-[var(--primary)] bg-[var(--card)] text-[var(--foreground)]"
+                    placeholder="0x..."
+                    required
+                  />
               </div>
 
               <div>
-                <label htmlFor="name" className="block text-sm font-medium text-gray-700">
+                <label
+                  htmlFor="name"
+                  className="block text-sm font-medium text-gray-700"
+                >
                   Nombre
                 </label>
-                <input
-                  type="text"
-                  id="name"
-                  value={formData.name}
-                  onChange={(e) => setFormData({ ...formData, name: e.target.value })}
-                  className="mt-1 block w-full border border-gray-300 rounded-md shadow-sm py-2 px-3 focus:outline-none focus:ring-indigo-500 focus:border-indigo-500"
-                  placeholder="Nombre de la empresa"
-                  required
-                />
+                                  <input
+                    type="text"
+                    id="name"
+                    value={formData.name}
+                    onChange={e =>
+                      setFormData({ ...formData, name: e.target.value })
+                    }
+                    className="mt-1 block w-full border border-[var(--muted-light)] rounded-md shadow-sm py-2 px-3 focus:outline-none focus:ring-[var(--primary)] focus:border-[var(--primary)] bg-[var(--card)] text-[var(--foreground)]"
+                    placeholder="Nombre de la empresa"
+                    required
+                  />
               </div>
 
               <div>
-                <label htmlFor="description" className="block text-sm font-medium text-gray-700">
+                <label
+                  htmlFor="description"
+                  className="block text-sm font-medium text-gray-700"
+                >
                   Descripción
                 </label>
-                <textarea
-                  id="description"
-                  value={formData.description}
-                  onChange={(e) => setFormData({ ...formData, description: e.target.value })}
-                  rows={3}
-                  className="mt-1 block w-full border border-gray-300 rounded-md shadow-sm py-2 px-3 focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 bg-blue-50 text-gray-900"
-                  placeholder="Descripción de la empresa"
-                />
+                                  <textarea
+                    id="description"
+                    value={formData.description}
+                    onChange={e =>
+                      setFormData({ ...formData, description: e.target.value })
+                    }
+                    rows={3}
+                    className="mt-1 block w-full border border-[var(--muted-light)] rounded-md shadow-sm py-2 px-3 focus:outline-none focus:ring-[var(--primary)] focus:border-[var(--primary)] bg-[var(--card)] text-[var(--foreground)]"
+                    placeholder="Descripción de la empresa"
+                  />
               </div>
 
               <div>
                 <button
                   type="submit"
                   disabled={submitting}
-                  className={`w-full flex justify-center py-2 px-4 border border-transparent rounded-md shadow-sm text-sm font-medium text-white ${!ecommerceContract && isConnected
-                    ? 'bg-yellow-600 hover:bg-yellow-700'
-                    : 'bg-indigo-600 hover:bg-indigo-700'
-                    } focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 disabled:opacity-50`}
+                  className={`w-full flex justify-center py-2 px-4 border border-transparent rounded-md shadow-sm text-sm font-medium text-white ${
+                    !ecommerceContract && isConnected
+                      ? 'bg-yellow-600 hover:bg-yellow-700'
+                      : 'bg-[var(--primary)] hover:bg-[var(--primary-dark)]'
+                  } focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-[var(--primary)] disabled:opacity-50`}
                 >
                   {submitting
                     ? 'Procesando...'
                     : !ecommerceContract && isConnected
-                      ? 'Cambiar a Red Local'
+                      ? 'Cambiar a Red Soportada'
                       : 'Registrar Empresa'}
                 </button>
               </div>
@@ -283,8 +336,10 @@ export default function CompaniesPage() {
           </div>
 
           {/* Lista de Empresas */}
-          <div className="bg-white shadow rounded-lg p-6">
-            <h2 className="text-xl font-semibold text-gray-900 mb-6">Empresas Registradas</h2>
+          <div className="bg-[var(--card)] shadow rounded-lg p-6">
+            <h2 className="text-xl font-semibold text-gray-900 mb-6">
+              Empresas Registradas
+            </h2>
 
             {loading ? (
               <div className="flex justify-center items-center py-8">
@@ -293,8 +348,18 @@ export default function CompaniesPage() {
               </div>
             ) : companies.length === 0 ? (
               <div className="text-center py-8 text-gray-500">
-                <svg className="mx-auto h-12 w-12 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-8m8 0v-4a2 2 0 00-2-2H5a2 2 0 00-2 2v4h18z" />
+                <svg
+                  className="mx-auto h-12 w-12 text-gray-400"
+                  fill="none"
+                  viewBox="0 0 24 24"
+                  stroke="currentColor"
+                >
+                  <path
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    strokeWidth={2}
+                    d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-8m8 0v-4a2 2 0 00-2-2H5a2 2 0 00-2 2v4h18z"
+                  />
                 </svg>
                 <p className="mt-2">
                   {!ecommerceContract && isConnected
@@ -304,16 +369,25 @@ export default function CompaniesPage() {
               </div>
             ) : (
               <div className="space-y-4">
-                {companies.map((company) => (
-                  <div key={company.id} className="border border-gray-200 rounded-lg p-4 hover:bg-gray-50">
+                {companies.map(company => (
+                                      <div
+                      key={company.id}
+                      className="border border-[var(--border)] rounded-lg p-4 hover:bg-[var(--muted-light)]"
+                    >
                     <div className="flex justify-between items-start">
                       <div className="flex-1">
-                        <h3 className="font-medium text-gray-900">{company.name}</h3>
-                        <p className="text-sm text-gray-600 mt-1">{company.description}</p>
+                        <h3 className="font-medium text-gray-900">
+                          {company.name}
+                        </h3>
+                        <p className="text-sm text-gray-600 mt-1">
+                          {company.description}
+                        </p>
                         <div className="mt-2 text-xs text-gray-500 space-y-1">
                           <p>ID: {company.id}</p>
                           <p>Propietario: {formatAddress(company.owner)}</p>
-                          <p>Estado: {company.isActive ? 'Activa' : 'Inactiva'}</p>
+                          <p>
+                            Estado: {company.isActive ? 'Activa' : 'Inactiva'}
+                          </p>
                           <p>Registrada: {formatDate(company.createdAt)}</p>
                         </div>
                       </div>
@@ -334,4 +408,3 @@ export default function CompaniesPage() {
     </div>
   );
 }
-

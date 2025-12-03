@@ -5,7 +5,10 @@ export function formatAddress(address: string): string {
   return `${address.slice(0, 6)}...${address.slice(-4)}`;
 }
 
-export function formatCurrency(amount: string | number, decimals: number = 2): string {
+export function formatCurrency(
+  amount: string | number,
+  decimals: number = 2
+): string {
   const num = typeof amount === 'string' ? parseFloat(amount) : amount;
   return new Intl.NumberFormat('es-ES', {
     style: 'currency',

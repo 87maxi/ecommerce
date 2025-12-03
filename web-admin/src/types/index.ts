@@ -1,15 +1,15 @@
 // Tipos comunes para la aplicación
 
-export interface Company {
+export type Company = {
   id: string;
   owner: string;
   name: string;
   description: string;
   isActive: boolean;
   createdAt: string;
-}
+};
 
-export interface Product {
+export type Product = {
   id: string;
   companyId: string;
   name: string;
@@ -18,18 +18,18 @@ export interface Product {
   imageHash: string;
   stock: number;
   isActive: boolean;
-}
+};
 
-export interface Customer {
+export type Customer = {
   id: string;
   address: string;
   name: string;
   email: string;
   registeredAt: string;
   isActive: boolean;
-}
+};
 
-export interface Order {
+export type Order = {
   id: string;
   customerId: string;
   companyId: string;
@@ -37,15 +37,15 @@ export interface Order {
   totalAmount: string;
   status: 'pending' | 'completed' | 'cancelled';
   createdAt: string;
-}
+};
 
-export interface OrderProduct {
+export type OrderProduct = {
   productId: string;
   quantity: number;
   price: string;
-}
+};
 
-export interface Transaction {
+export type Transaction = {
   id: string;
   type: string;
   amount: string;
@@ -53,12 +53,12 @@ export interface Transaction {
   to: string;
   timestamp: string;
   status: 'completed' | 'pending' | 'failed';
-}
+};
 
-export interface Stats {
+export type Stats = {
   title: string;
   value: string | number;
   icon: React.ReactNode;
   color: string;
   description?: string;
-}
+};
