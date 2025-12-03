@@ -8,7 +8,7 @@ import { useWallet } from '../hooks/useWallet';
 import { RoleIndicator } from './RoleIndicator';
 import { ThemeProvider } from './ThemeProvider';
 import { useTheme } from './ThemeProvider';
-import { WalletConnect } from './WalletConnect';
+
 
 export function Header() {
   const { isConnected } = useWallet();
@@ -96,9 +96,7 @@ export function Header() {
               )}
             </button>
 
-            <div className="hidden md:block">
-              <WalletConnect />
-            </div>
+
           </div>
         </div>
       </div>
@@ -107,9 +105,7 @@ export function Header() {
       <div className="md:hidden border-t border-gray-200">
         <div className="px-2 py-3 space-y-1 flex flex-col items-start">
           <RoleIndicator />
-          <div className="mt-2 w-full">
-            <WalletConnect />
-          </div>
+
         </div>
       </div>
     </header>
