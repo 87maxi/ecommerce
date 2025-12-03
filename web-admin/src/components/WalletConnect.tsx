@@ -144,94 +144,92 @@ export function WalletConnect() {
       ) : (
         <div className="space-y-3">
           <div className="flex flex-col space-y-3 p-3 sm:p-4 bg-white rounded-lg border border-gray-200 shadow-sm">
-                <div className="flex items-center justify-between flex-wrap gap-3">
-                  <div className="flex items-center space-x-3">
-                    <div className="w-10 h-10 rounded-full bg-indigo-100 ring-2 ring-indigo-200 flex items-center justify-center">
-                      <svg viewBox="0 0 24 24" className="w-6 h-6 text-indigo-600">
-                        <path
-                          fill="currentColor"
-                          d="M12 2C6.486 2 2 6.486 2 12s4.486 10 10 10 10-4.486 10-10S17.514 2 12 2zm0 18c-4.411 0-8-3.589-8-8s3.589-8 8-8 8 3.589 8 8-3.589 8-8 8z"
-
-          
-                        <circle cx="12" cy="12" r="3" fill="currentColor" />
-                      </svg>
-                    </div>
-                    <div className="flex flex-col">
-                      <div className="flex items-center space-x-2">
-                        <p className="text-sm font-medium text-gray-900">
-                          {formatAddress(address!)}
-                        </p>
-                        <button
-                          onClick={() => navigator.clipboard.writeText(address)}
-                          className="text-gray-400 hover:text-gray-600 transition-colors"
-                          title="Copiar dirección"
-                        >
-                          <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z" />
-                          </svg>
-                        </button>
-                      </div>
-                      <p className="text-xs text-gray-500">
-                        Red: {chainId}
-                      </p>
-                    </div>
-                  </div>
-
-                  <div className="flex space-x-2 flex-shrink-0">
+            <div className="flex items-center justify-between flex-wrap gap-3">
+              <div className="flex items-center space-x-3">
+                <div className="w-10 h-10 rounded-full bg-indigo-100 ring-2 ring-indigo-200 flex items-center justify-center">
+                  <svg viewBox="0 0 24 24" className="w-6 h-6 text-indigo-600">
+                    <path
+                      fill="currentColor"
+                      d="M12 2C6.486 2 2 6.486 2 12s4.486 10 10 10 10-4.486 10-10S17.514 2 12 2zm0 18c-4.411 0-8-3.589-8s3.589-8 8-8 8 3.589 8 8-3.589 8-8 8z"
+                    />
+                    <circle cx="12" cy="12" r="3" fill="currentColor" />
+                  </svg>
+                </div>
+                <div className="flex flex-col">
+                  <div className="flex items-center space-x-2">
+                    <p className="text-sm font-medium text-gray-900">
+                      {formatAddress(address!)}
+                    </p>
                     <button
-                      onClick={async () => {
+                      onClick={() => navigator.clipboard.writeText(address)}
+                      className="text-gray-400 hover:text-gray-600 transition-colors"
+                      title="Copiar dirección"
+                    >
+                      <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z" />
+                      </svg>
+                    </button>
+                  </div>
+                  <p className="text-xs text-gray-500">
+                    Red: {chainId}
+                  </p>
+                </div>
+              </div>
+
+              <div className="flex space-x-2 flex-shrink-0">
+                <button
+                  onClick={async () => {
+                    try {
+                      await window.ethereum?.request({
+                        method: 'wallet_switchEthereumChain',
+                        params: [{ chainId: '0x7A69' }],
+                      });
+                    } catch (switchError: any) {
+                      // Si la red no está agregada, intenta agregarla
+                      if (switchError.code === 4902) {
                         try {
                           await window.ethereum?.request({
-                            method: 'wallet_switchEthereumChain',
-                            params: [{ chainId: '0x7A69' }],
+                            method: 'wallet_addEthereumChain',
+                            params: [{
+                              chainId: '0x7A69',
+                              chainName: 'Localhost 8545',
+                              nativeCurrency: {
+                                name: 'ETH',
+                                symbol: 'ETH',
+                                decimals: 18,
+                              },
+                              rpcUrls: ['http://127.0.0.1:8545'],
+                            }],
                           });
-                        } catch (switchError: any) {
-                          // Si la red no está agregada, intenta agregarla
-                          if (switchError.code === 4902) {
-                            try {
-                              await window.ethereum?.request({
-                                method: 'wallet_addEthereumChain',
-                                params: [{
-                                  chainId: '0x7A69',
-                                  chainName: 'Localhost 8545',
-                                  nativeCurrency: {
-                                    name: 'ETH',
-                                    symbol: 'ETH',
-                                    decimals: 18,
-                                  },
-                                  rpcUrls: ['http://127.0.0.1:8545'],
-                                }],
-                              });
-                            } catch (addError) {
-                              console.error('Error adding network:', addError);
-                            }
-                          }
+                        } catch (addError) {
+                          console.error('Error adding network:', addError);
                         }
-                      }}
-                      className="px-3 py-1.5 text-xs font-medium bg-gray-100 text-gray-700 rounded-lg hover:bg-gray-200 transition-colors"
-                      title="Cambiar a red local"
-                    >
-                      <div className="flex items-center space-x-1">
-                        <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14" />
-                        </svg>
-                        <span>Local</span>
-                      </div>
-                    </button>
-                    <button
-                      onClick={handleDisconnect}
-                      className="px-3 py-1.5 text-xs font-medium bg-red-50 text-red-700 rounded-lg hover:bg-red-100 transition-colors"
-                      title="Desconectar"
-                    >
-                      <div className="flex items-center space-x-1">
-                        <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v4a2 2 0 01-2 2H9a2 2 0 01-2-2v-4" />
-                        </svg>
-                        <span>Salir</span>
-                      </div>
-                    </button>
+                      }
+                    }
+                  }}
+                  className="px-3 py-1.5 text-xs font-medium bg-gray-100 text-gray-700 rounded-lg hover:bg-gray-200 transition-colors"
+                  title="Cambiar a red local"
+                >
+                  <div className="flex items-center space-x-1">
+                    <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14" />
+                    </svg>
+                    <span>Local</span>
                   </div>
-
+                </button>
+                <button
+                  onClick={handleDisconnect}
+                  className="px-3 py-1.5 text-xs font-medium bg-red-50 text-red-700 rounded-lg hover:bg-red-100 transition-colors"
+                  title="Desconectar"
+                >
+                  <div className="flex items-center space-x-1">
+                    <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v4a2 2 0 01-2 2H9a2 2 0 01-2-2v-4" />
+                    </svg>
+                    <span>Salir</span>
+                  </div>
+                </button>
+              </div>
             </div>
 
             {/* EuroToken Balance Section */}
@@ -298,7 +296,7 @@ export function WalletConnect() {
                   onClick={() => {
                     // Simulando cambio a red local (Anvil)
                     console.log('Switching to network 31337');
-                    setShowNetworkSelector(false);
+                    setShowNetworkSelector;
                   }}
                   className="px-3 py-2 text-xs border border-gray-300 rounded-md text-gray-700 hover:bg-gray-50 text-left w-full"
                 >
@@ -315,10 +313,6 @@ export function WalletConnect() {
             </div>
           )}
         </div>
-      )}
-    </div>
-  );
-}
       )}
     </div>
   );
