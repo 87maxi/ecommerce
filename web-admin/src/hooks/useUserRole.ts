@@ -28,15 +28,7 @@ export function useUserRole(): UserRoleInfo {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    console.log('=== useUserRole Debug ===');
-    console.log('address:', address);
-    console.log('chainId:', chainId);
-    console.log('provider:', provider);
-    console.log('signer:', signer);
-    console.log('ecommerceContract:', ecommerceContract);
-
     if (!address || !ecommerceContract) {
-      console.log('Missing address or contract:', { address, ecommerceContract });
       if (address === null) {
         setRoleInfo({ role: 'loading' });
       } else if (!ecommerceContract) {
@@ -51,44 +43,29 @@ export function useUserRole(): UserRoleInfo {
     const determineRole = async () => {
       try {
         setLoading(true);
-        console.log('Starting role determination...');
 
         // First, check if the user is the contract owner (admin)
-        console.log('Checking contract owner...');
         const contractOwner = await ecommerceContract.owner();
-        console.log('Contract owner:', contractOwner);
-        console.log('User address:', address);
-        
         if (contractOwner.toLowerCase() === address.toLowerCase()) {
-          console.log('User is admin!');
           setRoleInfo({ role: 'admin' });
           setLoading(false);
           return;
         }
 
         // Check if the user is registered as a customer
-        console.log('Checking if user is registered customer...');
         const isCustomerRegistered =
           await ecommerceContract.isCustomerRegistered(address);
-        console.log('isCustomerRegistered:', isCustomerRegistered);
-        
         if (isCustomerRegistered) {
-          console.log('User is registered customer, getting customer info...');
           // Try to get customer info
           try {
             const customerInfo = await ecommerceContract.getCustomer(address);
-            console.log('Customer info:', customerInfo);
-            
             if (customerInfo && customerInfo.isRegistered) {
-              console.log('Setting role to customer...');
               setRoleInfo({ role: 'customer' });
               setLoading(false);
               return;
             }
           } catch (err) {
-            console.error('Error getting customer info:', err);
             // If we can't get customer info, still consider them a customer
-            console.log('Error getting customer info, but marking as customer...');
             setRoleInfo({ role: 'customer' });
             setLoading(false);
             return;
@@ -96,21 +73,15 @@ export function useUserRole(): UserRoleInfo {
         }
 
         // Check if the user owns any companies
-        console.log('Checking if user owns any companies...');
         try {
           // Get all companies
           const companyIds = await ecommerceContract.getAllCompanies();
-          console.log('Found companyIds:', companyIds);
-          
+
           // Check each company to see if the user is the owner
           for (const companyId of companyIds) {
-            console.log('Checking company:', companyId);
             try {
               const company = await ecommerceContract.getCompany(companyId);
-              console.log(`Company ${companyId} owner:`, company.owner);
-              
               if (company.owner.toLowerCase() === address.toLowerCase()) {
-                console.log(`User is owner of company ${companyId}, setting role...`);
                 setRoleInfo({
                   role: 'company_owner',
                   companyId: companyId.toString(),
@@ -129,7 +100,6 @@ export function useUserRole(): UserRoleInfo {
         }
 
         // If we get here, the user is not registered in any specific role
-        console.log('User role is unregistered...');
         setRoleInfo({ role: 'unregistered' });
       } catch (err) {
         console.error('Error determining user role:', err);
@@ -141,7 +111,6 @@ export function useUserRole(): UserRoleInfo {
               : 'Error desconocido al determinar rol',
         });
       } finally {
-        console.log('Role determination complete, setting loading to false');
         setLoading(false);
       }
     };
@@ -149,10 +118,11 @@ export function useUserRole(): UserRoleInfo {
     determineRole();
   }, [address, ecommerceContract]);
 
-  console.log('useUserRole returning:', { roleInfo, loading });
-  
-  if (loading) {
-    return { role: 'loading' };
+  // Si ya no está loading pero el rol todavía es 'loading',
+  // significa que hubo un problema en la determinación del rol
+  if (roleInfo.role === 'loading' && !loading) {
+    console.warn('Role determination completed but role is still loading - defaulting to unregistered');
+    return { role: 'unregistered' };
   }
 
   return roleInfo;
