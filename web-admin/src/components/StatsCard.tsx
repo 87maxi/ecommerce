@@ -12,20 +12,20 @@ interface StatsCardProps {
 
 export function StatsCard({ title, value, icon, color, description }: StatsCardProps) {
   return (
-    <div className="bg-white overflow-hidden shadow rounded-lg">
-      <div className="p-5">
+    <div className="bg-[var(--card)] overflow-hidden shadow-xl rounded-lg transition-all duration-200 hover:shadow-lg hover:-translate-y-0.5">
+      <div className="p-6">
         <div className="flex items-center">
-          <div className={`flex-shrink-0 rounded-md p-3 ${color}`}>
+          <div className={`flex-shrink-0 rounded-xl p-3 ${color} shadow-sm opacity-90 hover:opacity-100 transition-opacity`}>
             {icon}
           </div>
-          <div className="ml-5 w-0 flex-1">
+          <div className="ml-6 w-0 flex-1">
             <dl>
-              <dt className="text-sm font-medium text-gray-500 truncate">{title}</dt>
+              <dt className="text-sm font-medium text-[var(--muted)] truncate">{title}</dt>
               <dd className="flex items-baseline">
-                <div className="text-2xl font-semibold text-gray-900">{value}</div>
+                <div className="text-3xl font-bold text-[var(--foreground)]">{value}</div>
               </dd>
               {description && (
-                <dd className="mt-1 text-sm text-gray-500">{description}</dd>
+                <dd className="mt-2 text-sm text-[var(--muted)]">{description}</dd>
               )}
             </dl>
           </div>

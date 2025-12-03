@@ -1,7 +1,7 @@
 export const CONTRACT_ADDRESSES = {
   31337: {
-    Ecommerce: process.env.NEXT_PUBLIC_ECOMMERCE_CONTRACT_ADDRESS || '0xdc64a140aa3e981100a9beca4e685f962f0cf6c9',
-    EuroToken: process.env.NEXT_PUBLIC_EUROTOKEN_CONTRACT_ADDRESS || '0x5fbdb2315678afecb367f032d93f642f64180aa3',
+    Ecommerce: process.env.NEXT_PUBLIC_ECOMMERCE_CONTRACT_ADDRESS?.toLowerCase() || '0xdc64a140aa3e981100a9beca4e685f962f0cf6c9',
+    EuroToken: process.env.NEXT_PUBLIC_EUROTOKEN_CONTRACT_ADDRESS?.toLowerCase() || '0x5fbdb2315678afecb367f032d93f642f64180aa3',
   },
 };
 

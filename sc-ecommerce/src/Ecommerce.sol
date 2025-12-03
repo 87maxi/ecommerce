@@ -182,7 +182,7 @@ contract Ecommerce is ReentrancyGuard {
         uint256 price,
         string memory image,
         uint256 stock
-    ) external returns (uint256) {
+    ) external onlyCompanyOwner(companyId) returns (uint256) {
         return productStorage.addProduct(companyId, name, description, price, image, stock);
     }
 

@@ -2,7 +2,26 @@
 @tailwind components;
 @tailwind utilities;
 
+/* Light Theme Variables */
 :root {
+  --background: #f8fafc;
+  --foreground: #1e293b;
+  --primary: #8b5cf6;
+  --primary-light: #a78bfa;
+  --primary-dark: #7c3aed;
+  --secondary: #22d3ee;
+  --success: #10b981;
+  --warning: #f59e0b;
+  --danger: #ef4444;
+  --card: #ffffff;
+  --card-hover: #f1f5f9;
+  --border: #e2e8f0;
+  --muted: #94a3b8;
+  --muted-light: #cbd5e1;
+}
+
+/* Dark Theme Variables */
+.dark {
   --background: #0a0a0a;
   --foreground: #ededed;
   --primary: #8b5cf6;
@@ -13,7 +32,10 @@
   --warning: #f59e0b;
   --danger: #ef4444;
   --card: #1f1f1f;
+  --card-hover: #2d2d2d;
   --border: #2d2d2d;
+  --muted: #64748b;
+  --muted-light: #334155;
 }
 
 body {
@@ -39,19 +61,19 @@ body {
   }
 
   .btn-outline {
-    @apply border border-gray-600 text-gray-300 hover:bg-gray-800;
+    @apply border border-[var(--muted-light)] text-[var(--foreground)] hover:bg-[var(--muted-light)] hover:bg-opacity-10;
   }
 
   .card {
-    @apply bg-gray-900 border border-gray-700 rounded-lg p-4 shadow-lg;
+    @apply bg-[var(--card)] border border-[var(--border)] rounded-lg p-4 shadow-lg transition-all duration-200 hover:bg-[var(--card-hover)];
   }
 
   .input, .select {
-    @apply bg-gray-900 border border-gray-700 rounded px-3 py-2 text-white focus:outline-none focus:ring-2 focus:ring-purple-600 focus:border-transparent;
+    @apply bg-[var(--card)] border border-[var(--muted-light)] rounded px-3 py-2 text-[var(--foreground)] focus:outline-none focus:ring-2 focus:ring-[var(--primary)] focus:border-transparent;
   }
 
   .connect-wallet-btn {
-    @apply btn btn-primary flex items-center justify-center space-x-2;
+    @apply btn bg-[var(--primary)] hover:bg-[var(--primary-dark)] text-white flex items-center justify-center space-x-2;
   }
 
   .network-badge {

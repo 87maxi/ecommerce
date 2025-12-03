@@ -27,6 +27,7 @@ export default function CompaniesPage() {
   });
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [contractAddress, setContractAddress] = useState<string | null>(null);
 
   useEffect(() => {
     if (!ecommerceContract) {
@@ -38,14 +39,27 @@ export default function CompaniesPage() {
       try {
         setLoading(true);
         console.log('Loading companies...');
-        console.log('Contract address:', await ecommerceContract.getAddress());
+        
+        // Get and store contract address
+        const address = await ecommerceContract.getAddress();
+        setContractAddress(address);
+        console.log('Contract address:', address);
 
         const companyIdsResult = await ecommerceContract.getAllCompanies();
         console.log('Company IDs raw result:', companyIdsResult);
-
+        console.log('Type of companyIdsResult:', typeof companyIdsResult);
+        console.log('Keys of companyIdsResult:', Object.keys(companyIdsResult));
+        
         // Handle different return types using utility function
         const companyIds = normalizeArrayResponse(companyIdsResult);
         console.log('Normalized Company IDs:', companyIds);
+        
+        // Validate company IDs
+        if (companyIds.length === 0) {
+          console.log('No company IDs returned from contract');
+          setCompanies([]);
+          return;
+        }
 
         if (companyIds.length === 0) {
           console.log('No companies found.');
@@ -56,8 +70,17 @@ export default function CompaniesPage() {
         const companyDataPromises = companyIds.map(async (id: any) => {
           try {
             console.log('Fetching company with ID:', id);
-            const companyResult = await ecommerceContract.getCompany(id);
-            console.log(`Company ${id} raw result:`, companyResult);
+            console.log('ID type:', typeof id);
+            console.log('ID value:', id);
+            
+            // Ensure ID is in correct format
+            const companyId = typeof id === 'bigint' ? id : BigInt(id);
+            console.log('Using companyId:', companyId);
+            
+            const companyResult = await ecommerceContract.getCompany(companyId);
+            console.log(`Company ${companyId} raw result:`, companyResult);
+            console.log(`Company ${companyId} result type:`, typeof companyResult);
+            console.log(`Company ${companyId} result keys:`, Object.keys(companyResult));
 
             // Normalize company data using utility function
             const normalizedCompany = normalizeCompany(companyResult, id);

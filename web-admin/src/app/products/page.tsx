@@ -7,14 +7,18 @@ import Link from 'next/link';
 import { formatAddress } from '../../lib/utils';
 import { Product } from '../../types';
 import { normalizeProduct, normalizeArrayResponse } from '../../lib/contractUtils';
+import ProductModal from '../../components/ProductModal';
 
 export default function ProductsPage() {
-  const { isConnected, provider, signer, chainId } = useWallet();
+  const { isConnected, provider, signer, chainId, address } = useWallet();
   const ecommerceContract = useContract('Ecommerce', provider, signer, chainId);
 
   const [products, setProducts] = useState<Product[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [isModalOpen, setIsModalOpen] = useState(false);
+  const [editingProduct, setEditingProduct] = useState<Product | null>(null);
+  const [isCompanyOwner, setIsCompanyOwner] = useState(false);
 
   useEffect(() => {
     if (!ecommerceContract) {
@@ -45,9 +49,21 @@ export default function ProductsPage() {
           })
         );
 
-        const validProducts = productData.filter((p: Product | null): p is Product => p !== null);
-        console.log('Final products list:', validProducts);
-        setProducts(validProducts);
+              const validProducts = productData.filter((p: Product | null): p is Product => p !== null);
+      console.log('Final products list:', validProducts);
+      setProducts(validProducts);
+
+      // Intentar obtener información de la empresa para verificación de rol
+      if (validProducts.length > 0 && address) {
+        try {
+          const companyResult = await ecommerceContract.getCompany(validProducts[0].companyId);
+          const companyOwner = companyResult.owner?.toString() || companyResult[1]?.toString() || '';
+          setIsCompanyOwner(companyOwner.toLowerCase() === address.toLowerCase());
+        } catch (err) {
+          console.error('Error verificando propietario de empresa:', err);
+          setIsCompanyOwner(false);
+        }
+      }
       } catch (err) {
         console.error('Error loading products:', err);
         setError('Failed to load products');
@@ -79,6 +95,58 @@ export default function ProductsPage() {
       </div>
     );
   }
+
+  const handleEditProduct = (product: Product) => {
+    setEditingProduct(product);
+    setIsModalOpen(true);
+  };
+
+  const handleUpdateProduct = async (formData: any) => {
+    if (!ecommerceContract || !editingProduct) return;
+
+    try {
+      // Actualizar producto
+      const tx = await ecommerceContract.updateProduct(
+        BigInt(editingProduct.id),
+        formData.name,
+        formData.description,
+        BigInt(Math.floor(parseFloat(formData.price) * 1000000)), // Convertir a unidades de 6 decimales
+       formData.imageHash
+      );
+      await tx.wait();
+
+      // Actualizar stock
+      const tx2 = await ecommerceContract.updateStock(
+        BigInt(editingProduct.id),
+        BigInt(formData.stock)
+      );
+      await tx2.wait();
+
+      // Si el estado cambió
+      if (formData.isActive !== editingProduct.isActive) {
+        if (formData.isActive) {
+          await ecommerceContract.activateProduct(BigInt(editingProduct.id));
+        } else {
+          await ecommerceContract.deactivateProduct(BigInt(editingProduct.id));
+        }
+      }
+
+      // Actualizar producto en la lista local
+      setProducts(prevProducts => 
+        prevProducts.map(p => 
+          p.id === editingProduct.id 
+            ? { ...p, ...formData } 
+            : p
+        )
+      );
+    } catch (err: any) {
+      console.error('Error updating product:', err);
+      setError(err.message || 'Failed to update product');
+    } finally {
+      setIsModalOpen(false);
+      setEditingProduct(null);
+    }
+  };
 
   return (
     <div className="min-h-screen bg-gray-50 py-12 px-4 sm:px-6 lg:px-8">
@@ -145,6 +213,16 @@ export default function ProductsPage() {
                         )}
                       </div>
                     </div>
+                    {isCompanyOwner && (
+                      <div className="ml-4 flex-shrink-0">
+                        <button
+                          onClick={() => handleEditProduct(product)}
+                          className="text-indigo-600 hover:text-indigo-900 text-sm font-medium"
+                        >
+                          Editar
+                        </button>
+                      </div>
+                    )}
                   </div>
                 </div>
               ))}
@@ -152,6 +230,24 @@ export default function ProductsPage() {
           )}
         </div>
       </div>
+
+      <ProductModal
+        isOpen={isModalOpen}
+        onClose={() => {
+          setIsModalOpen(false);
+          setEditingProduct(null);
+        }}
+        onSubmit={editingProduct ? handleUpdateProduct : () => {}}
+        initialData={editingProduct ? {
+          name: editingProduct.name,
+          description: editingProduct.description,
+          price: editingProduct.price,
+          imageHash: editingProduct.imageHash,
+          stock: editingProduct.stock.toString(),
+          isActive: editingProduct.isActive
+        } : undefined}
+        isSubmitting={false}
+      />
     </div>
   );
 }
