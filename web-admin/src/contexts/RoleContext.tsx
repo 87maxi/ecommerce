@@ -13,8 +13,8 @@ const RoleContext = createContext<RoleContextType | undefined>(undefined);
 
 export function RoleProvider({ children }: { children: ReactNode }) {
   const roleInfo = useUserRole();
-  // Usamos el estado interno de loading del hook, no basado en el rol
-  const isLoading = false; // El hook useUserRole maneja su propio estado de loading
+  // Determinar si está cargando basado en el rol
+  const isLoading = roleInfo.role === 'loading';
 
   return (
     <RoleContext.Provider value={{ roleInfo, isLoading }}>

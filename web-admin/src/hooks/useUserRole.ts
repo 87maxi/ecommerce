@@ -118,12 +118,5 @@ export function useUserRole(): UserRoleInfo {
     determineRole();
   }, [address, ecommerceContract]);
 
-  // Si ya no está loading pero el rol todavía es 'loading',
-  // significa que hubo un problema en la determinación del rol
-  if (roleInfo.role === 'loading' && !loading) {
-    console.warn('Role determination completed but role is still loading - defaulting to unregistered');
-    return { role: 'unregistered' };
-  }
-
   return roleInfo;
 }
