@@ -1,4 +1,4 @@
-import { getContractAddress } from './src/lib/contracts/addresses.ts';
+import { getContractAddress } from './src/lib/contracts/addresses';
 
 try {
   const address = getContractAddress(31337, 'Ecommerce');

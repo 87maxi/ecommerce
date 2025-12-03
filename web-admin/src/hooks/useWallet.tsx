@@ -1,7 +1,7 @@
 'use client';
 
 import { BrowserProvider, JsonRpcSigner } from 'ethers';
-import { useState, useCallback, useEffect } from 'react';
+import React, { useState, useCallback, useEffect } from 'react';
 
 export type WalletProvider = 'metamask';
 
@@ -42,24 +42,30 @@ async function connectWalletProvider(walletInfo: WalletInfo): Promise<{
 }> {
   if (!window.ethereum) {
     throw new Error(
-      'No se encontró el proveedor Ethereum. Por favor, instala MetaMask.'
+      'No se encontró una wallet Ethereum. Por favor, instala MetaMask, Rabby u otra wallet compatible.'
     );
   }
 
   try {
+    console.log('Requesting wallet connection...');
     const provider = new BrowserProvider(window.ethereum);
     const accounts = await window.ethereum.request({
       method: 'eth_requestAccounts',
     });
 
+    console.log('Accounts received:', accounts);
+
     if (!accounts || accounts.length === 0) {
       throw new Error(
-        'No se encontraron cuentas. Por favor, desbloquea MetaMask.'
+        'No se encontraron cuentas. Por favor, desbloquea tu wallet.'
       );
     }
 
     const signer = await provider.getSigner();
     const network = await provider.getNetwork();
+
+    console.log('Connected to network:', network.chainId);
+    console.log('Connected address:', accounts[0]);
 
     return {
       provider,
@@ -68,6 +74,7 @@ async function connectWalletProvider(walletInfo: WalletInfo): Promise<{
       chainId: Number(network.chainId),
     };
   } catch (error: any) {
+    console.error('Wallet connection error:', error);
     if (error.code === 4001) {
       throw new Error('El usuario rechazó la conexión de la billetera');
     }
@@ -95,7 +102,14 @@ async function switchNetworkProvider(chainId: number): Promise<void> {
   }
 }
 
-export function useWallet() {
+export const WalletContext = React.createContext<WalletState & {
+  connect: (walletInfo: WalletInfo) => Promise<void>;
+  disconnect: () => void;
+  switchNetwork: (chainId: number) => Promise<void>;
+  isConnected: boolean;
+} | null>(null);
+
+export function WalletProvider({ children }: { children: React.ReactNode }) {
   const [state, setState] = useState<WalletState>({
     provider: null,
     signer: null,
@@ -242,11 +256,25 @@ export function useWallet() {
 
   const isConnected = !!state.address;
 
-  return {
+  const value = {
     ...state,
     connect,
     disconnect,
     switchNetwork,
     isConnected,
   };
+
+  return (
+    <WalletContext.Provider value= { value } >
+    { children }
+    </WalletContext.Provider>
+  );
+}
+
+export function useWallet() {
+  const context = React.useContext(WalletContext);
+  if (!context) {
+    throw new Error('useWallet must be used within a WalletProvider');
+  }
+  return context;
 }

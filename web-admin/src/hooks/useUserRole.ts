@@ -28,15 +28,17 @@ export function useUserRole(): UserRoleInfo {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    if (!address || !ecommerceContract) {
-      if (address === null) {
-        setRoleInfo({ role: 'loading' });
-      } else if (!ecommerceContract) {
-        setRoleInfo({ role: 'error', error: 'Contrato no disponible' });
-      } else {
-        setRoleInfo({ role: 'unregistered' });
-      }
+    // If no address, show loading
+    if (!address) {
+      setRoleInfo({ role: 'loading' });
       setLoading(false);
+      return;
+    }
+
+    // If address exists but contract not ready, keep loading
+    if (!ecommerceContract) {
+      setRoleInfo({ role: 'loading' });
+      setLoading(true);
       return;
     }
 

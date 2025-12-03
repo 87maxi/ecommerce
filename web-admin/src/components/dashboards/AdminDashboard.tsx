@@ -1,9 +1,9 @@
 'use client';
 
 import { useDashboardData } from '@/hooks/useDashboardData';
-
 import { RoleAwareNavigation } from '../RoleAwareNavigation';
 import { StatsCard } from '../StatsCard';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 
 export function AdminDashboard() {
   const {
@@ -16,7 +16,7 @@ export function AdminDashboard() {
   const stats = [
     {
       title: 'Empresas',
-      value: dashboardData.companyCount.toLocaleString(),
+      value: dashboardData?.companyCount?.toLocaleString() || '0',
       icon: (
         <svg
           className="h-6 w-6 text-white"
@@ -36,7 +36,7 @@ export function AdminDashboard() {
     },
     {
       title: 'Productos',
-      value: dashboardData.productCount.toLocaleString(),
+      value: dashboardData?.productCount?.toLocaleString() || '0',
       icon: (
         <svg
           className="h-6 w-6 text-white"
@@ -56,7 +56,7 @@ export function AdminDashboard() {
     },
     {
       title: 'Clientes',
-      value: dashboardData.customerCount.toLocaleString(),
+      value: dashboardData?.customerCount?.toLocaleString() || '0',
       icon: (
         <svg
           className="h-6 w-6 text-white"
@@ -76,7 +76,7 @@ export function AdminDashboard() {
     },
     {
       title: 'Ventas',
-      value: dashboardData.totalSales.toLocaleString(),
+      value: dashboardData?.totalSales?.toLocaleString() || '0',
       icon: (
         <svg
           className="h-6 w-6 text-white"
@@ -97,49 +97,49 @@ export function AdminDashboard() {
   ];
 
   return (
-    <div className="min-h-screen bg-gray-50 py-12 px-4 sm:px-6 lg:px-8">
-      <div className="max-w-7xl mx-auto">
-        <div className="text-center mb-8">
-          <div className="inline-flex items-center px-3 py-1 rounded-full text-sm font-medium bg-red-100 text-red-800 mb-2">
-            Rol: Administrador
-          </div>
-          <h1 className="text-4xl font-extrabold text-gray-900 sm:text-5xl sm:tracking-tight">
-            Panel de Administración
-          </h1>
-          <p className="mt-4 text-lg text-gray-500">
-            Gestiona empresas, productos y clientes en el e-commerce
-            descentralizado
+    <div className="space-y-6 sm:space-y-8">
+      {/* Header */}
+      <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-4">
+        <div>
+          <h1 className="text-2xl sm:text-3xl font-bold text-gray-900">Panel de Administración</h1>
+          <p className="text-sm sm:text-base text-gray-500 mt-2">
+            Gestiona empresas, productos y clientes en el e-commerce descentralizado
           </p>
         </div>
-
-        {dashboardError ? (
-          <div className="bg-red-50 border border-red-200 rounded-lg p-6 mb-8">
-            <p className="text-red-800">{dashboardError}</p>
-          </div>
-        ) : dashboardLoading ? (
-                      <div className="flex justify-center items-center py-12">
-              <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-[var(--primary)]"></div>
-              <span className="ml-3 text-[var(--muted)]">Cargando datos...</span>
-            </div>
-        ) : (
-          <>
-            {/* Estadísticas */}
-            <div className="grid grid-cols-1 gap-5 sm:grid-cols-2 lg:grid-cols-4 mb-8">
-              {stats.map((stat, index) => (
-                <StatsCard
-                  key={index}
-                  title={stat.title}
-                  value={stat.value}
-                  icon={stat.icon}
-                  color={stat.color}
-                />
-              ))}
-            </div>
-
-            <RoleAwareNavigation />
-          </>
-        )}
+        <div className="inline-flex items-center px-3 py-1.5 rounded-full text-sm font-medium bg-red-100 text-red-800 self-start">
+          Rol: Administrador
+        </div>
       </div>
+
+      {dashboardError ? (
+        <Card className="border-red-200 bg-red-50">
+          <CardContent className="p-6">
+            <p className="text-red-800">{dashboardError}</p>
+          </CardContent>
+        </Card>
+      ) : dashboardLoading ? (
+        <div className="flex justify-center items-center py-12">
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-[var(--primary)]"></div>
+          <span className="ml-3 text-[var(--muted)]">Cargando datos...</span>
+        </div>
+      ) : (
+        <>
+          {/* Estadísticas */}
+          <div className="grid grid-cols-1 gap-5 sm:grid-cols-2 lg:grid-cols-4">
+            {stats.map((stat, index) => (
+              <StatsCard
+                key={index}
+                title={stat.title}
+                value={stat.value}
+                icon={stat.icon}
+                color={stat.color}
+              />
+            ))}
+          </div>
+
+          <RoleAwareNavigation />
+        </>
+      )}
     </div>
   );
 }

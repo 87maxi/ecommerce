@@ -1,32 +1,18 @@
 'use client';
 
 import Link from 'next/link';
-import { useRouter } from 'next/navigation';
-
 import { useWallet } from '../hooks/useWallet';
-
-import { RoleIndicator } from './RoleIndicator';
-import { ThemeProvider } from './ThemeProvider';
 import { useTheme } from './ThemeProvider';
-
+import { RoleIndicator } from './RoleIndicator';
+import { useState } from 'react';
 
 export function Header() {
   const { isConnected } = useWallet();
-  const router = useRouter();
   const { theme, toggleTheme } = useTheme();
-
-  const baseNavigation = [
-    { name: 'Dashboard', href: '/' },
-    { name: 'Empresas', href: '/companies' },
-    { name: 'Productos', href: '/products' },
-    { name: 'Clientes', href: '/customers' },
-  ];
-
-  // Navigation will be handled by the dashboard components based on role
-  // We'll keep a minimal navigation in header for now
+  const [isMenuOpen, setIsMenuOpen] = useState(false);
 
   return (
-    <header className="bg-white shadow-sm border-b border-gray-200">
+    <header className="bg-white shadow-sm border-b border-gray-200 fixed w-full z-10">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="flex justify-between h-16 items-center">
           <div className="flex items-center flex-shrink-0">
@@ -55,19 +41,19 @@ export function Header() {
             </Link>
           </div>
 
-          <div className="hidden md:ml-6 md:flex md:items-center md:space-x-4 flex-1 justify-center">
+          <div className="hidden md:ml-6 md:flex md:items-center md:space-x-4">
             <RoleIndicator />
           </div>
 
-          <div className="flex items-center space-x-3 flex-shrink-0">
+          <div className="flex items-center space-x-3">
             <button
               onClick={toggleTheme}
-              className="p-2.5 rounded-lg bg-[var(--muted-light)] text-[var(--muted)] hover:text-[var(--foreground)] hover:bg-[var(--muted)] transition-all duration-200"
+              className="p-2 rounded-lg bg-[var(--muted-light)] text-[var(--muted)] hover:text-[var(--foreground)] hover:bg-[var(--muted)] transition-all duration-200"
               aria-label="Toggle theme"
             >
               {theme === 'dark' ? (
                 <svg
-                  className="w-4 h-4"
+                  className="w-5 h-5"
                   fill="none"
                   stroke="currentColor"
                   viewBox="0 0 24 24"
@@ -81,7 +67,7 @@ export function Header() {
                 </svg>
               ) : (
                 <svg
-                  className="w-4 h-4"
+                  className="w-5 h-5"
                   fill="none"
                   stroke="currentColor"
                   viewBox="0 0 24 24"
@@ -96,18 +82,37 @@ export function Header() {
               )}
             </button>
 
-
+            {/* Mobile menu button */}
+            <button
+              onClick={() => setIsMenuOpen(!isMenuOpen)}
+              className="md:hidden p-2 rounded-md text-gray-700 hover:text-gray-900 hover:bg-gray-100"
+            >
+              <svg
+                className="h-6 w-6"
+                fill="none"
+                viewBox="0 0 24 24"
+                stroke="currentColor"
+              >
+                <path
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  strokeWidth="2"
+                  d="M4 6h16M4 12h16M4 18h16"
+                />
+              </svg>
+            </button>
           </div>
         </div>
       </div>
 
       {/* Mobile navigation menu */}
-      <div className="md:hidden border-t border-gray-200">
-        <div className="px-2 py-3 space-y-1 flex flex-col items-start">
-          <RoleIndicator />
-
+      {isMenuOpen && (
+        <div className="md:hidden border-t border-gray-200 bg-white">
+          <div className="px-2 pt-2 pb-3 space-y-1 flex flex-col items-start">
+            <RoleIndicator />
+          </div>
         </div>
-      </div>
+      )}
     </header>
   );
 }

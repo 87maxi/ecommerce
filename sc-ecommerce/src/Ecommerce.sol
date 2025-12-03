@@ -115,6 +115,12 @@ contract Ecommerce is ReentrancyGuard {
     // Next invoice ID
     uint256 public nextInvoiceId;
 
+    // Array to track all invoice IDs
+    uint256[] private allInvoices;
+
+    // Array to track all registered customer addresses
+    address[] private allCustomers;
+
     // Events
     event CompanyRegistered(uint256 indexed companyId, address indexed companyAddress, string name);
     event CompanyDeactivated(uint256 indexed companyId);
@@ -256,6 +262,10 @@ contract Ecommerce is ReentrancyGuard {
         }
         
         customerStorage.registerCustomer(msg.sender);
+        
+        // Add to all customers list
+        allCustomers.push(msg.sender);
+        
         return true;
     }
 
@@ -318,6 +328,9 @@ contract Ecommerce is ReentrancyGuard {
         // Add to company's invoice list
         companyInvoices[companyId].push(invoiceId);
 
+        // Add to all invoices list
+        allInvoices.push(invoiceId);
+
         // Clear customer's cart
         shoppingCartStorage.clearCart(msg.sender);
 
@@ -342,6 +355,10 @@ contract Ecommerce is ReentrancyGuard {
 
     function getCompanyInvoices(uint256 companyId) external view returns (uint256[] memory) {
         return companyInvoices[companyId];
+    }
+
+    function getAllInvoices() external view returns (uint256[] memory) {
+        return allInvoices;
     }
 
     // Payment functions
@@ -416,10 +433,7 @@ contract Ecommerce is ReentrancyGuard {
     }
 
     function getAllCustomers() external view returns (address[] memory) {
-        // This is a complex operation that needs to scan all possible customer addresses
-        // In a real implementation, we would maintain a list of registered customers
-        // For now, we'll return an empty array
-        return new address[](0);
+        return allCustomers;
     }
 
     function isCustomerRegistered(address customerAddress) external view returns (bool) {

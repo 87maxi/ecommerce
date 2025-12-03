@@ -44,23 +44,27 @@ export function normalizeProduct(
   };
 }
 
-export function normalizeArrayResponse(response: any): bigint[] {
-  // Handle response that might be a BigNumber array or nested array
-  if (Array.isArray(response)) {
-    // If it's a nested array (sometimes comes back as [ [values] ])
-    if (Array.isArray(response[0])) {
-      return response[0] as bigint[];
-    }
-    return response as bigint[];
+export function normalizeArrayResponse(response: any): any[] {
+  if (!response) return [];
+
+  // Handle ethers ProxyResult which behaves like an array
+  // We can convert it to a regular array using Array.from or spread
+  const arrayResponse = Array.isArray(response)
+    ? response
+    : (typeof response === 'object' && 'length' in response)
+      ? Array.from(response)
+      : [response];
+
+  if (arrayResponse.length === 0) return [];
+
+  // Check if it's a nested array (e.g. [[1, 2, 3]])
+  // Use explicit check for array-like structure on the first element
+  const firstItem = arrayResponse[0];
+  if (Array.isArray(firstItem) || (typeof firstItem === 'object' && firstItem !== null && 'length' in firstItem && typeof firstItem !== 'bigint')) {
+    return Array.from(firstItem);
   }
 
-  // If it's a single value
-  if (typeof response === 'bigint') {
-    return [response];
-  }
-
-  // Fallback
-  return [];
+  return arrayResponse;
 }
 
 export function normalizeCompany(companyResult: any, companyId: string): any {

@@ -11,6 +11,7 @@ import {
 } from '../../lib/contractUtils';
 import { formatAddress, formatDate } from '../../lib/utils';
 import { Company } from '../../types';
+import { RoleGuard } from '../../components/RoleGuard';
 
 type CompanyFormData = {
   address: string;
@@ -19,6 +20,14 @@ type CompanyFormData = {
 };
 
 export default function CompaniesPage() {
+  return (
+    <RoleGuard allowedRoles={['admin']}>
+      <CompaniesPageContent />
+    </RoleGuard>
+  );
+}
+
+function CompaniesPageContent() {
   const { isConnected, provider, signer, chainId, switchNetwork } = useWallet();
   const ecommerceContract = useContract('Ecommerce', provider, signer, chainId);
 
@@ -31,7 +40,6 @@ export default function CompaniesPage() {
   });
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const [contractAddress, setContractAddress] = useState<string | null>(null);
 
   useEffect(() => {
     if (!ecommerceContract) {
@@ -44,57 +52,26 @@ export default function CompaniesPage() {
         setLoading(true);
         console.log('Loading companies...');
 
-        // Get and store contract address
-        const address = await ecommerceContract.getAddress();
-        setContractAddress(address);
-        console.log('Contract address:', address);
-
         const companyIdsResult = await ecommerceContract.getAllCompanies();
-        console.log('Company IDs raw result:', companyIdsResult);
-        console.log('Type of companyIdsResult:', typeof companyIdsResult);
-        console.log('Keys of companyIdsResult:', Object.keys(companyIdsResult));
 
         // Handle different return types using utility function
         const companyIds = normalizeArrayResponse(companyIdsResult);
-        console.log('Normalized Company IDs:', companyIds);
 
         // Validate company IDs
         if (companyIds.length === 0) {
-          console.log('No company IDs returned from contract');
-          setCompanies([]);
-          return;
-        }
-
-        if (companyIds.length === 0) {
-          console.log('No companies found.');
           setCompanies([]);
           return;
         }
 
         const companyDataPromises = companyIds.map(async (id: any) => {
           try {
-            console.log('Fetching company with ID:', id);
-            console.log('ID type:', typeof id);
-            console.log('ID value:', id);
-
             // Ensure ID is in correct format
             const companyId = typeof id === 'bigint' ? id : BigInt(id);
-            console.log('Using companyId:', companyId);
 
             const companyResult = await ecommerceContract.getCompany(companyId);
-            console.log(`Company ${companyId} raw result:`, companyResult);
-            console.log(
-              `Company ${companyId} result type:`,
-              typeof companyResult
-            );
-            console.log(
-              `Company ${companyId} result keys:`,
-              Object.keys(companyResult)
-            );
 
             // Normalize company data using utility function
             const normalizedCompany = normalizeCompany(companyResult, id);
-            console.log(`Company ${id} normalized:`, normalizedCompany);
 
             return normalizedCompany;
           } catch (err) {
@@ -108,13 +85,12 @@ export default function CompaniesPage() {
           (c: Company | null): c is Company => c !== null
         );
 
-        console.log('Final company data array:', companyData);
         setCompanies(companyData);
       } catch (err) {
         console.error('Error loading companies:', err);
         setError(
           'Failed to load companies: ' +
-            (err instanceof Error ? err.message : String(err))
+          (err instanceof Error ? err.message : String(err))
         );
       } finally {
         setLoading(false);
@@ -263,17 +239,17 @@ export default function CompaniesPage() {
                 >
                   Dirección de la Empresa
                 </label>
-                                  <input
-                    type="text"
-                    id="address"
-                    value={formData.address}
-                    onChange={e =>
-                      setFormData({ ...formData, address: e.target.value })
-                    }
-                    className="mt-1 block w-full border border-[var(--muted-light)] rounded-md shadow-sm py-2 px-3 focus:outline-none focus:ring-[var(--primary)] focus:border-[var(--primary)] bg-[var(--card)] text-[var(--foreground)]"
-                    placeholder="0x..."
-                    required
-                  />
+                <input
+                  type="text"
+                  id="address"
+                  value={formData.address}
+                  onChange={e =>
+                    setFormData({ ...formData, address: e.target.value })
+                  }
+                  className="mt-1 block w-full border border-[var(--muted-light)] rounded-md shadow-sm py-2 px-3 focus:outline-none focus:ring-[var(--primary)] focus:border-[var(--primary)] bg-[var(--card)] text-[var(--foreground)]"
+                  placeholder="0x..."
+                  required
+                />
               </div>
 
               <div>
@@ -283,17 +259,17 @@ export default function CompaniesPage() {
                 >
                   Nombre
                 </label>
-                                  <input
-                    type="text"
-                    id="name"
-                    value={formData.name}
-                    onChange={e =>
-                      setFormData({ ...formData, name: e.target.value })
-                    }
-                    className="mt-1 block w-full border border-[var(--muted-light)] rounded-md shadow-sm py-2 px-3 focus:outline-none focus:ring-[var(--primary)] focus:border-[var(--primary)] bg-[var(--card)] text-[var(--foreground)]"
-                    placeholder="Nombre de la empresa"
-                    required
-                  />
+                <input
+                  type="text"
+                  id="name"
+                  value={formData.name}
+                  onChange={e =>
+                    setFormData({ ...formData, name: e.target.value })
+                  }
+                  className="mt-1 block w-full border border-[var(--muted-light)] rounded-md shadow-sm py-2 px-3 focus:outline-none focus:ring-[var(--primary)] focus:border-[var(--primary)] bg-[var(--card)] text-[var(--foreground)]"
+                  placeholder="Nombre de la empresa"
+                  required
+                />
               </div>
 
               <div>
@@ -303,27 +279,26 @@ export default function CompaniesPage() {
                 >
                   Descripción
                 </label>
-                                  <textarea
-                    id="description"
-                    value={formData.description}
-                    onChange={e =>
-                      setFormData({ ...formData, description: e.target.value })
-                    }
-                    rows={3}
-                    className="mt-1 block w-full border border-[var(--muted-light)] rounded-md shadow-sm py-2 px-3 focus:outline-none focus:ring-[var(--primary)] focus:border-[var(--primary)] bg-[var(--card)] text-[var(--foreground)]"
-                    placeholder="Descripción de la empresa"
-                  />
+                <textarea
+                  id="description"
+                  value={formData.description}
+                  onChange={e =>
+                    setFormData({ ...formData, description: e.target.value })
+                  }
+                  rows={3}
+                  className="mt-1 block w-full border border-[var(--muted-light)] rounded-md shadow-sm py-2 px-3 focus:outline-none focus:ring-[var(--primary)] focus:border-[var(--primary)] bg-[var(--card)] text-[var(--foreground)]"
+                  placeholder="Descripción de la empresa"
+                />
               </div>
 
               <div>
                 <button
                   type="submit"
                   disabled={submitting}
-                  className={`w-full flex justify-center py-2 px-4 border border-transparent rounded-md shadow-sm text-sm font-medium text-white ${
-                    !ecommerceContract && isConnected
-                      ? 'bg-yellow-600 hover:bg-yellow-700'
-                      : 'bg-[var(--primary)] hover:bg-[var(--primary-dark)]'
-                  } focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-[var(--primary)] disabled:opacity-50`}
+                  className={`w-full flex justify-center py-2 px-4 border border-transparent rounded-md shadow-sm text-sm font-medium text-white ${!ecommerceContract && isConnected
+                    ? 'bg-yellow-600 hover:bg-yellow-700'
+                    : 'bg-[var(--primary)] hover:bg-[var(--primary-dark)]'
+                    } focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-[var(--primary)] disabled:opacity-50`}
                 >
                   {submitting
                     ? 'Procesando...'
@@ -370,10 +345,10 @@ export default function CompaniesPage() {
             ) : (
               <div className="space-y-4">
                 {companies.map(company => (
-                                      <div
-                      key={company.id}
-                      className="border border-[var(--border)] rounded-lg p-4 hover:bg-[var(--muted-light)]"
-                    >
+                  <div
+                    key={company.id}
+                    className="border border-[var(--border)] rounded-lg p-4 hover:bg-[var(--muted-light)]"
+                  >
                     <div className="flex justify-between items-start">
                       <div className="flex-1">
                         <h3 className="font-medium text-gray-900">

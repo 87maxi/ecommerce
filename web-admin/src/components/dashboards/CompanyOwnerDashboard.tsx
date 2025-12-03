@@ -111,9 +111,20 @@ export function CompanyOwnerDashboard({
   return (
     <div className="min-h-screen bg-gray-50 py-12 px-4 sm:px-6 lg:px-8">
       <div className="max-w-7xl mx-auto">
-        <div className="text-center mb-8">
-          <div className="inline-flex items-center px-3 py-1 rounded-full text-sm font-medium bg-orange-100 text-orange-800 mb-2">
-            Rol: Propietario de Empresa
+        <div className="space-y-6 sm:space-y-8">
+          {/* Header */}
+          <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-4">
+            <div>
+              <h1 className="text-2xl sm:text-3xl font-bold text-gray-900">
+                Mi Empresa{companyName ? `: ${companyName}` : ''}
+              </h1>
+              <p className="text-sm sm:text-base text-gray-500 mt-2">
+                Gestiona tus productos y pedidos
+              </p>
+            </div>
+            <div className="inline-flex items-center px-3 py-1.5 rounded-full text-sm font-medium bg-blue-100 text-blue-800 self-start">
+              Rol: Propietario de Empresa
+            </div>
           </div>
           <h1 className="text-4xl font-extrabold text-gray-900 sm:text-5xl sm:tracking-tight">
             Panel de {companyName || 'Tu Empresa'}
@@ -129,10 +140,10 @@ export function CompanyOwnerDashboard({
             <p className="text-red-800">{dashboardError}</p>
           </div>
         ) : dashboardLoading ? (
-                      <div className="flex justify-center items-center py-12">
-              <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-[var(--primary)]"></div>
-              <span className="ml-3 text-[var(--muted)]">Cargando datos...</span>
-            </div>
+          <div className="flex justify-center items-center py-12">
+            <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-[var(--primary)]"></div>
+            <span className="ml-3 text-[var(--muted)]">Cargando datos...</span>
+          </div>
         ) : (
           <>
             {/* Estadísticas */}
