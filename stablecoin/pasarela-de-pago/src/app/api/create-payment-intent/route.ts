@@ -1,4 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
+import { orders } from '@/lib/orderStorage';
+import { CreatePaymentIntentRequest, CreatePaymentIntentResponse } from '@/types';
 
 const stripe = require('stripe')(process.env.STRIPE_SECRET_KEY!);
 
@@ -14,7 +16,7 @@ const stripe = require('stripe')(process.env.STRIPE_SECRET_KEY!);
  */
 export async function POST(request: NextRequest) {
     try {
-        const body = await request.json();
+        const body: CreatePaymentIntentRequest = await request.json();
         const { amount, walletAddress, invoice } = body;
 
         // Validar campos requeridos
@@ -27,7 +29,7 @@ export async function POST(request: NextRequest) {
         }
 
         // Validar que amount sea un número positivo
-        const amountNum = parseFloat(amount);
+        const amountNum = parseFloat(amount.toString());
         if (isNaN(amountNum) || amountNum <= 0) {
             console.error('[CREATE-PAYMENT-INTENT] Invalid amount:', amount);
             return NextResponse.json(
@@ -63,10 +65,31 @@ export async function POST(request: NextRequest) {
             status: paymentIntent.status
         });
 
-        return NextResponse.json({
+        // Crear orden en orderStorage para que el webhook pueda encontrarla
+        const orderId = paymentIntent.id;
+        const order = {
+            orderId,
+            paymentIntentId: paymentIntent.id,
+            buyerAddress: walletAddress,
+            tokenAmount: amountNum,
+            invoice,
+            status: 'pending' as const,
+            createdAt: new Date(),
+            expiresAt: new Date(Date.now() + 30 * 60 * 1000), // 30 minutes
+            txHash: null,
+            completedAt: null
+        };
+
+        orders.set(orderId, order);
+        console.log('[CREATE-PAYMENT-INTENT] Order created in storage:', orderId);
+
+        const response: CreatePaymentIntentResponse = {
             clientSecret: paymentIntent.client_secret,
-            paymentIntentId: paymentIntent.id
-        });
+            paymentIntentId: paymentIntent.id,
+            orderId
+        };
+
+        return NextResponse.json(response);
 
     } catch (error: any) {
         console.error('[CREATE-PAYMENT-INTENT] Error:', error);

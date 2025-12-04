@@ -1,12 +1,15 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
+import { ethers } from 'ethers';
 
 export function useWallet() {
   const [isConnected, setIsConnected] = useState(false);
   const [chainId, setChainId] = useState<string | null>(null);
   const [account, setAccount] = useState<string>('');
   const [error, setError] = useState<string | null>(null);
+  const [provider, setProvider] = useState<ethers.providers.Web3Provider | null>(null);
+  const isProviderInitialized = useRef(false);
 
   const connectWallet = async () => {
     if (!window.ethereum) {
@@ -35,9 +38,20 @@ export function useWallet() {
 
   // Check if wallet is already connected
   useEffect(() => {
+    // Prevent multiple initializations using ref
+    if (isProviderInitialized.current) {
+      return;
+    }
+
     const checkConnection = async () => {
       if (window.ethereum) {
         try {
+          console.log('[useWallet] Initializing provider (should only happen once)...');
+          // Initialize provider once
+          const web3Provider = new ethers.providers.Web3Provider(window.ethereum as any);
+          setProvider(web3Provider);
+          isProviderInitialized.current = true;
+
           const accounts = await window.ethereum.request({
             method: 'eth_accounts'
           }) as string[];
@@ -88,6 +102,7 @@ export function useWallet() {
     chainId,
     error,
     connectWallet,
-    disconnectWallet
+    disconnectWallet,
+    provider
   };
 }

@@ -6,9 +6,7 @@ import {Test} from  "forge-std/Test.sol";
 import {Ecommerce} from "../src/Ecommerce.sol";
 
 // Import libraries (needed for storage layout)
-import {CompanyLib}  from "../src/libraries/CompanyLib.sol";
 import {ProductLib}  from "../src/libraries/ProductLib.sol";
-//import {CustomerLib}  from "../src/libraries/CustomerLib.sol";
 import {ShoppingCartLib}  from "../src/libraries/ShoppingCartLib.sol";
 
 contract ShoppingCartTest is Test {

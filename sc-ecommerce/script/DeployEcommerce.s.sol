@@ -9,10 +9,7 @@ import {Ecommerce} from "../src/Ecommerce.sol";
 import {console2} from "forge-std/console2.sol";
 
 // Import libraries (needed for storage layout)
-import {CompanyLib} from "../src/libraries/CompanyLib.sol";
-import {ProductLib} from "../src/libraries/ProductLib.sol";
-import {CustomerLib} from "../src/libraries/CustomerLib.sol";
-import {ShoppingCartLib} from "../src/libraries/ShoppingCartLib.sol";
+// Unused imports removed to reduce contract size
 
 contract DeployEcommerce is Script {
     function run() public {

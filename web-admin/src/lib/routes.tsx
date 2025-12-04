@@ -15,7 +15,7 @@ export const ROUTES = {
 export type NavigationItem = {
   name: string;
   href: string;
-  icon: JSX.Element;
+  icon: React.ReactNode;
   allowedRoles: UserRole[];
 };
 

@@ -7,44 +7,75 @@ import { ethers } from 'ethers';
 type EthersType = typeof ethers;
 const { providers, utils }: { providers: EthersType['providers'], utils: EthersType['utils'] } = ethers as any;
 import EcommerceABI from '@/contracts/abis/EcommerceABI.json';
+import { useWallet } from './useWallet';
 
 // Dirección del contrato (debería venir de variables de entorno)
 const CONTRACT_ADDRESS = process.env.NEXT_PUBLIC_ECOMMERCE_CONTRACT_ADDRESS || '';
 
 export function useContract() {
-  const [provider, setProvider] = useState<ethers.providers.Web3Provider | null>(null);
+  const { provider: walletProvider, account: walletAccount } = useWallet();
   const [signer, setSigner] = useState<ethers.Signer | null>(null);
   const [contract, setContract] = useState<ethers.Contract | null>(null);
   const [account, setAccount] = useState<string | null>(null);
+  const [isInitialized, setIsInitialized] = useState(false);
 
-  // Inicializar el contrato cuando haya una cuenta conectada
+  // Inicializar el contrato cuando haya un provider disponible
   useEffect(() => {
-    if (typeof window !== 'undefined' && window.ethereum) {
-      const initProvider = async () => {
-        try {
-          const web3Provider = new ethers.providers.Web3Provider(window.ethereum as any);
-          const web3Signer = web3Provider.getSigner();
-          const userAccount = await web3Signer.getAddress();
-
-          setProvider(web3Provider);
-          setSigner(web3Signer);
-          setAccount(userAccount);
-
-          const ecommerceContract = new ethers.Contract(
-            CONTRACT_ADDRESS,
-            EcommerceABI,
-            web3Signer
-          );
-
-          setContract(ecommerceContract);
-        } catch (error) {
-          console.error('Error initializing contract:', error);
-        }
-      };
-
-      initProvider();
+    // Prevent multiple initializations or initialize without provider
+    if (isInitialized || !walletProvider || !walletAccount) {
+      return;
     }
-  }, []);
+
+    const initContract = async () => {
+      try {
+        console.log('[useContract] Initializing contract with shared provider...');
+        const web3Signer = walletProvider.getSigner();
+
+        setSigner(web3Signer);
+        setAccount(walletAccount);
+
+        const ecommerceContract = new ethers.Contract(
+          CONTRACT_ADDRESS,
+          EcommerceABI,
+          web3Signer
+        );
+
+        setContract(ecommerceContract);
+        setIsInitialized(true);
+
+        // Verificar si el cliente está registrado y registrarlo si no lo está
+        await checkAndRegisterCustomer(ecommerceContract, walletAccount);
+      } catch (error) {
+        console.error('[useContract] Error initializing contract:', error);
+        setIsInitialized(false);
+      }
+    };
+
+    initContract();
+  }, [walletProvider, walletAccount, isInitialized]);
+
+  // Función para verificar y registrar al cliente si no está registrado
+  const checkAndRegisterCustomer = async (contract: ethers.Contract, account: string): Promise<boolean> => {
+    try {
+      const isRegistered = await contract.isCustomerRegistered(account);
+
+      if (!isRegistered) {
+        console.log('[Customer Registration] Customer not registered, registering...', account);
+        const tx = await contract.registerCustomer();
+        console.log('[Customer Registration] Transaction sent:', tx.hash);
+        const receipt = await tx.wait();
+        console.log('[Customer Registration] Transaction mined in block:', receipt.blockNumber);
+        console.log('[Customer Registration] Customer registered successfully');
+        return true;
+      } else {
+        console.log('[Customer Registration] Customer already registered');
+        return true;
+      }
+    } catch (error) {
+      console.error('[Customer Registration] Error verifying/registering customer:', error);
+      throw error; // Re-throw to let caller handle the error
+    }
+  };
 
   // Función para obtener todos los productos
   const getAllProducts = async () => {
@@ -77,9 +108,28 @@ export function useContract() {
 
   // Función para obtener el carrito del usuario
   const getCart = async () => {
-    if (!contract) return [];
+    if (!contract || !account) return [];
 
     try {
+      // Verificar que el cliente esté registrado antes de obtener el carrito
+      const isRegistered = await contract.isCustomerRegistered(account);
+      if (!isRegistered) {
+        console.log('[Get Cart] Customer not registered, attempting registration...');
+        try {
+          await checkAndRegisterCustomer(contract, account);
+
+          // Verify registration succeeded
+          const isNowRegistered = await contract.isCustomerRegistered(account);
+          if (!isNowRegistered) {
+            console.error('[Get Cart] Registration failed, customer still not registered');
+            return [];
+          }
+        } catch (regError) {
+          console.error('[Get Cart] Failed to register customer:', regError);
+          return [];
+        }
+      }
+
       const cartItems = await contract.getCart();
       const items = [];
 
@@ -103,7 +153,7 @@ export function useContract() {
 
       return items;
     } catch (error) {
-      console.error('Error fetching cart:', error);
+      console.error('[Get Cart] Error fetching cart:', error);
       return [];
     }
   };
@@ -235,13 +285,32 @@ export function useContract() {
 
   // Función para obtener la cantidad de items en el carrito
   const getCartItemCount = async () => {
-    if (!contract) return 0;
+    if (!contract || !account) return 0;
 
     try {
+      // Verificar que el cliente esté registrado
+      const isRegistered = await contract.isCustomerRegistered(account);
+      if (!isRegistered) {
+        console.log('[Get Cart Count] Customer not registered, attempting registration...');
+        try {
+          await checkAndRegisterCustomer(contract, account);
+
+          // Verify registration succeeded
+          const isNowRegistered = await contract.isCustomerRegistered(account);
+          if (!isNowRegistered) {
+            console.error('[Get Cart Count] Registration failed, customer still not registered');
+            return 0;
+          }
+        } catch (regError) {
+          console.error('[Get Cart Count] Failed to register customer:', regError);
+          return 0;
+        }
+      }
+
       const items = await getCart();
       return items.reduce((acc: number, item: any) => acc + item.quantity, 0);
     } catch (error) {
-      console.error('Error getting cart count:', error);
+      console.error('[Get Cart Count] Error getting cart count:', error);
       return 0;
     }
   };

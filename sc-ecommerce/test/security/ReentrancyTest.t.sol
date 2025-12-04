@@ -71,7 +71,7 @@ contract ReentrancyTest is Test {
 
         // Verify invoice is still unpaid
         Ecommerce.Invoice memory invoice = ecommerce.getInvoice(invoiceId);
-        assertFalse(invoice.isPaid);
+        assertEq(uint8(invoice.status), uint8(Ecommerce.PaymentStatus.PENDING));
     }
 }
 

@@ -17,6 +17,7 @@
   "author": "",
   "license": "MIT",
   "dependencies": {
+
     "@stripe/react-stripe-js": "^2.7.0",
     "@stripe/stripe-js": "^3.0.1",
     "@tailwindcss/postcss": "^4.1.17",

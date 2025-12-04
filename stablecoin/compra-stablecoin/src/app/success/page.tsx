@@ -42,37 +42,69 @@ function SuccessPageContent() {
       const verifyMinting = async () => {
         try {
           const pasarelaUrl = process.env.NEXT_PUBLIC_PASARELA_PAGO_URL || 'http://localhost:3034';
-          const response = await fetch(
-            `${pasarelaUrl}/api/verify-minting?invoice=${finalInvoice}&wallet=${finalWallet}`
-          );
-          
-          if (response.ok) {
-            const data = await response.json();
-            
-            if (data.minted) {
-              console.log('✅ Tokens minteados exitosamente:', data);
-            } else {
-              console.warn('⚠️ Tokens no minteados aún:', data);
-              // Podrías mostrar una advertencia al usuario aquí
+
+          // Retry mechanism for verification
+          let retries = 0;
+          const maxRetries = 5;
+
+          while (retries < maxRetries) {
+            const response = await fetch(
+              `${pasarelaUrl}/api/verify-minting?invoice=${finalInvoice}&wallet=${finalWallet}`
+            );
+
+            if (response.ok) {
+              const data = await response.json();
+
+              if (data.minted) {
+                console.log('✅ Tokens minteados exitosamente:', data);
+                setPayment({
+                  amount: finalAmount,
+                  invoice: finalInvoice,
+                  wallet: finalWallet,
+                  status: 'success',
+                  txHash: data.txHash
+                });
+
+                // Clean up session storage
+                sessionStorage.removeItem('redirect_url');
+                sessionStorage.removeItem('invoice');
+                sessionStorage.removeItem('amount');
+                sessionStorage.removeItem('wallet_address');
+
+                // Redirect with success parameters
+                const redirectUrl = `${storedRedirect}?success=true&tokens=${finalAmount}&invoice=${finalInvoice}&wallet=${finalWallet}`;
+                setTimeout(() => {
+                  window.location.href = redirectUrl;
+                }, 3000);
+                return;
+              } else {
+                console.warn(`⚠️ Tokens no minteados aún (intento ${retries + 1}/${maxRetries}):`, data);
+              }
             }
+
+            retries++;
+            // Wait 2 seconds before retrying
+            await new Promise(resolve => setTimeout(resolve, 2000));
           }
+
+          console.error('❌ Fallo en verificación de minting después de', maxRetries, 'intentos');
+          setPayment({
+            amount: finalAmount,
+            invoice: finalInvoice,
+            wallet: finalWallet,
+            status: 'verification_failed'
+          });
+
         } catch (error) {
           console.error('Error verificando minting:', error);
+          setPayment({
+            amount: finalAmount,
+            invoice: finalInvoice,
+            wallet: finalWallet,
+            status: 'error',
+            error: error instanceof Error ? error.message : 'Unknown error'
+          });
         }
-
-        // Redirigir de todos modos después de la verificación
-        const redirectUrl = `${storedRedirect}?success=true&tokens=${finalAmount}&invoice=${finalInvoice}`;
-
-        // Clean up session storage
-        sessionStorage.removeItem('redirect_url');
-        sessionStorage.removeItem('invoice');
-        sessionStorage.removeItem('amount');
-        sessionStorage.removeItem('wallet_address');
-
-        // Redirect after short delay
-        setTimeout(() => {
-          window.location.href = redirectUrl;
-        }, 2000);
       };
 
       verifyMinting();
@@ -106,16 +138,45 @@ function SuccessPageContent() {
           </div>
 
           <h1 className="text-2xl font-bold text-white mb-2">¡Pago Exitoso!</h1>
-          <p className="text-slate-400">Redirigiendo a la tienda...</p>
+          <p className="text-slate-400 mb-4">Verificando tokens y redirigiendo a la tienda...</p>
+
+          <div className="inline-flex items-center gap-2 text-sm text-indigo-300 bg-indigo-900/20 px-3 py-1.5 rounded-full border border-indigo-500/30 mb-6">
+            <div className="w-2 h-2 rounded-full bg-indigo-500 animate-pulse"></div>
+            <span>Verificando minting de tokens</span>
+          </div>
 
           {payment && (
-            <div className="mt-6 p-4 bg-slate-900/50 rounded-xl border border-slate-700/50">
+            <div className="mt-6 p-4 bg-slate-900/50 rounded-xl border border-slate-700/50 space-y-3">
               <div className="flex justify-between items-center">
                 <span className="text-slate-400 text-sm">Tokens adquiridos</span>
                 <span className="text-emerald-400 font-mono font-bold">{payment.amount} EURT</span>
               </div>
+              <div className="flex justify-between items-center">
+                <span className="text-slate-400 text-sm">Estado</span>
+                <span className="text-sm font-medium">
+                  {payment.status === 'success' && (
+                    <span className="text-emerald-400">Tokens verificados</span>
+                  )}
+                  {payment.status === 'verification_failed' && (
+                    <span className="text-amber-400">Verificación pendiente</span>
+                  )}
+                  {payment.status === 'error' && (
+                    <span className="text-red-400">Error en verificación</span>
+                  )}
+                </span>
+              </div>
+              {payment.wallet && (
+                <div className="flex justify-between items-center pt-2 border-t border-slate-800">
+                  <span className="text-slate-400 text-sm">Wallet</span>
+                  <span className="text-xs font-mono text-indigo-300">{payment.wallet.slice(0, 6)}...{payment.wallet.slice(-4)}</span>
+                </div>
+              )}
             </div>
           )}
+
+          <p className="text-xs text-slate-500 mt-6">
+            Serás redirigido automáticamente en breve...
+          </p>
         </div>
       </div>
     );

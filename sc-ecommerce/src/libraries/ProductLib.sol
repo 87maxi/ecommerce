@@ -19,11 +19,10 @@ library ProductLib {
         uint256 nextProductId;
     }
 
-    event ProductAdded(uint256 productId, uint256 companyId, string name, uint256 price);
-    event ProductUpdated(uint256 productId, string name, uint256 price);
-    event StockUpdated(uint256 productId, uint256 stock);
-    event ProductDeactivated(uint256 productId);
-    event ProductActivated(uint256 productId);
+    event ProductCreated(uint256 indexed productId, uint256 indexed companyId, string name, uint256 price, uint256 indexed timestamp);
+    event ProductUpdated(uint256 indexed productId, uint256 indexed companyId, string name, uint256 price, uint256 indexed timestamp);
+    event ProductStatusChanged(uint256 indexed productId, uint256 indexed companyId, bool active, uint256 indexed timestamp);
+    event ProductStockUpdated(uint256 indexed productId, uint256 stock, uint256 indexed timestamp);
 
     function addProduct(
         ProductStorage storage self,
@@ -54,7 +53,7 @@ library ProductLib {
         self.companyProductExists[companyId][productId] = true;
         self.companyProducts[companyId].push(productId);
 
-        emit ProductAdded(productId, companyId, name, price);
+        emit ProductCreated(productId, companyId, name, price, block.timestamp);
         return productId;
     }
 
@@ -74,14 +73,14 @@ library ProductLib {
         product.price = price;
         product.image = image;
 
-        emit ProductUpdated(productId, name, price);
+        emit ProductUpdated(productId, product.companyId, name, price, block.timestamp);
     }
 
     function updateStock(ProductStorage storage self, uint256 productId, uint256 stock) external {
         require(self.products[productId].id != 0, "ProductLib: Product does not exist");
 
         self.products[productId].stock = stock;
-        emit StockUpdated(productId, stock);
+        emit ProductStockUpdated(productId, stock, block.timestamp);
     }
 
     function decreaseStock(ProductStorage storage self, uint256 productId, uint256 quantity) external {
@@ -89,7 +88,7 @@ library ProductLib {
         require(self.products[productId].stock >= quantity, "ProductLib: Insufficient stock");
 
         self.products[productId].stock -= quantity;
-        emit StockUpdated(productId, self.products[productId].stock);
+        emit ProductStockUpdated(productId, self.products[productId].stock, block.timestamp);
     }
 
     function deactivateProduct(ProductStorage storage self, uint256 productId) external {
@@ -97,7 +96,7 @@ library ProductLib {
         require(self.products[productId].active, "ProductLib: Product already inactive");
 
         self.products[productId].active = false;
-        emit ProductDeactivated(productId);
+        emit ProductStatusChanged(productId, self.products[productId].companyId, false, block.timestamp);
     }
 
     function activateProduct(ProductStorage storage self, uint256 productId) external {
@@ -105,7 +104,7 @@ library ProductLib {
         require(!self.products[productId].active, "ProductLib: Product already active");
 
         self.products[productId].active = true;
-        emit ProductActivated(productId);
+        emit ProductStatusChanged(productId, self.products[productId].companyId, true, block.timestamp);
     }
 
     function getProduct(ProductStorage storage self, uint256 productId) external view returns (Product memory) {
@@ -144,6 +143,42 @@ library ProductLib {
         return result;
     }
 
+    function getPaginatedProducts(ProductStorage storage self, uint256 page, uint256 pageSize)
+        external
+        view
+        returns (uint256[] memory, bool hasNextPage)
+    {
+        uint256 startIndex = page * pageSize;
+        uint256 endIndex = startIndex + pageSize;
+        
+        if (startIndex >= self.nextProductId) {
+            return (new uint256[](0), false);
+        }
+        
+        if (endIndex > self.nextProductId) {
+            endIndex = self.nextProductId;
+        }
+        
+        uint256[] memory result = new uint256[](endIndex - startIndex);
+        uint256 count = 0;
+        for (uint256 i = startIndex; i < endIndex; i++) {
+            uint256 productId = i + 1;
+            if (self.products[productId].id != 0) {
+                result[count] = productId;
+                count++;
+            }
+        }
+        
+        // Create properly sized array
+        uint256[] memory finalResult = new uint256[](count);
+        for (uint256 i = 0; i < count; i++) {
+            finalResult[i] = result[i];
+        }
+        
+        bool hasMore = endIndex < self.nextProductId;
+        return (finalResult, hasMore);
+    }
+
     function isProductAvailable(ProductStorage storage self, uint256 productId, uint256 quantity)
         external
         view
@@ -151,5 +186,32 @@ library ProductLib {
     {
         Product storage product = self.products[productId];
         return (product.id != 0 && product.active && product.stock >= quantity);
+    }
+
+    function getProductsByCompanyAndStatus(ProductStorage storage self, uint256 companyId, bool activeStatus)
+        external
+        view
+        returns (uint256[] memory)
+    {
+        uint256[] memory companyProducts = self.companyProducts[companyId];
+        uint256 count = 0;
+        
+        // First count matching products
+        for (uint256 i = 0; i < companyProducts.length; i++) {
+            if (self.products[companyProducts[i]].active == activeStatus) {
+                count++;
+            }
+        }
+        
+        uint256[] memory result = new uint256[](count);
+        uint256 index = 0;
+        for (uint256 i = 0; i < companyProducts.length; i++) {
+            if (self.products[companyProducts[i]].active == activeStatus) {
+                result[index] = companyProducts[i];
+                index++;
+            }
+        }
+        
+        return result;
     }
 }

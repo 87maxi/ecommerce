@@ -243,6 +243,30 @@
   },
   {
     "type": "function",
+    "name": "failPayment",
+    "inputs": [
+      {
+        "name": "_invoiceId",
+        "type": "uint256",
+        "internalType": "uint256"
+      },
+      {
+        "name": "_errorCode",
+        "type": "string",
+        "internalType": "string"
+      }
+    ],
+    "outputs": [
+      {
+        "name": "",
+        "type": "bool",
+        "internalType": "bool"
+      }
+    ],
+    "stateMutability": "nonpayable"
+  },
+  {
+    "type": "function",
     "name": "getAllCompanies",
     "inputs": [],
     "outputs": [
@@ -559,12 +583,22 @@
             "internalType": "uint256"
           },
           {
-            "name": "isPaid",
-            "type": "bool",
-            "internalType": "bool"
+            "name": "status",
+            "type": "uint8",
+            "internalType": "enum Ecommerce.PaymentStatus"
           },
           {
             "name": "paymentTxHash",
+            "type": "string",
+            "internalType": "string"
+          },
+          {
+            "name": "paymentExpiration",
+            "type": "uint256",
+            "internalType": "uint256"
+          },
+          {
+            "name": "lastErrorMessage",
             "type": "string",
             "internalType": "string"
           }
@@ -701,6 +735,30 @@
   },
   {
     "type": "function",
+    "name": "getProductsByCompanyAndStatus",
+    "inputs": [
+      {
+        "name": "companyId",
+        "type": "uint256",
+        "internalType": "uint256"
+      },
+      {
+        "name": "activeStatus",
+        "type": "bool",
+        "internalType": "bool"
+      }
+    ],
+    "outputs": [
+      {
+        "name": "",
+        "type": "uint256[]",
+        "internalType": "uint256[]"
+      }
+    ],
+    "stateMutability": "view"
+  },
+  {
+    "type": "function",
     "name": "invoiceItems",
     "inputs": [
       {
@@ -780,12 +838,22 @@
         "internalType": "uint256"
       },
       {
-        "name": "isPaid",
-        "type": "bool",
-        "internalType": "bool"
+        "name": "status",
+        "type": "uint8",
+        "internalType": "enum Ecommerce.PaymentStatus"
       },
       {
         "name": "paymentTxHash",
+        "type": "string",
+        "internalType": "string"
+      },
+      {
+        "name": "paymentExpiration",
+        "type": "uint256",
+        "internalType": "uint256"
+      },
+      {
+        "name": "lastErrorMessage",
         "type": "string",
         "internalType": "string"
       }
@@ -906,6 +974,30 @@
   },
   {
     "type": "function",
+    "name": "refundPayment",
+    "inputs": [
+      {
+        "name": "_invoiceId",
+        "type": "uint256",
+        "internalType": "uint256"
+      },
+      {
+        "name": "_refundTxHash",
+        "type": "string",
+        "internalType": "string"
+      }
+    ],
+    "outputs": [
+      {
+        "name": "",
+        "type": "bool",
+        "internalType": "bool"
+      }
+    ],
+    "stateMutability": "nonpayable"
+  },
+  {
+    "type": "function",
     "name": "registerCompany",
     "inputs": [
       {
@@ -957,45 +1049,6 @@
       }
     ],
     "outputs": [],
-    "stateMutability": "nonpayable"
-  },
-  {
-    "type": "function",
-    "name": "updateProduct",
-    "inputs": [
-      {
-        "name": "productId",
-        "type": "uint256",
-        "internalType": "uint256"
-      },
-      {
-        "name": "name",
-        "type": "string",
-        "internalType": "string"
-      },
-      {
-        "name": "description",
-        "type": "string",
-        "internalType": "string"
-      },
-      {
-        "name": "price",
-        "type": "uint256",
-        "internalType": "uint256"
-      },
-      {
-        "name": "image",
-        "type": "string",
-        "internalType": "string"
-      }
-    ],
-    "outputs": [
-      {
-        "name": "",
-        "type": "bool",
-        "internalType": "bool"
-      }
-    ],
     "stateMutability": "nonpayable"
   },
   {
@@ -1055,6 +1108,37 @@
   },
   {
     "type": "event",
+    "name": "CompanyCreated",
+    "inputs": [
+      {
+        "name": "companyId",
+        "type": "uint256",
+        "indexed": true,
+        "internalType": "uint256"
+      },
+      {
+        "name": "owner",
+        "type": "address",
+        "indexed": true,
+        "internalType": "address"
+      },
+      {
+        "name": "name",
+        "type": "string",
+        "indexed": false,
+        "internalType": "string"
+      },
+      {
+        "name": "timestamp",
+        "type": "uint256",
+        "indexed": true,
+        "internalType": "uint256"
+      }
+    ],
+    "anonymous": false
+  },
+  {
+    "type": "event",
     "name": "CompanyDeactivated",
     "inputs": [
       {
@@ -1068,7 +1152,7 @@
   },
   {
     "type": "event",
-    "name": "CompanyRegistered",
+    "name": "CompanyStatusChanged",
     "inputs": [
       {
         "name": "companyId",
@@ -1077,7 +1161,38 @@
         "internalType": "uint256"
       },
       {
-        "name": "companyAddress",
+        "name": "owner",
+        "type": "address",
+        "indexed": true,
+        "internalType": "address"
+      },
+      {
+        "name": "active",
+        "type": "bool",
+        "indexed": false,
+        "internalType": "bool"
+      },
+      {
+        "name": "timestamp",
+        "type": "uint256",
+        "indexed": true,
+        "internalType": "uint256"
+      }
+    ],
+    "anonymous": false
+  },
+  {
+    "type": "event",
+    "name": "CompanyUpdated",
+    "inputs": [
+      {
+        "name": "companyId",
+        "type": "uint256",
+        "indexed": true,
+        "internalType": "uint256"
+      },
+      {
+        "name": "owner",
         "type": "address",
         "indexed": true,
         "internalType": "address"
@@ -1087,6 +1202,12 @@
         "type": "string",
         "indexed": false,
         "internalType": "string"
+      },
+      {
+        "name": "timestamp",
+        "type": "uint256",
+        "indexed": true,
+        "internalType": "uint256"
       }
     ],
     "anonymous": false
@@ -1124,7 +1245,7 @@
   },
   {
     "type": "event",
-    "name": "InvoicePaid",
+    "name": "PaymentProcessed",
     "inputs": [
       {
         "name": "invoiceId",
@@ -1133,7 +1254,7 @@
         "internalType": "uint256"
       },
       {
-        "name": "customerAddress",
+        "name": "customer",
         "type": "address",
         "indexed": true,
         "internalType": "address"
@@ -1149,13 +1270,25 @@
         "type": "string",
         "indexed": false,
         "internalType": "string"
+      },
+      {
+        "name": "status",
+        "type": "uint8",
+        "indexed": false,
+        "internalType": "enum Ecommerce.PaymentStatus"
+      },
+      {
+        "name": "timestamp",
+        "type": "uint256",
+        "indexed": true,
+        "internalType": "uint256"
       }
     ],
     "anonymous": false
   },
   {
     "type": "event",
-    "name": "PaymentFailed",
+    "name": "PaymentRefunded",
     "inputs": [
       {
         "name": "invoiceId",
@@ -1164,7 +1297,7 @@
         "internalType": "uint256"
       },
       {
-        "name": "customerAddress",
+        "name": "customer",
         "type": "address",
         "indexed": true,
         "internalType": "address"
@@ -1176,10 +1309,208 @@
         "internalType": "uint256"
       },
       {
+        "name": "refundTxHash",
+        "type": "string",
+        "indexed": false,
+        "internalType": "string"
+      },
+      {
+        "name": "timestamp",
+        "type": "uint256",
+        "indexed": true,
+        "internalType": "uint256"
+      }
+    ],
+    "anonymous": false
+  },
+  {
+    "type": "event",
+    "name": "PaymentStatusUpdated",
+    "inputs": [
+      {
+        "name": "invoiceId",
+        "type": "uint256",
+        "indexed": true,
+        "internalType": "uint256"
+      },
+      {
+        "name": "previousStatus",
+        "type": "uint8",
+        "indexed": false,
+        "internalType": "enum Ecommerce.PaymentStatus"
+      },
+      {
+        "name": "newStatus",
+        "type": "uint8",
+        "indexed": false,
+        "internalType": "enum Ecommerce.PaymentStatus"
+      },
+      {
         "name": "reason",
         "type": "string",
         "indexed": false,
         "internalType": "string"
+      },
+      {
+        "name": "timestamp",
+        "type": "uint256",
+        "indexed": true,
+        "internalType": "uint256"
+      }
+    ],
+    "anonymous": false
+  },
+  {
+    "type": "event",
+    "name": "ProductCreated",
+    "inputs": [
+      {
+        "name": "productId",
+        "type": "uint256",
+        "indexed": true,
+        "internalType": "uint256"
+      },
+      {
+        "name": "companyId",
+        "type": "uint256",
+        "indexed": true,
+        "internalType": "uint256"
+      },
+      {
+        "name": "name",
+        "type": "string",
+        "indexed": false,
+        "internalType": "string"
+      },
+      {
+        "name": "price",
+        "type": "uint256",
+        "indexed": false,
+        "internalType": "uint256"
+      },
+      {
+        "name": "timestamp",
+        "type": "uint256",
+        "indexed": true,
+        "internalType": "uint256"
+      }
+    ],
+    "anonymous": false
+  },
+  {
+    "type": "event",
+    "name": "ProductStatusChanged",
+    "inputs": [
+      {
+        "name": "productId",
+        "type": "uint256",
+        "indexed": true,
+        "internalType": "uint256"
+      },
+      {
+        "name": "companyId",
+        "type": "uint256",
+        "indexed": true,
+        "internalType": "uint256"
+      },
+      {
+        "name": "active",
+        "type": "bool",
+        "indexed": false,
+        "internalType": "bool"
+      },
+      {
+        "name": "timestamp",
+        "type": "uint256",
+        "indexed": true,
+        "internalType": "uint256"
+      }
+    ],
+    "anonymous": false
+  },
+  {
+    "type": "event",
+    "name": "ProductStockUpdated",
+    "inputs": [
+      {
+        "name": "productId",
+        "type": "uint256",
+        "indexed": true,
+        "internalType": "uint256"
+      },
+      {
+        "name": "stock",
+        "type": "uint256",
+        "indexed": false,
+        "internalType": "uint256"
+      },
+      {
+        "name": "timestamp",
+        "type": "uint256",
+        "indexed": true,
+        "internalType": "uint256"
+      }
+    ],
+    "anonymous": false
+  },
+  {
+    "type": "event",
+    "name": "ProductUpdated",
+    "inputs": [
+      {
+        "name": "productId",
+        "type": "uint256",
+        "indexed": true,
+        "internalType": "uint256"
+      },
+      {
+        "name": "companyId",
+        "type": "uint256",
+        "indexed": true,
+        "internalType": "uint256"
+      },
+      {
+        "name": "name",
+        "type": "string",
+        "indexed": false,
+        "internalType": "string"
+      },
+      {
+        "name": "price",
+        "type": "uint256",
+        "indexed": false,
+        "internalType": "uint256"
+      },
+      {
+        "name": "timestamp",
+        "type": "uint256",
+        "indexed": true,
+        "internalType": "uint256"
+      }
+    ],
+    "anonymous": false
+  },
+  {
+    "type": "event",
+    "name": "QuantitiesUpdated",
+    "inputs": [
+      {
+        "name": "customer",
+        "type": "address",
+        "indexed": true,
+        "internalType": "address"
+      },
+      {
+        "name": "productIds",
+        "type": "uint256[]",
+        "indexed": false,
+        "internalType": "uint256[]"
+      },
+      {
+        "name": "quantities",
+        "type": "uint256[]",
+        "indexed": false,
+        "internalType": "uint256[]"
       }
     ],
     "anonymous": false

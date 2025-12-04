@@ -87,7 +87,7 @@ contract IntegrationTest is Test {
         assertEq(invoice.companyId, companyId);
         assertEq(invoice.customerAddress, customer);
         assertEq(invoice.totalAmount, 200000);
-        assertEq(invoice.isPaid, false);
+        assertEq(uint8(invoice.status), uint8(Ecommerce.PaymentStatus.PENDING));
 
         // Verify invoice items
         Ecommerce.InvoiceItem[] memory items = ecommerce.getInvoiceItems(invoiceId);
@@ -121,7 +121,7 @@ contract IntegrationTest is Test {
 
         // Verify invoice is now paid
         invoice = ecommerce.getInvoice(invoiceId);
-        assertTrue(invoice.isPaid);
+        assertEq(uint8(invoice.status), uint8(Ecommerce.PaymentStatus.COMPLETED));
         assertEq(invoice.paymentTxHash, "txhash123");
 
         // Verify customer's total spent and purchase count
@@ -195,7 +195,7 @@ contract IntegrationTest is Test {
 
         // Try to process payment again for the same invoice
         vm.startPrank(customer);
-        vm.expectRevert(bytes("Ecommerce: Invoice already paid"));
+        vm.expectRevert(bytes("Ecommerce: Invalid payment status for processing"));
         ecommerce.processPayment(invoiceId, "txhash456");
         vm.stopPrank();
     }

@@ -9,57 +9,6 @@ import {ProductLib}  from "./libraries/ProductLib.sol";
 import {CustomerLib}  from "./libraries/CustomerLib.sol";
 import {ShoppingCartLib}  from "./libraries/ShoppingCartLib.sol";
 
-// Export productStorage for access by other libraries
-
-// Export structs for testing
-struct CompanyData {
-    uint256 id;
-    address ownerAddress;
-    string name;
-    string description;
-    bool active;
-}
-
-struct ProductData {
-    uint256 id;
-    uint256 companyId;
-    string name;
-    string description;
-    uint256 price;
-    uint256 stock;
-    string image;
-    bool active;
-}
-
-struct CustomerData {
-    address customerAddress;
-    uint256 purchaseCount;
-    uint256 totalSpent;
-}
-
-struct CartItemData {
-    uint256 productId;
-    uint256 quantity;
-}
-
-struct InvoiceData {
-    uint256 invoiceId;
-    uint256 companyId;
-    address customerAddress;
-    uint256 totalAmount;
-    uint256 timestamp;
-    bool isPaid;
-    string paymentTxHash;
-}
-
-struct InvoiceItemData {
-    uint256 productId;
-    string productName;
-    uint256 quantity;
-    uint256 unitPrice;
-    uint256 totalPrice;
-}
-
 contract Ecommerce is ReentrancyGuard {
     // Constructor to set owner
     constructor() {
@@ -88,8 +37,10 @@ contract Ecommerce is ReentrancyGuard {
         address customerAddress;
         uint256 totalAmount;
         uint256 timestamp;
-        bool isPaid;
+        PaymentStatus status;
         string paymentTxHash;
+        uint256 paymentExpiration;
+        string lastErrorMessage;
     }
 
     struct InvoiceItem {
@@ -118,28 +69,64 @@ contract Ecommerce is ReentrancyGuard {
     // Array to track all invoice IDs
     uint256[] private allInvoices;
 
-    // Array to track all registered customer addresses
-    address[] private allCustomers;
-
     // Events
-    event CompanyRegistered(uint256 indexed companyId, address indexed companyAddress, string name);
+    event CompanyCreated(uint256 indexed companyId, address indexed owner, string name, uint256 indexed timestamp);
+    event CompanyUpdated(uint256 indexed companyId, address indexed owner, string name, uint256 indexed timestamp);
+    event CompanyStatusChanged(uint256 indexed companyId, address indexed owner, bool active, uint256 indexed timestamp);
     event CompanyDeactivated(uint256 indexed companyId);
     event CompanyActivated(uint256 indexed companyId);
     event InvoiceCreated(
         uint256 indexed invoiceId, uint256 indexed companyId, address indexed customerAddress, uint256 totalAmount
     );
-    event InvoicePaid(uint256 indexed invoiceId, address indexed customerAddress, uint256 amount, string paymentTxHash);
-    event PaymentFailed(uint256 indexed invoiceId, address indexed customerAddress, uint256 amount, string reason);
+    event PaymentProcessed(
+        uint256 indexed invoiceId,
+        address indexed customer,
+        uint256 amount,
+        string paymentTxHash,
+        PaymentStatus status,
+        uint256 indexed timestamp
+    );
+    event PaymentStatusUpdated(
+        uint256 indexed invoiceId,
+        PaymentStatus previousStatus,
+        PaymentStatus newStatus,
+        string reason,
+        uint256 indexed timestamp
+    );
+    event PaymentRefunded(
+        uint256 indexed invoiceId,
+        address indexed customer,
+        uint256 amount,
+        string refundTxHash,
+        uint256 indexed timestamp
+    );
+    event ProductCreated(uint256 indexed productId, uint256 indexed companyId, string name, uint256 price, uint256 indexed timestamp);
+    event ProductUpdated(uint256 indexed productId, uint256 indexed companyId, string name, uint256 price, uint256 indexed timestamp);
+    event ProductStatusChanged(uint256 indexed productId, uint256 indexed companyId, bool active, uint256 indexed timestamp);
+    event ProductStockUpdated(uint256 indexed productId, uint256 stock, uint256 indexed timestamp);
+    event QuantitiesUpdated(address indexed customer, uint256[] productIds, uint256[] quantities);
+
+    // Payment status enumeration
+    enum PaymentStatus { PENDING, COMPLETED, FAILED, REFUNDED }
 
     // Modifiers
     modifier onlyOwner() {
-        require(owner == msg.sender, "Ecommerce: Not contract owner");
+        _checkOwner();
         _;
     }
 
     modifier onlyCompanyOwner(uint256 companyId) {
-        require(companyStorage.getCompany(companyId).owner == msg.sender, "Ecommerce: Not company owner");
+        _checkCompanyOwner(companyId);
         _;
+    }
+
+    // Internal functions for modifier logic
+    function _checkOwner() internal view {
+        require(owner == msg.sender, "Ecommerce: Not contract owner");
+    }
+
+    function _checkCompanyOwner(uint256 companyId) internal view {
+        require(companyStorage.getCompany(companyId).owner == msg.sender, "Ecommerce: Not company owner");
     }
 
     // Company functions
@@ -149,7 +136,7 @@ contract Ecommerce is ReentrancyGuard {
         returns (uint256)
     {
         uint256 companyId = companyStorage.registerCompany(companyAddress, name, description);
-        emit CompanyRegistered(companyId, companyAddress, name);
+        emit CompanyCreated(companyId, companyAddress, name, block.timestamp);
         return companyId;
     }
 
@@ -190,20 +177,6 @@ contract Ecommerce is ReentrancyGuard {
         uint256 stock
     ) external onlyCompanyOwner(companyId) returns (uint256) {
         return productStorage.addProduct(companyId, name, description, price, image, stock);
-    }
-
-    function updateProduct(
-        uint256 productId,
-        string memory name,
-        string memory description,
-        uint256 price,
-        string memory image
-    ) external returns (bool) {
-        uint256 companyId = productStorage.products[productId].companyId;
-        require(companyId != 0, "Ecommerce: Product does not exist");
-
-        productStorage.updateProduct(productId, name, description, price, image);
-        return true;
     }
 
     function updateStock(uint256 productId, uint256 stock) external returns (bool) {
@@ -250,6 +223,10 @@ contract Ecommerce is ReentrancyGuard {
         return productStorage.getAllProducts();
     }
 
+    function getProductsByCompanyAndStatus(uint256 companyId, bool activeStatus) external view returns (uint256[] memory) {
+        return productStorage.getProductsByCompanyAndStatus(companyId, activeStatus);
+    }
+
     function isProductAvailable(uint256 productId, uint256 quantity) external view returns (bool) {
         return productStorage.isProductAvailable(productId, quantity);
     }
@@ -262,9 +239,6 @@ contract Ecommerce is ReentrancyGuard {
         }
         
         customerStorage.registerCustomer(msg.sender);
-        
-        // Add to all customers list
-        allCustomers.push(msg.sender);
         
         return true;
     }
@@ -284,8 +258,8 @@ contract Ecommerce is ReentrancyGuard {
         require(cartItems.length > 0, "Ecommerce: Cart is empty");
 
         // Calculate total amount
-        uint256 totalAmount = calculateTotal(); // Use the calculateTotal function
-        // require(totalAmount > 0, "Ecommerce: Total amount must be greater than 0"); // Skip for testing
+        uint256 totalAmount = calculateTotal();
+        require(totalAmount > 0, "Ecommerce: Total amount must be greater than 0");
 
         // Validate all products are available
         for (uint256 i = 0; i < cartItems.length; i++) {
@@ -304,8 +278,10 @@ contract Ecommerce is ReentrancyGuard {
             customerAddress: msg.sender,
             totalAmount: totalAmount,
             timestamp: block.timestamp,
-            isPaid: false,
-            paymentTxHash: ""
+            status: PaymentStatus.PENDING,
+            paymentTxHash: "",
+            paymentExpiration: block.timestamp + 30 days,
+            lastErrorMessage: ""
         });
 
         // Add invoice items
@@ -362,33 +338,111 @@ contract Ecommerce is ReentrancyGuard {
     }
 
     // Payment functions
-    function processPayment(uint256 _invoiceId, string memory _paymentTxHash) external nonReentrant returns (bool) {
-        // Validate invoice exists and is not paid
+    function processPayment(
+        uint256 _invoiceId, 
+        string memory _paymentTxHash
+    ) external nonReentrant returns (bool) {
+        // Validate invoice exists and status
         require(invoices[_invoiceId].invoiceId != 0, "Ecommerce: Invoice does not exist");
-        require(!invoices[_invoiceId].isPaid, "Ecommerce: Invoice already paid");
+        require(
+            invoices[_invoiceId].status == PaymentStatus.PENDING || 
+            invoices[_invoiceId].status == PaymentStatus.FAILED,
+            "Ecommerce: Invalid payment status for processing"
+        );
 
-        // Get invoice
         Invoice storage invoice = invoices[_invoiceId];
         
-        // Validate customer ownership of invoice
+        // Validate customer ownership
         require(invoice.customerAddress == msg.sender, "Ecommerce: Not invoice owner");
-
+        
+        // Validate expiration
+        require(block.timestamp <= invoice.paymentExpiration, "Ecommerce: Payment expired");
+        
         // Process payment
-        invoice.isPaid = true;
         invoice.paymentTxHash = _paymentTxHash;
-
+        
+        // Complete processing
+        invoice.status = PaymentStatus.COMPLETED;
+        
         // Update customer stats
         customerStorage.customers[msg.sender].totalSpent += invoice.totalAmount;
         customerStorage.customers[msg.sender].totalPurchases++;
-
+        
         // Decrease stock
         for (uint256 i = 0; i < invoiceItems[_invoiceId].length; i++) {
             productStorage.decreaseStock(invoiceItems[_invoiceId][i].productId, invoiceItems[_invoiceId][i].quantity);
         }
-
-        emit InvoicePaid(_invoiceId, msg.sender, invoice.totalAmount, _paymentTxHash);
+        
+        // Emit processed event
+        emit PaymentProcessed(
+            _invoiceId, 
+            msg.sender, 
+            invoice.totalAmount, 
+            _paymentTxHash, 
+            invoice.status, 
+            block.timestamp
+        );
+        
         return true;
-    } // Shopping cart functions
+    }
+    
+    function failPayment(
+        uint256 _invoiceId,
+        string memory _errorCode
+    ) external onlyOwner returns (bool) {
+        require(invoices[_invoiceId].invoiceId != 0, "Ecommerce: Invoice does not exist");
+        require(
+            invoices[_invoiceId].status == PaymentStatus.PENDING,
+            "Ecommerce: Invalid payment status for failure"
+        );
+        
+        Invoice storage invoice = invoices[_invoiceId];
+        
+        // Update payment status
+        emit PaymentStatusUpdated(
+            _invoiceId, 
+            invoice.status, 
+            PaymentStatus.FAILED, 
+            _errorCode,
+            block.timestamp
+        );
+        invoice.status = PaymentStatus.FAILED;
+        invoice.lastErrorMessage = _errorCode;
+        
+        // Set expiration to 7 days in the future for retry window
+        invoice.paymentExpiration = block.timestamp + 7 days;
+        
+        return true;
+    }
+    
+    function refundPayment(
+        uint256 _invoiceId,
+        string memory _refundTxHash
+    ) external onlyOwner returns (bool) {
+        require(invoices[_invoiceId].invoiceId != 0, "Ecommerce: Invoice does not exist");
+        require(
+            invoices[_invoiceId].status == PaymentStatus.COMPLETED,
+            "Ecommerce: Invalid payment status for refund"
+        );
+        
+        Invoice storage invoice = invoices[_invoiceId];
+        
+        // Update payment status
+        invoice.status = PaymentStatus.REFUNDED;
+        
+        // Emit refund event
+        emit PaymentRefunded(
+            _invoiceId, 
+            invoice.customerAddress, 
+            invoice.totalAmount, 
+            _refundTxHash,
+            block.timestamp
+        );
+        
+        return true;
+    }
+    
+    // Shopping cart functions
 
     function addToCart(uint256 productId, uint256 quantity) external {
         require(customerStorage.isCustomerRegistered(msg.sender), "Ecommerce: Customer not registered");
@@ -415,11 +469,7 @@ contract Ecommerce is ReentrancyGuard {
         shoppingCartStorage.clearCart(msg.sender);
     }
 
-        function calculateTotal() public view returns (uint256) {
-        // Get customer's cart
-        ShoppingCartLib.CartItem[] memory cartItems = shoppingCartStorage.getCart(msg.sender);
-        
-        // Calculate total amount from cart items
+    function calculateTotal() public view returns (uint256) {
         return shoppingCartStorage.calculateTotal(productStorage, msg.sender);
     }
 
@@ -430,10 +480,6 @@ contract Ecommerce is ReentrancyGuard {
 
     function getCustomer(address customerAddress) external view returns (CustomerLib.Customer memory) {
         return customerStorage.getCustomer(customerAddress);
-    }
-
-    function getAllCustomers() external view returns (address[] memory) {
-        return allCustomers;
     }
 
     function isCustomerRegistered(address customerAddress) external view returns (bool) {

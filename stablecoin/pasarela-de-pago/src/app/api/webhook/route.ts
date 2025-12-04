@@ -53,19 +53,34 @@ export async function POST(request: NextRequest) {
                 invoice
             });
 
-            // Buscar la orden correspondiente
-            let orderToUpdate = null;
-            for (const [orderId, order] of orders.entries()) {
-                if (order.buyerAddress.toLowerCase() === walletAddress.toLowerCase() && 
-                    order.invoice === invoice) {
-                    orderToUpdate = order;
-                    break;
+            // Buscar la orden correspondiente por paymentIntentId primero
+            let orderToUpdate = orders.get(paymentIntent.id);
+
+            // Fallback: buscar por invoice y wallet si no se encuentra por ID
+            if (!orderToUpdate) {
+                console.log('[WEBHOOK] Order not found by paymentIntentId, searching by invoice/wallet...');
+                for (const [orderId, order] of orders.entries()) {
+                    if (order.buyerAddress.toLowerCase() === walletAddress.toLowerCase() &&
+                        order.invoice === invoice) {
+                        orderToUpdate = order;
+                        break;
+                    }
                 }
             }
 
             if (!orderToUpdate) {
-                console.log('[WEBHOOK] No order found for:', { walletAddress, invoice });
+                console.error('[WEBHOOK] No order found for payment:', {
+                    paymentIntentId: paymentIntent.id,
+                    walletAddress,
+                    invoice
+                });
+                return NextResponse.json({
+                    received: true,
+                    error: 'Order not found'
+                });
             }
+
+            console.log('[WEBHOOK] Order found:', orderToUpdate.orderId);
 
             // Llamar a la función local para mintear tokens
             console.log('[WEBHOOK] Calling local mintTokens function');

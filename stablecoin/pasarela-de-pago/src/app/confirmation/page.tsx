@@ -92,7 +92,7 @@ export default function Confirmation() {
 
         <div className="mt-4">
           <a
-            href="http://localhost:3030"
+            href={`${process.env.NEXT_PUBLIC_WEB_CUSTOMER_URL || 'http://localhost:3030'}${status === 'succeeded' ? '?success=true&amount=' + amount + (invoice ? '&invoice=' + invoice : '') : ''}`}
             className="block w-full py-3 px-4 bg-slate-700 hover:bg-slate-600 text-white font-medium rounded-xl transition-colors"
           >
             Volver a la Tienda

@@ -110,7 +110,6 @@ echo $ECOMMERCE_ABI_JSON | jq '.' > src/contracts/abis/EcommerceABI.json
 cat > .env.local << EOF
 NEXT_PUBLIC_ECOMMERCE_CONTRACT_ADDRESS=$ECOMMERCE_ADDRESS
 NEXT_PUBLIC_CHAIN_ID=31337
-NEXT_PUBLIC_EUROTOKEN_CONTRACT_ADDRESS=$EUROTOKEN_ADDRESS
 EOF
 
 echo "✅ Web-Admin configured with addresses:"

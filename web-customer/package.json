@@ -11,10 +11,13 @@
   "dependencies": {
     "@fontsource/inter": "^5.2.8",
     "@fontsource/syne": "^5.2.7",
+    "clsx": "^2.1.1",
     "ethers": "^5.7.2",
+    "lucide-react": "^0.555.0",
     "next": "^14.0.0",
     "react": "^18.2.0",
     "react-dom": "^18.2.0",
+    "tailwind-merge": "^3.4.0",
     "tailwindcss-animate": "^1.0.7"
   },
   "devDependencies": {

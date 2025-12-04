@@ -14,7 +14,6 @@ export default function RootLayout({
     <html lang="es">
       <body className="min-h-screen antialiased">
         {children}
-        <script src="/metamask-detection.js"></script>
       </body>
     </html>
   );
