@@ -21,16 +21,32 @@ export function TransactionList({
   transactions,
   title = 'Transacciones Recientes',
 }: TransactionListProps) {
-  const getStatusColor = (status: string) => {
+  const getStatusConfig = (status: string) => {
     switch (status) {
       case 'completed':
-        return 'bg-green-100 text-green-800';
+        return {
+          bg: 'bg-gradient-to-r from-emerald-500/20 to-green-500/20',
+          text: 'text-emerald-300',
+          border: 'border-emerald-500/30',
+        };
       case 'pending':
-        return 'bg-yellow-100 text-yellow-800';
+        return {
+          bg: 'bg-gradient-to-r from-yellow-500/20 to-amber-500/20',
+          text: 'text-yellow-300',
+          border: 'border-yellow-500/30',
+        };
       case 'failed':
-        return 'bg-red-100 text-red-800';
+        return {
+          bg: 'bg-gradient-to-r from-red-500/20 to-rose-500/20',
+          text: 'text-red-300',
+          border: 'border-red-500/30',
+        };
       default:
-        return 'bg-gray-100 text-gray-800';
+        return {
+          bg: 'bg-slate-700/50',
+          text: 'text-slate-400',
+          border: 'border-slate-600/30',
+        };
     }
   };
 
@@ -46,11 +62,11 @@ export function TransactionList({
   });
 
   return (
-    <div className="bg-white shadow overflow-hidden sm:rounded-lg transition-all duration-200 hover:shadow-md">
-      <div className="px-6 py-5 border-b border-gray-200">
-        <h3 className="text-lg leading-6 font-medium text-gray-900 flex items-center">
+    <div className="bg-slate-800/50 backdrop-blur-sm border border-cyan-500/20 shadow-lg shadow-cyan-500/10 overflow-hidden rounded-xl transition-all duration-200 hover:shadow-cyan-500/20 hover:border-cyan-500/30">
+      <div className="px-6 py-5 border-b border-cyan-500/20">
+        <h3 className="text-lg leading-6 font-semibold text-slate-200 flex items-center">
           <svg
-            className="w-5 h-5 text-gray-400 mr-2"
+            className="w-5 h-5 text-cyan-400 mr-2"
             fill="none"
             stroke="currentColor"
             viewBox="0 0 24 24"
@@ -65,11 +81,11 @@ export function TransactionList({
           {title}
         </h3>
       </div>
-      <ul className="divide-y divide-gray-200">
+      <ul className="divide-y divide-cyan-500/10">
         {transactions.length === 0 ? (
-          <li className="px-6 py-8 text-center text-gray-500">
+          <li className="px-6 py-12 text-center">
             <svg
-              className="mx-auto h-12 w-12 text-gray-300 mb-3"
+              className="mx-auto h-16 w-16 text-slate-600 mb-4"
               fill="none"
               stroke="currentColor"
               viewBox="0 0 24 24"
@@ -81,75 +97,78 @@ export function TransactionList({
                 d="M9 17v-2m3 2v-4m3 4v-6m2 10H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"
               />
             </svg>
-            <p className="text-sm font-medium">
+            <p className="text-sm font-medium text-slate-400">
               No hay transacciones recientes
             </p>
           </li>
         ) : (
-          sortedTransactions.map(transaction => (
-            <li
-              key={transaction.id}
-              className="transition-colors duration-150 hover:bg-gray-50"
-            >
-              <div className="px-6 py-4">
-                <div className="flex items-center justify-between">
-                  <div className="flex items-center">
-                    <p className="text-sm font-medium text-indigo-600 truncate">
-                      {transaction.type}
-                    </p>
-                    <span
-                      className={`ml-2 inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${getStatusColor(transaction.status)}`}
-                    >
-                      {transaction.status}
-                    </span>
+          sortedTransactions.map(transaction => {
+            const statusConfig = getStatusConfig(transaction.status);
+            return (
+              <li
+                key={transaction.id}
+                className="transition-all duration-200 hover:bg-slate-700/30"
+              >
+                <div className="px-6 py-4">
+                  <div className="flex items-center justify-between mb-3">
+                    <div className="flex items-center gap-3">
+                      <p className="text-sm font-semibold text-cyan-400 truncate">
+                        {transaction.type}
+                      </p>
+                      <span
+                        className={`inline-flex items-center px-2.5 py-1 rounded-lg text-xs font-medium border ${statusConfig.bg} ${statusConfig.text} ${statusConfig.border}`}
+                      >
+                        {transaction.status}
+                      </span>
+                    </div>
+                    <div className="flex-shrink-0">
+                      <p className="text-sm font-bold bg-gradient-to-r from-cyan-400 to-purple-400 bg-clip-text text-transparent">
+                        {transaction.amount}
+                      </p>
+                    </div>
                   </div>
-                  <div className="ml-2 flex-shrink-0">
-                    <p className="text-sm font-medium text-gray-900">
-                      {transaction.amount}
-                    </p>
+                  <div className="flex flex-col sm:flex-row sm:justify-between sm:items-center gap-2">
+                    <div className="flex flex-col sm:flex-row gap-2 sm:gap-4">
+                      <p className="flex items-center text-sm text-slate-400">
+                        <span className="text-xs px-2 py-1 rounded-md bg-slate-700/50 border border-slate-600/30 text-slate-500">
+                          De
+                        </span>
+                        <span className="ml-2 font-mono text-slate-300">
+                          {formatAddress(transaction.from)}
+                        </span>
+                      </p>
+                      <p className="flex items-center text-sm text-slate-400">
+                        <span className="text-xs px-2 py-1 rounded-md bg-slate-700/50 border border-slate-600/30 text-slate-500">
+                          Para
+                        </span>
+                        <span className="ml-2 font-mono text-slate-300">
+                          {formatAddress(transaction.to)}
+                        </span>
+                      </p>
+                    </div>
+                    <div className="flex items-center text-sm text-slate-500">
+                      <svg
+                        className="flex-shrink-0 mr-1.5 h-4 w-4 text-slate-600"
+                        fill="none"
+                        stroke="currentColor"
+                        viewBox="0 0 24 24"
+                      >
+                        <path
+                          strokeLinecap="round"
+                          strokeLinejoin="round"
+                          strokeWidth="2"
+                          d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"
+                        />
+                      </svg>
+                      <time dateTime={transaction.timestamp} className="text-xs">
+                        {transaction.timestamp}
+                      </time>
+                    </div>
                   </div>
                 </div>
-                <div className="mt-3 flex flex-col sm:flex-row sm:justify-between sm:items-center">
-                  <div className="flex flex-col sm:flex-row space-y-1 sm:space-y-0">
-                    <p className="flex items-center text-sm text-gray-500">
-                      <span className="text-xs px-1.5 py-0.5 rounded bg-gray-100">
-                        De
-                      </span>
-                      <span className="ml-2 font-mono">
-                        {formatAddress(transaction.from)}
-                      </span>
-                    </p>
-                    <p className="flex items-center text-sm text-gray-500 mt-1 sm:mt-0 sm:ml-4">
-                      <span className="text-xs px-1.5 py-0.5 rounded bg-gray-100">
-                        Para
-                      </span>
-                      <span className="ml-2 font-mono">
-                        {formatAddress(transaction.to)}
-                      </span>
-                    </p>
-                  </div>
-                  <div className="flex items-center text-sm text-gray-500 mt-2 sm:mt-0">
-                    <svg
-                      className="flex-shrink-0 mr-1.5 h-4 w-4 text-gray-400"
-                      fill="none"
-                      stroke="currentColor"
-                      viewBox="0 0 24 24"
-                    >
-                      <path
-                        strokeLinecap="round"
-                        strokeLinejoin="round"
-                        strokeWidth="2"
-                        d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"
-                      />
-                    </svg>
-                    <time dateTime={transaction.timestamp} className="text-xs">
-                      {transaction.timestamp}
-                    </time>
-                  </div>
-                </div>
-              </div>
-            </li>
-          ))
+              </li>
+            );
+          })
         )}
       </ul>
     </div>

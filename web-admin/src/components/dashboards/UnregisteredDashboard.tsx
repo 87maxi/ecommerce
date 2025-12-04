@@ -4,12 +4,12 @@ import Link from 'next/link';
 
 export function UnregisteredDashboard() {
   return (
-    <div className="min-h-screen bg-gradient-to-br from-gray-50 to-gray-100 py-12 px-4 sm:px-6 lg:px-8">
+    <div className="min-h-screen bg-gradient-to-br from-slate-900 via-slate-800 to-slate-900 py-12 px-4 sm:px-6 lg:px-8">
       <div className="max-w-4xl mx-auto">
         <div className="text-center mb-12">
-          <div className="inline-flex items-center justify-center w-20 h-20 bg-yellow-100 rounded-full mb-6">
+          <div className="inline-flex items-center justify-center w-24 h-24 bg-gradient-to-br from-yellow-500/20 to-orange-500/20 border-2 border-yellow-500/30 rounded-full mb-6 shadow-lg shadow-yellow-500/20">
             <svg
-              className="w-10 h-10 text-yellow-600"
+              className="w-12 h-12 text-yellow-400"
               fill="none"
               stroke="currentColor"
               viewBox="0 0 24 24"
@@ -22,20 +22,20 @@ export function UnregisteredDashboard() {
               />
             </svg>
           </div>
-          <h1 className="text-4xl font-extrabold text-gray-900 sm:text-5xl mb-4">
+          <h1 className="text-4xl font-extrabold bg-gradient-to-r from-cyan-400 to-purple-400 bg-clip-text text-transparent sm:text-5xl mb-4">
             Cuenta No Registrada
           </h1>
-          <p className="text-xl text-gray-600 max-w-2xl mx-auto">
+          <p className="text-xl text-slate-300 max-w-2xl mx-auto">
             Tu billetera está conectada pero no está registrada en el sistema
           </p>
         </div>
 
         {/* Warning Box */}
-        <div className="bg-white rounded-xl shadow-lg border-2 border-yellow-200 p-8 mb-8">
+        <div className="bg-slate-800/50 backdrop-blur-sm rounded-2xl shadow-xl border border-yellow-500/30 p-8 mb-8">
           <div className="flex items-start">
             <div className="flex-shrink-0">
               <svg
-                className="h-8 w-8 text-yellow-500"
+                className="h-8 w-8 text-yellow-400"
                 fill="currentColor"
                 viewBox="0 0 20 20"
               >
@@ -47,16 +47,16 @@ export function UnregisteredDashboard() {
               </svg>
             </div>
             <div className="ml-4 flex-1">
-              <h3 className="text-lg font-semibold text-gray-900 mb-2">
+              <h3 className="text-lg font-semibold text-slate-200 mb-2">
                 Acceso Limitado
               </h3>
-              <div className="text-gray-700 space-y-2">
+              <div className="text-slate-300 space-y-2">
                 <p>
                   Para acceder al panel de administración y gestionar el e-commerce, necesitas registrarte como:
                 </p>
-                <ul className="list-disc list-inside ml-4 space-y-1 text-gray-600">
-                  <li><strong>Empresa:</strong> Si deseas vender productos en la plataforma</li>
-                  <li><strong>Cliente:</strong> Si deseas comprar productos (disponible próximamente)</li>
+                <ul className="list-disc list-inside ml-4 space-y-1 text-slate-400">
+                  <li><strong className="text-slate-300">Empresa:</strong> Si deseas vender productos en la plataforma</li>
+                  <li><strong className="text-slate-300">Cliente:</strong> Si deseas comprar productos (disponible próximamente)</li>
                 </ul>
               </div>
             </div>
@@ -64,18 +64,18 @@ export function UnregisteredDashboard() {
         </div>
 
         {/* Action Buttons */}
-        <div className="bg-white rounded-xl shadow-lg p-8">
-          <h3 className="text-lg font-semibold text-gray-900 mb-6 text-center">
+        <div className="bg-slate-800/50 backdrop-blur-sm rounded-2xl shadow-xl border border-cyan-500/20 p-8">
+          <h3 className="text-lg font-semibold text-slate-200 mb-6 text-center">
             ¿Qué te gustaría hacer?
           </h3>
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
             <Link
               href="/companies"
-              className="group relative flex flex-col items-center p-6 border-2 border-indigo-200 rounded-lg hover:border-indigo-500 hover:shadow-lg transition-all duration-200 bg-gradient-to-br from-indigo-50 to-white"
+              className="group relative flex flex-col items-center p-6 border-2 border-cyan-500/30 rounded-xl hover:border-cyan-400/50 hover:shadow-lg hover:shadow-cyan-500/20 transition-all duration-200 bg-gradient-to-br from-cyan-500/10 to-purple-500/10 hover:from-cyan-500/20 hover:to-purple-500/20"
             >
-              <div className="w-16 h-16 bg-indigo-100 rounded-full flex items-center justify-center mb-4 group-hover:bg-indigo-200 transition-colors">
+              <div className="w-16 h-16 bg-gradient-to-br from-cyan-500 to-purple-600 rounded-full flex items-center justify-center mb-4 shadow-lg shadow-cyan-500/30 group-hover:shadow-cyan-500/50 transition-all">
                 <svg
-                  className="w-8 h-8 text-indigo-600"
+                  className="w-8 h-8 text-white"
                   fill="none"
                   stroke="currentColor"
                   viewBox="0 0 24 24"
@@ -88,18 +88,18 @@ export function UnregisteredDashboard() {
                   />
                 </svg>
               </div>
-              <h4 className="text-lg font-semibold text-gray-900 mb-2">
+              <h4 className="text-lg font-semibold text-cyan-300 mb-2">
                 Registrar Empresa
               </h4>
-              <p className="text-sm text-gray-600 text-center">
+              <p className="text-sm text-slate-400 text-center">
                 Crea tu empresa y comienza a vender productos en la plataforma
               </p>
             </Link>
 
-            <div className="group relative flex flex-col items-center p-6 border-2 border-gray-200 rounded-lg bg-gray-50 opacity-60 cursor-not-allowed">
-              <div className="w-16 h-16 bg-gray-200 rounded-full flex items-center justify-center mb-4">
+            <div className="group relative flex flex-col items-center p-6 border-2 border-slate-600/30 rounded-xl bg-slate-700/20 opacity-60 cursor-not-allowed">
+              <div className="w-16 h-16 bg-slate-700 rounded-full flex items-center justify-center mb-4">
                 <svg
-                  className="w-8 h-8 text-gray-400"
+                  className="w-8 h-8 text-slate-500"
                   fill="none"
                   stroke="currentColor"
                   viewBox="0 0 24 24"
@@ -112,13 +112,13 @@ export function UnregisteredDashboard() {
                   />
                 </svg>
               </div>
-              <h4 className="text-lg font-semibold text-gray-600 mb-2">
+              <h4 className="text-lg font-semibold text-slate-500 mb-2">
                 Registrar Cliente
               </h4>
-              <p className="text-sm text-gray-500 text-center">
+              <p className="text-sm text-slate-600 text-center">
                 Próximamente disponible para comprar productos
               </p>
-              <span className="absolute top-4 right-4 inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-gray-200 text-gray-700">
+              <span className="absolute top-4 right-4 inline-flex items-center px-2.5 py-1 rounded-lg text-xs font-medium bg-slate-700/50 border border-slate-600/30 text-slate-500">
                 Próximamente
               </span>
             </div>
@@ -126,7 +126,7 @@ export function UnregisteredDashboard() {
         </div>
 
         {/* Info Footer */}
-        <div className="mt-8 text-center text-sm text-gray-500">
+        <div className="mt-8 text-center text-sm text-slate-500">
           <p>
             ¿Necesitas ayuda? Contacta al administrador del sistema
           </p>

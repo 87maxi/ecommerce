@@ -24,12 +24,12 @@ export function RoleGuard({ children, allowedRoles }: RoleGuardProps) {
 
     if (!allowedRoles.includes(roleInfo.role)) {
         return (
-            <div className="min-h-screen bg-gray-50 flex flex-col justify-center py-12 sm:px-6 lg:px-8">
+            <div className="min-h-screen bg-slate-900 flex flex-col justify-center py-12 sm:px-6 lg:px-8">
                 <div className="sm:mx-auto sm:w-full sm:max-w-md">
-                    <div className="bg-white py-8 px-4 shadow sm:rounded-lg sm:px-10 text-center">
-                        <div className="mx-auto flex items-center justify-center h-12 w-12 rounded-full bg-red-100 mb-4">
+                    <div className="bg-slate-800/50 backdrop-blur-sm border border-red-500/30 py-8 px-4 shadow-xl shadow-red-500/10 rounded-2xl sm:px-10 text-center">
+                        <div className="mx-auto flex items-center justify-center h-16 w-16 rounded-full bg-gradient-to-br from-red-500/20 to-rose-500/20 border-2 border-red-500/30 mb-4">
                             <svg
-                                className="h-6 w-6 text-red-600"
+                                className="h-8 w-8 text-red-400"
                                 fill="none"
                                 viewBox="0 0 24 24"
                                 stroke="currentColor"
@@ -42,15 +42,15 @@ export function RoleGuard({ children, allowedRoles }: RoleGuardProps) {
                                 />
                             </svg>
                         </div>
-                        <h2 className="text-xl font-bold text-gray-900 mb-2">
+                        <h2 className="text-xl font-bold bg-gradient-to-r from-cyan-400 to-purple-400 bg-clip-text text-transparent mb-2">
                             Acceso Denegado
                         </h2>
-                        <p className="text-gray-500 mb-6">
+                        <p className="text-slate-400 mb-6">
                             No tienes permisos para ver esta página.
                         </p>
                         <Link
                             href="/"
-                            className="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md shadow-sm text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500"
+                            className="inline-flex items-center px-5 py-2.5 border border-transparent text-sm font-medium rounded-lg shadow-lg text-white bg-gradient-to-r from-cyan-500 to-purple-600 hover:from-cyan-400 hover:to-purple-500 focus:outline-none focus:ring-2 focus:ring-cyan-500/50 shadow-cyan-500/20 hover:shadow-cyan-500/30 transition-all duration-200"
                         >
                             Volver al Inicio
                         </Link>

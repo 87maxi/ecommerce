@@ -27,18 +27,18 @@ const Button = forwardRef<HTMLButtonElement, ButtonProps>(
     return (
       <button
         className={cn(
-          'inline-flex items-center justify-center rounded-md font-medium transition-colors focus:outline-none focus:ring-2 focus:ring-offset-2 disabled:opacity-50 disabled:pointer-events-none',
+          'inline-flex items-center justify-center rounded-lg font-medium transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-offset-slate-900 disabled:opacity-50 disabled:pointer-events-none',
           {
             // Variant styles
-            'bg-[var(--primary)] text-white hover:bg-[var(--primary-dark)] focus:ring-[var(--primary)]':
+            'bg-gradient-to-r from-cyan-500 to-purple-600 text-white hover:from-cyan-400 hover:to-purple-500 shadow-lg shadow-cyan-500/20 hover:shadow-cyan-500/30 focus:ring-cyan-500':
               variant === 'primary',
-            'bg-[var(--secondary)] text-[var(--foreground)] hover:bg-[var(--secondary)]/80 focus:ring-[var(--secondary)]':
+            'bg-slate-700/50 border border-cyan-500/30 text-cyan-300 hover:bg-slate-600/50 hover:border-cyan-400/50 focus:ring-cyan-500':
               variant === 'secondary',
-            'border border-[var(--muted-light)] bg-[var(--card)] text-[var(--foreground)] hover:bg-[var(--muted-light)] hover:bg-opacity-10 focus:ring-[var(--primary)]':
+            'border border-cyan-500/30 bg-slate-800/50 text-slate-200 hover:bg-cyan-500/10 hover:border-cyan-400/50 focus:ring-cyan-500':
               variant === 'outline',
-            'text-[var(--foreground)] hover:bg-[var(--muted-light)] hover:bg-opacity-10 focus:ring-[var(--primary)]':
+            'text-slate-300 hover:bg-slate-700/50 hover:text-cyan-400 focus:ring-cyan-500':
               variant === 'ghost',
-            'text-[var(--primary)] underline-offset-4 hover:underline focus:ring-[var(--primary)]':
+            'text-cyan-400 underline-offset-4 hover:underline hover:text-cyan-300 focus:ring-cyan-500':
               variant === 'link',
 
             // Size styles

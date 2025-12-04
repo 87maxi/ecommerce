@@ -109,60 +109,52 @@ export function CompanyOwnerDashboard({
   ];
 
   return (
-    <div className="min-h-screen bg-gray-50 py-12 px-4 sm:px-6 lg:px-8">
-      <div className="max-w-7xl mx-auto">
-        <div className="space-y-6 sm:space-y-8">
-          {/* Header */}
-          <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-4">
-            <div>
-              <h1 className="text-2xl sm:text-3xl font-bold text-gray-900">
-                Mi Empresa{companyName ? `: ${companyName}` : ''}
-              </h1>
-              <p className="text-sm sm:text-base text-gray-500 mt-2">
-                Gestiona tus productos y pedidos
-              </p>
-            </div>
-            <div className="inline-flex items-center px-3 py-1.5 rounded-full text-sm font-medium bg-blue-100 text-blue-800 self-start">
-              Rol: Propietario de Empresa
-            </div>
-          </div>
-          <h1 className="text-4xl font-extrabold text-gray-900 sm:text-5xl sm:tracking-tight">
-            Panel de {companyName || 'Tu Empresa'}
+    <div className="space-y-6 sm:space-y-8">
+      {/* Header */}
+      <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-4">
+        <div>
+          <h1 className="text-2xl sm:text-3xl font-bold bg-gradient-to-r from-cyan-400 to-purple-400 bg-clip-text text-transparent">
+            Mi Empresa{companyName ? `: ${companyName}` : ''}
           </h1>
-          <p className="mt-4 text-lg text-gray-500">
-            Gestiona tus productos, ventas y clientes en el e-commerce
-            descentralizado
+          <p className="text-sm sm:text-base text-slate-400 mt-2">
+            Gestiona tus productos y pedidos
           </p>
         </div>
-
-        {dashboardError ? (
-          <div className="bg-red-50 border border-red-200 rounded-lg p-6 mb-8">
-            <p className="text-red-800">{dashboardError}</p>
-          </div>
-        ) : dashboardLoading ? (
-          <div className="flex justify-center items-center py-12">
-            <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-[var(--primary)]"></div>
-            <span className="ml-3 text-[var(--muted)]">Cargando datos...</span>
-          </div>
-        ) : (
-          <>
-            {/* Estadísticas */}
-            <div className="grid grid-cols-1 gap-5 sm:grid-cols-2 lg:grid-cols-4 mb-8">
-              {stats.map((stat, index) => (
-                <StatsCard
-                  key={index}
-                  title={stat.title}
-                  value={stat.value}
-                  icon={stat.icon}
-                  color={stat.color}
-                />
-              ))}
-            </div>
-
-            <RoleAwareNavigation />
-          </>
-        )}
+        <div className="inline-flex items-center px-3 py-1.5 rounded-lg text-sm font-medium bg-gradient-to-r from-orange-500/20 to-amber-500/20 text-orange-300 border border-orange-500/30 self-start">
+          Rol: Propietario de Empresa
+        </div>
       </div>
+
+      {dashboardError ? (
+        <div className="bg-red-500/10 border border-red-500/30 rounded-xl p-6 backdrop-blur-sm">
+          <p className="text-red-300">{dashboardError}</p>
+        </div>
+      ) : dashboardLoading ? (
+        <div className="flex justify-center items-center py-12">
+          <div className="relative">
+            <div className="animate-spin rounded-full h-16 w-16 border-4 border-slate-700"></div>
+            <div className="animate-spin rounded-full h-16 w-16 border-t-4 border-cyan-500 absolute top-0 left-0 shadow-lg shadow-cyan-500/50"></div>
+          </div>
+          <span className="ml-4 text-slate-300 font-medium">Cargando datos...</span>
+        </div>
+      ) : (
+        <>
+          {/* Estadísticas */}
+          <div className="grid grid-cols-1 gap-5 sm:grid-cols-2 lg:grid-cols-4">
+            {stats.map((stat, index) => (
+              <StatsCard
+                key={index}
+                title={stat.title}
+                value={stat.value}
+                icon={stat.icon}
+                color={stat.color}
+              />
+            ))}
+          </div>
+
+          <RoleAwareNavigation />
+        </>
+      )}
     </div>
   );
 }

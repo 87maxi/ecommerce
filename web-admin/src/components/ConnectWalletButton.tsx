@@ -28,7 +28,7 @@ export function ConnectWalletButton() {
             <button
                 onClick={handleConnect}
                 disabled={connecting}
-                className="w-full flex items-center justify-center px-6 py-3 border border-transparent text-base font-medium rounded-lg shadow-sm text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 disabled:opacity-50 disabled:cursor-not-allowed transition-all duration-200"
+                className="w-full flex items-center justify-center px-6 py-3 border border-cyan-500/30 text-base font-medium rounded-xl shadow-lg shadow-cyan-500/20 text-white bg-gradient-to-r from-cyan-500 to-purple-600 hover:from-cyan-400 hover:to-purple-500 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-cyan-500 disabled:opacity-50 disabled:cursor-not-allowed transition-all duration-200 hover:shadow-cyan-500/40"
             >
                 {connecting ? (
                     <>
@@ -75,7 +75,7 @@ export function ConnectWalletButton() {
             </button>
 
             {error && (
-                <div className="p-3 bg-red-50 border border-red-200 rounded-lg">
+                <div className="p-3 bg-red-500/10 border border-red-500/30 rounded-lg backdrop-blur-sm">
                     <div className="flex items-start">
                         <svg
                             className="w-5 h-5 text-red-400 mt-0.5 flex-shrink-0"
@@ -89,15 +89,15 @@ export function ConnectWalletButton() {
                             />
                         </svg>
                         <div className="ml-3 flex-1">
-                            <p className="text-sm text-red-800 font-medium">Error de conexión</p>
-                            <p className="text-xs text-red-700 mt-1">{error.message}</p>
+                            <p className="text-sm text-red-300 font-medium">Error de conexión</p>
+                            <p className="text-xs text-red-400 mt-1">{error.message}</p>
                         </div>
                     </div>
                 </div>
             )}
 
             <div className="text-center">
-                <p className="text-xs text-gray-500">
+                <p className="text-xs text-slate-400">
                     Compatible con MetaMask, Rabby y otras wallets Ethereum
                 </p>
                 <div className="flex gap-2 justify-center mt-2">
@@ -105,16 +105,16 @@ export function ConnectWalletButton() {
                         href="https://metamask.io/download/"
                         target="_blank"
                         rel="noopener noreferrer"
-                        className="text-xs text-indigo-600 hover:text-indigo-800 underline"
+                        className="text-xs text-cyan-400 hover:text-cyan-300 underline transition-colors"
                     >
                         MetaMask
                     </a>
-                    <span className="text-xs text-gray-400">•</span>
+                    <span className="text-xs text-slate-600">•</span>
                     <a
                         href="https://rabby.io/"
                         target="_blank"
                         rel="noopener noreferrer"
-                        className="text-xs text-indigo-600 hover:text-indigo-800 underline"
+                        className="text-xs text-cyan-400 hover:text-cyan-300 underline transition-colors"
                     >
                         Rabby
                     </a>

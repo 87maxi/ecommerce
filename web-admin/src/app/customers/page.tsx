@@ -38,12 +38,12 @@ export default function CustomersPage() {
 
   if (!isConnected) {
     return (
-      <div className="min-h-screen bg-gray-50 py-12 px-4 sm:px-6 lg:px-8">
+      <div className="min-h-screen bg-slate-900 py-12 px-4 sm:px-6 lg:px-8">
         <div className="max-w-3xl mx-auto text-center">
-          <h1 className="text-3xl font-bold text-gray-900">
+          <h1 className="text-3xl font-bold text-slate-200">
             Acceso Restringido
           </h1>
-          <p className="mt-4 text-lg text-gray-500">
+          <p className="mt-4 text-lg text-slate-400">
             Por favor, conecta tu billetera para acceder al panel de
             administración.
           </p>
@@ -61,13 +61,13 @@ export default function CustomersPage() {
   }
 
   return (
-    <div className="min-h-screen bg-gray-50 py-12 px-4 sm:px-6 lg:px-8">
+    <div className="min-h-screen bg-slate-900 py-12 px-4 sm:px-6 lg:px-8">
       <div className="max-w-7xl mx-auto">
         <div className="mb-8">
-          <h1 className="text-3xl font-bold text-gray-900">
+          <h1 className="text-3xl font-bold text-slate-200">
             Gestión de Clientes
           </h1>
-          <p className="mt-2 text-sm text-gray-600">
+          <p className="mt-2 text-sm text-slate-300">
             Gestiona todos los clientes registrados en el e-commerce
             descentralizado.
           </p>
@@ -77,7 +77,7 @@ export default function CustomersPage() {
           {loading ? (
             <div className="flex justify-center items-center py-8">
               <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-indigo-600"></div>
-              <span className="ml-2 text-gray-600">Cargando clientes...</span>
+              <span className="ml-2 text-slate-300">Cargando clientes...</span>
             </div>
           ) : error ? (
             <div className="text-center py-8">
@@ -92,7 +92,7 @@ export default function CustomersPage() {
               </Link>
             </div>
           ) : customers.length === 0 ? (
-            <div className="text-center py-8 text-gray-500">
+            <div className="text-center py-8 text-slate-400">
               <svg
                 className="mx-auto h-12 w-12 text-gray-400"
                 fill="none"
@@ -117,13 +117,13 @@ export default function CustomersPage() {
                 >
                   <div className="flex justify-between items-start">
                     <div className="flex-1">
-                      <h3 className="font-medium text-gray-900">
+                      <h3 className="font-medium text-slate-200">
                         {customer.name}
                       </h3>
-                      <p className="text-sm text-gray-600 mt-1">
+                      <p className="text-sm text-slate-300 mt-1">
                         {customer.email}
                       </p>
-                      <div className="mt-2 text-xs text-gray-500 space-y-1">
+                      <div className="mt-2 text-xs text-slate-400 space-y-1">
                         <p>ID: {customer.id}</p>
                         <p>Dirección: {formatAddress(customer.address)}</p>
                         <p>Registrado: {formatDate(customer.registeredAt)}</p>

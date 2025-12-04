@@ -163,12 +163,12 @@ function CompaniesPageContent() {
 
   if (!isConnected) {
     return (
-      <div className="min-h-screen bg-gray-50 py-12 px-4 sm:px-6 lg:px-8">
+      <div className="min-h-screen bg-slate-900 py-12 px-4 sm:px-6 lg:px-8">
         <div className="max-w-3xl mx-auto text-center">
-          <h1 className="text-3xl font-bold text-gray-900">
+          <h1 className="text-3xl font-bold text-slate-200">
             Acceso Restringido
           </h1>
-          <p className="mt-4 text-lg text-gray-500">
+          <p className="mt-4 text-lg text-slate-400">
             Por favor, conecta tu billetera para acceder al panel de
             administración.
           </p>
@@ -186,24 +186,24 @@ function CompaniesPageContent() {
   }
 
   return (
-    <div className="min-h-screen bg-gray-50 py-12 px-4 sm:px-6 lg:px-8">
+    <div className="min-h-screen bg-slate-900 py-12 px-4 sm:px-6 lg:px-8">
       <div className="max-w-7xl mx-auto">
         <div className="flex justify-between items-center mb-8">
           <div>
-            <h1 className="text-3xl font-bold text-gray-900">
+            <h1 className="text-3xl font-bold text-slate-200">
               Gestión de Empresas
             </h1>
-            <p className="mt-2 text-sm text-gray-600">
+            <p className="mt-2 text-sm text-slate-300">
               Registra nuevas empresas y gestiona las existentes en el
               e-commerce descentralizado.
             </p>
           </div>
           <button
             onClick={() => window.location.reload()}
-            className="inline-flex items-center px-4 py-2 border border-gray-300 rounded-md shadow-sm text-sm font-medium text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500"
+            className="inline-flex items-center px-4 py-2 border border-cyan-500/30 rounded-md shadow-sm text-sm font-medium text-slate-300 bg-slate-800/50 hover:bg-slate-700/50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500"
           >
             <svg
-              className="-ml-1 mr-2 h-5 w-5 text-gray-500"
+              className="-ml-1 mr-2 h-5 w-5 text-slate-400"
               xmlns="http://www.w3.org/2000/svg"
               viewBox="0 0 20 20"
               fill="currentColor"
@@ -221,7 +221,7 @@ function CompaniesPageContent() {
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
           {/* Formulario de Registro */}
           <div className="bg-[var(--card)] shadow rounded-lg p-6">
-            <h2 className="text-xl font-semibold text-gray-900 mb-6">
+            <h2 className="text-xl font-semibold text-slate-200 mb-6">
               Registrar Nueva Empresa
             </h2>
 
@@ -235,7 +235,7 @@ function CompaniesPageContent() {
               <div>
                 <label
                   htmlFor="address"
-                  className="block text-sm font-medium text-gray-700"
+                  className="block text-sm font-medium text-slate-300"
                 >
                   Dirección de la Empresa
                 </label>
@@ -255,7 +255,7 @@ function CompaniesPageContent() {
               <div>
                 <label
                   htmlFor="name"
-                  className="block text-sm font-medium text-gray-700"
+                  className="block text-sm font-medium text-slate-300"
                 >
                   Nombre
                 </label>
@@ -275,7 +275,7 @@ function CompaniesPageContent() {
               <div>
                 <label
                   htmlFor="description"
-                  className="block text-sm font-medium text-gray-700"
+                  className="block text-sm font-medium text-slate-300"
                 >
                   Descripción
                 </label>
@@ -312,17 +312,17 @@ function CompaniesPageContent() {
 
           {/* Lista de Empresas */}
           <div className="bg-[var(--card)] shadow rounded-lg p-6">
-            <h2 className="text-xl font-semibold text-gray-900 mb-6">
+            <h2 className="text-xl font-semibold text-slate-200 mb-6">
               Empresas Registradas
             </h2>
 
             {loading ? (
               <div className="flex justify-center items-center py-8">
                 <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-indigo-600"></div>
-                <span className="ml-2 text-gray-600">Cargando empresas...</span>
+                <span className="ml-2 text-slate-300">Cargando empresas...</span>
               </div>
             ) : companies.length === 0 ? (
-              <div className="text-center py-8 text-gray-500">
+              <div className="text-center py-8 text-slate-400">
                 <svg
                   className="mx-auto h-12 w-12 text-gray-400"
                   fill="none"
@@ -351,13 +351,13 @@ function CompaniesPageContent() {
                   >
                     <div className="flex justify-between items-start">
                       <div className="flex-1">
-                        <h3 className="font-medium text-gray-900">
+                        <h3 className="font-medium text-slate-200">
                           {company.name}
                         </h3>
-                        <p className="text-sm text-gray-600 mt-1">
+                        <p className="text-sm text-slate-300 mt-1">
                           {company.description}
                         </p>
-                        <div className="mt-2 text-xs text-gray-500 space-y-1">
+                        <div className="mt-2 text-xs text-slate-400 space-y-1">
                           <p>ID: {company.id}</p>
                           <p>Propietario: {formatAddress(company.owner)}</p>
                           <p>

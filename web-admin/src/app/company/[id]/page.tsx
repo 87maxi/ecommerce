@@ -174,12 +174,12 @@ export default function CompanyDetailPage() {
 
   if (!isConnected) {
     return (
-      <div className="min-h-screen bg-gray-50 py-12 px-4 sm:px-6 lg:px-8">
+      <div className="min-h-screen bg-slate-900 py-12 px-4 sm:px-6 lg:px-8">
         <div className="max-w-3xl mx-auto text-center">
-          <h1 className="text-3xl font-bold text-gray-900">
+          <h1 className="text-3xl font-bold text-slate-200">
             Acceso Restringido
           </h1>
-          <p className="mt-4 text-lg text-gray-500">
+          <p className="mt-4 text-lg text-slate-400">
             Por favor, conecta tu billetera para acceder al panel de
             administración.
           </p>
@@ -198,10 +198,10 @@ export default function CompanyDetailPage() {
 
   if (loading) {
     return (
-      <div className="min-h-screen bg-gray-50 py-12 px-4 sm:px-6 lg:px-8">
+      <div className="min-h-screen bg-slate-900 py-12 px-4 sm:px-6 lg:px-8">
         <div className="max-w-4xl mx-auto text-center">
           <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-indigo-600 mx-auto"></div>
-          <p className="mt-4 text-gray-600">
+          <p className="mt-4 text-slate-300">
             Cargando información de la empresa...
           </p>
         </div>
@@ -211,12 +211,12 @@ export default function CompanyDetailPage() {
 
   if (!company) {
     return (
-      <div className="min-h-screen bg-gray-50 py-12 px-4 sm:px-6 lg:px-8">
+      <div className="min-h-screen bg-slate-900 py-12 px-4 sm:px-6 lg:px-8">
         <div className="max-w-3xl mx-auto text-center">
-          <h1 className="text-3xl font-bold text-gray-900">
+          <h1 className="text-3xl font-bold text-slate-200">
             Empresa no encontrada
           </h1>
-          <p className="mt-4 text-lg text-gray-500">
+          <p className="mt-4 text-lg text-slate-400">
             La empresa solicitada no existe o no tienes acceso a ella.
           </p>
           <div className="mt-8">
@@ -233,17 +233,17 @@ export default function CompanyDetailPage() {
   }
 
   return (
-    <div className="min-h-screen bg-gray-50 py-12 px-4 sm:px-6 lg:px-8">
+    <div className="min-h-screen bg-slate-900 py-12 px-4 sm:px-6 lg:px-8">
       <div className="max-w-6xl mx-auto">
         {/* Header */}
         <div className="mb-8">
           <div className="flex items-center justify-between">
             <div>
-              <h1 className="text-3xl font-bold text-gray-900">
+              <h1 className="text-3xl font-bold text-slate-200">
                 {company.name}
               </h1>
-              <p className="mt-2 text-gray-600">{company.description}</p>
-              <div className="mt-2 text-sm text-gray-500 space-y-1">
+              <p className="mt-2 text-slate-300">{company.description}</p>
+              <div className="mt-2 text-sm text-slate-400 space-y-1">
                 <p>ID: {company.id}</p>
                 <p>Propietario: {formatAddress(company.owner)}</p>
                 <p>Estado: {company.isActive ? 'Activa' : 'Inactiva'}</p>
@@ -253,10 +253,10 @@ export default function CompanyDetailPage() {
             <div className="flex space-x-4">
               <button
                 onClick={() => window.location.reload()}
-                className="inline-flex items-center px-4 py-2 border border-gray-300 rounded-md shadow-sm text-sm font-medium text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500"
+                className="inline-flex items-center px-4 py-2 border border-cyan-500/30 rounded-md shadow-sm text-sm font-medium text-slate-300 bg-slate-800/50 hover:bg-slate-700/50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500"
               >
                 <svg
-                  className="-ml-1 mr-2 h-5 w-5 text-gray-500"
+                  className="-ml-1 mr-2 h-5 w-5 text-slate-400"
                   xmlns="http://www.w3.org/2000/svg"
                   viewBox="0 0 20 20"
                   fill="currentColor"
@@ -271,7 +271,7 @@ export default function CompanyDetailPage() {
               </button>
               <Link
                 href="/companies"
-                className="px-4 py-2 border border-gray-300 rounded-md text-sm font-medium text-gray-700 hover:bg-gray-50 flex items-center"
+                className="px-4 py-2 border border-cyan-500/30 rounded-md text-sm font-medium text-slate-300 hover:bg-slate-900 flex items-center"
               >
                 ← Volver
               </Link>
@@ -291,7 +291,7 @@ export default function CompanyDetailPage() {
           {/* Formulario de Producto (solo para el propietario) */}
           {isCompanyOwner && (
             <div className="bg-[var(--card)] shadow rounded-lg p-6">
-              <h2 className="text-xl font-semibold text-gray-900 mb-6">
+              <h2 className="text-xl font-semibold text-slate-200 mb-6">
                 Agregar Producto
               </h2>
 
@@ -305,7 +305,7 @@ export default function CompanyDetailPage() {
                 <div>
                   <label
                     htmlFor="name"
-                    className="block text-sm font-medium text-gray-700"
+                    className="block text-sm font-medium text-slate-300"
                   >
                     Nombre del Producto
                   </label>
@@ -328,7 +328,7 @@ export default function CompanyDetailPage() {
                 <div>
                   <label
                     htmlFor="description"
-                    className="block text-sm font-medium text-gray-700"
+                    className="block text-sm font-medium text-slate-300"
                   >
                     Descripción
                   </label>
@@ -350,7 +350,7 @@ export default function CompanyDetailPage() {
                 <div>
                   <label
                     htmlFor="price"
-                    className="block text-sm font-medium text-gray-700"
+                    className="block text-sm font-medium text-slate-300"
                   >
                     Precio (EURT)
                   </label>
@@ -375,7 +375,7 @@ export default function CompanyDetailPage() {
                 <div>
                   <label
                     htmlFor="stock"
-                    className="block text-sm font-medium text-gray-700"
+                    className="block text-sm font-medium text-slate-300"
                   >
                     Stock
                   </label>
@@ -399,7 +399,7 @@ export default function CompanyDetailPage() {
                 <div>
                   <label
                     htmlFor="imageHash"
-                    className="block text-sm font-medium text-gray-700"
+                    className="block text-sm font-medium text-slate-300"
                   >
                     Hash de Imagen (IPFS)
                   </label>
@@ -441,12 +441,12 @@ export default function CompanyDetailPage() {
 
           {/* Lista de Productos */}
           <div className="bg-[var(--card)] shadow rounded-lg p-6">
-            <h2 className="text-xl font-semibold text-gray-900 mb-6">
+            <h2 className="text-xl font-semibold text-slate-200 mb-6">
               Productos de la Empresa
             </h2>
 
             {products.length === 0 ? (
-              <div className="text-center py-8 text-gray-500">
+              <div className="text-center py-8 text-slate-400">
                 <svg
                   className="mx-auto h-12 w-12 text-gray-400"
                   fill="none"
@@ -471,13 +471,13 @@ export default function CompanyDetailPage() {
                 >
                     <div className="flex justify-between items-start">
                       <div className="flex-1">
-                        <h3 className="font-medium text-gray-900">
+                        <h3 className="font-medium text-slate-200">
                           {product.name}
                         </h3>
-                        <p className="text-sm text-gray-600 mt-1">
+                        <p className="text-sm text-slate-300 mt-1">
                           {product.description}
                         </p>
-                        <div className="mt-2 text-xs text-gray-500 space-y-1">
+                        <div className="mt-2 text-xs text-slate-400 space-y-1">
                           <p>Precio: {product.price} EURT</p>
                           <p>Stock: {product.stock}</p>
                           <p>
@@ -499,7 +499,7 @@ export default function CompanyDetailPage() {
         {/* Sección de Ventas (Solo para el propietario) */}
         {isCompanyOwner && (
           <div className="mt-8 bg-[var(--card)] shadow rounded-lg p-6">
-            <h2 className="text-xl font-semibold text-gray-900 mb-6">
+            <h2 className="text-xl font-semibold text-slate-200 mb-6">
               Ventas de la Empresa
             </h2>
             <SalesList companyId={companyId} contract={ecommerceContract} />
@@ -565,39 +565,39 @@ function SalesList({
     loadSales();
   }, [companyId, contract]);
 
-  if (loading) return <p className="text-gray-500">Cargando ventas...</p>;
+  if (loading) return <p className="text-slate-400">Cargando ventas...</p>;
   if (invoices.length === 0)
-    return <p className="text-gray-500">No hay ventas registradas.</p>;
+    return <p className="text-slate-400">No hay ventas registradas.</p>;
 
   return (
     <div className="overflow-x-auto">
       <table className="min-w-full divide-y divide-gray-200">
-        <thead className="bg-gray-50">
+        <thead className="bg-slate-900">
           <tr>
-            <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+            <th className="px-6 py-3 text-left text-xs font-medium text-slate-400 uppercase tracking-wider">
               Fecha
             </th>
-            <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+            <th className="px-6 py-3 text-left text-xs font-medium text-slate-400 uppercase tracking-wider">
               Cliente
             </th>
-            <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+            <th className="px-6 py-3 text-left text-xs font-medium text-slate-400 uppercase tracking-wider">
               Productos
             </th>
-            <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+            <th className="px-6 py-3 text-left text-xs font-medium text-slate-400 uppercase tracking-wider">
               Total (EURT)
             </th>
           </tr>
         </thead>
-        <tbody className="bg-white divide-y divide-gray-200">
+        <tbody className="bg-slate-800/30 divide-y divide-cyan-500/10">
           {invoices.map(sale => (
             <tr key={sale.id}>
-              <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+              <td className="px-6 py-4 whitespace-nowrap text-sm text-slate-400">
                 {sale.date}
               </td>
-              <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+              <td className="px-6 py-4 whitespace-nowrap text-sm text-slate-400">
                 {formatAddress(sale.customer)}
               </td>
-              <td className="px-6 py-4 text-sm text-gray-500">
+              <td className="px-6 py-4 text-sm text-slate-400">
                 <ul className="list-disc list-inside">
                   {sale.items.map((item: any, idx: number) => (
                     <li key={idx}>
@@ -606,7 +606,7 @@ function SalesList({
                   ))}
                 </ul>
               </td>
-              <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">
+              <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-slate-200">
                 {(Number(sale.total) / 100).toFixed(2)}
               </td>
             </tr>

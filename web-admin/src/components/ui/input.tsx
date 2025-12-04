@@ -15,16 +15,16 @@ const Input = forwardRef<HTMLInputElement, InputProps>(
       <>
         <input
           className={cn(
-            'flex h-10 w-full rounded-md border bg-[var(--card)] px-3 py-2 text-sm ring-offset-background file:border-0 file:bg-transparent file:text-sm file:font-medium placeholder:text-[var(--muted)] focus:outline-none focus:ring-2 focus:ring-[var(--primary)] focus:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50',
+            'flex h-10 w-full rounded-lg border bg-slate-800/50 px-3 py-2 text-sm text-slate-200 ring-offset-slate-900 file:border-0 file:bg-transparent file:text-sm file:font-medium placeholder:text-slate-500 focus:outline-none focus:ring-2 focus:ring-cyan-500/50 focus:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50 transition-all',
             error
-              ? 'border-red-500 focus:ring-red-500'
-              : 'border-[var(--muted-light)] focus:border-[var(--primary)]',
+              ? 'border-red-500/50 focus:ring-red-500/50'
+              : 'border-cyan-500/30 focus:border-cyan-400/50',
             className
           )}
           ref={ref}
           {...props}
         />
-        {error && <p className="mt-1 text-sm text-red-500">{error}</p>}
+        {error && <p className="mt-1 text-sm text-red-400">{error}</p>}
       </>
     );
   }

@@ -90,12 +90,12 @@ export default function ProductsPage() {
 
   if (!isConnected) {
     return (
-      <div className="min-h-screen bg-gray-50 py-12 px-4 sm:px-6 lg:px-8">
+      <div className="min-h-screen bg-slate-900 py-12 px-4 sm:px-6 lg:px-8">
         <div className="max-w-3xl mx-auto text-center">
-          <h1 className="text-3xl font-bold text-gray-900">
+          <h1 className="text-3xl font-bold text-slate-200">
             Acceso Restringido
           </h1>
-          <p className="mt-4 text-lg text-gray-500">
+          <p className="mt-4 text-lg text-slate-400">
             Por favor, conecta tu billetera para acceder al panel de
             administración.
           </p>
@@ -163,24 +163,24 @@ export default function ProductsPage() {
   };
 
   return (
-    <div className="min-h-screen bg-gray-50 py-12 px-4 sm:px-6 lg:px-8">
+    <div className="min-h-screen bg-slate-900 py-12 px-4 sm:px-6 lg:px-8">
       <div className="max-w-7xl mx-auto">
         <div className="flex justify-between items-center mb-8">
           <div>
-            <h1 className="text-3xl font-bold text-gray-900">
+            <h1 className="text-3xl font-bold text-slate-200">
               Gestión de Productos
             </h1>
-            <p className="mt-2 text-sm text-gray-600">
+            <p className="mt-2 text-sm text-slate-300">
               Gestiona todos los productos registrados en el e-commerce
               descentralizado.
             </p>
           </div>
           <button
             onClick={() => window.location.reload()}
-            className="inline-flex items-center px-4 py-2 border border-gray-300 rounded-md shadow-sm text-sm font-medium text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500"
+            className="inline-flex items-center px-4 py-2 border border-cyan-500/30 rounded-md shadow-sm text-sm font-medium text-slate-300 bg-slate-800/50 hover:bg-slate-700/50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500"
           >
             <svg
-              className="-ml-1 mr-2 h-5 w-5 text-gray-500"
+              className="-ml-1 mr-2 h-5 w-5 text-slate-400"
               xmlns="http://www.w3.org/2000/svg"
               viewBox="0 0 20 20"
               fill="currentColor"
@@ -199,7 +199,7 @@ export default function ProductsPage() {
           {loading ? (
             <div className="flex justify-center items-center py-8">
               <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-indigo-600"></div>
-              <span className="ml-2 text-gray-600">Cargando productos...</span>
+              <span className="ml-2 text-slate-300">Cargando productos...</span>
             </div>
           ) : error ? (
             <div className="text-center py-8">
@@ -214,7 +214,7 @@ export default function ProductsPage() {
               </Link>
             </div>
           ) : products.length === 0 ? (
-            <div className="text-center py-8 text-gray-500">
+            <div className="text-center py-8 text-slate-400">
               <svg
                 className="mx-auto h-12 w-12 text-gray-400"
                 fill="none"
@@ -239,13 +239,13 @@ export default function ProductsPage() {
                 >
                   <div className="flex justify-between items-start">
                     <div className="flex-1">
-                      <h3 className="font-medium text-gray-900">
+                      <h3 className="font-medium text-slate-200">
                         {product.name}
                       </h3>
-                      <p className="text-sm text-gray-600 mt-1">
+                      <p className="text-sm text-slate-300 mt-1">
                         {product.description}
                       </p>
-                      <div className="mt-2 text-xs text-gray-500 space-y-1">
+                      <div className="mt-2 text-xs text-slate-400 space-y-1">
                         <p>ID: {product.id}</p>
                         <p>Empresa: {product.companyId}</p>
                         <p>Precio: {product.price} EURT</p>

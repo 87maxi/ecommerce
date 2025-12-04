@@ -12,12 +12,12 @@ export function Header() {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
 
   return (
-    <header className="bg-white shadow-sm border-b border-gray-200 fixed w-full z-10">
+    <header className="bg-slate-900/95 backdrop-blur-md shadow-lg border-b border-cyan-500/20 fixed w-full z-10">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="flex justify-between h-16 items-center">
           <div className="flex items-center flex-shrink-0">
             <Link href="/" className="flex items-center space-x-3">
-              <div className="w-10 h-10 bg-indigo-600 rounded-lg flex items-center justify-center">
+              <div className="w-10 h-10 bg-gradient-to-br from-cyan-500 to-purple-600 rounded-lg flex items-center justify-center shadow-lg shadow-cyan-500/30">
                 <svg
                   className="w-6 h-6 text-white"
                   fill="none"
@@ -33,10 +33,10 @@ export function Header() {
                 </svg>
               </div>
               <div className="hidden md:block">
-                <h1 className="text-xl font-bold text-gray-900">
+                <h1 className="text-xl font-bold bg-gradient-to-r from-cyan-400 to-purple-400 bg-clip-text text-transparent">
                   E-Commerce Admin
                 </h1>
-                <p className="text-xs text-gray-500">Panel de Administración</p>
+                <p className="text-xs text-slate-400">Panel de Administración</p>
               </div>
             </Link>
           </div>
@@ -48,7 +48,7 @@ export function Header() {
           <div className="flex items-center space-x-3">
             <button
               onClick={toggleTheme}
-              className="p-2 rounded-lg bg-[var(--muted-light)] text-[var(--muted)] hover:text-[var(--foreground)] hover:bg-[var(--muted)] transition-all duration-200"
+              className="p-2 rounded-lg bg-slate-800/50 border border-cyan-500/30 text-cyan-400 hover:text-cyan-300 hover:bg-slate-700/50 hover:border-cyan-400/50 transition-all duration-200"
               aria-label="Toggle theme"
             >
               {theme === 'dark' ? (
@@ -85,7 +85,7 @@ export function Header() {
             {/* Mobile menu button */}
             <button
               onClick={() => setIsMenuOpen(!isMenuOpen)}
-              className="md:hidden p-2 rounded-md text-gray-700 hover:text-gray-900 hover:bg-gray-100"
+              className="md:hidden p-2 rounded-md text-slate-300 hover:text-cyan-400 hover:bg-slate-800/50 transition-colors"
             >
               <svg
                 className="h-6 w-6"
@@ -107,7 +107,7 @@ export function Header() {
 
       {/* Mobile navigation menu */}
       {isMenuOpen && (
-        <div className="md:hidden border-t border-gray-200 bg-white">
+        <div className="md:hidden border-t border-cyan-500/20 bg-slate-900/95 backdrop-blur-md">
           <div className="px-2 pt-2 pb-3 space-y-1 flex flex-col items-start">
             <RoleIndicator />
           </div>

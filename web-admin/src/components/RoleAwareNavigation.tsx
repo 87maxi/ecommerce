@@ -38,18 +38,18 @@ export function RoleAwareNavigation() {
     <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
       {items.map((item) => (
         <div key={item.name} className="lg:col-span-1">
-          <h2 className="text-xl font-bold text-gray-900 mb-4">{item.name}</h2>
+          <h2 className="text-xl font-bold bg-gradient-to-r from-cyan-400 to-purple-400 bg-clip-text text-transparent mb-4">{item.name}</h2>
           <Link
             href={item.href}
-            className="block p-4 border border-gray-200 rounded-lg hover:bg-gray-50 transition-colors"
+            className="block p-6 border-2 border-cyan-500/30 rounded-xl bg-gradient-to-br from-slate-800/50 to-slate-700/30 backdrop-blur-sm hover:border-cyan-400/50 hover:shadow-lg hover:shadow-cyan-500/20 transition-all duration-200"
           >
             <div className="flex items-center">
-              <div className="flex-shrink-0 flex items-center justify-center h-10 w-10 rounded-md bg-indigo-500 text-white">
+              <div className="flex-shrink-0 flex items-center justify-center h-12 w-12 rounded-lg bg-gradient-to-br from-cyan-500 to-purple-600 text-white shadow-lg shadow-cyan-500/30">
                 {getIconForSection(item.name)}
               </div>
               <div className="ml-4">
-                <h3 className="text-lg font-medium text-gray-900">{item.name}</h3>
-                <p className="text-sm text-gray-500">{item.description}</p>
+                <h3 className="text-lg font-medium text-cyan-300">{item.name}</h3>
+                <p className="text-sm text-slate-400">{item.description}</p>
               </div>
             </div>
           </Link>
@@ -58,22 +58,22 @@ export function RoleAwareNavigation() {
 
       {/* Recent activity for all users */}
       <div className="lg:col-span-2">
-        <h2 className="text-xl font-bold text-gray-900 mb-4">Actividad Reciente</h2>
-        <div className="bg-white shadow overflow-hidden sm:rounded-lg">
-          <div className="px-6 py-5 border-b border-gray-200">
-            <h3 className="text-lg leading-6 font-medium text-gray-900 flex items-center">
-              <svg className="w-5 h-5 text-gray-400 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+        <h2 className="text-xl font-bold bg-gradient-to-r from-cyan-400 to-purple-400 bg-clip-text text-transparent mb-4">Actividad Reciente</h2>
+        <div className="bg-slate-800/50 backdrop-blur-sm border border-cyan-500/20 shadow-lg shadow-cyan-500/10 overflow-hidden rounded-xl">
+          <div className="px-6 py-5 border-b border-cyan-500/20">
+            <h3 className="text-lg leading-6 font-medium text-slate-200 flex items-center">
+              <svg className="w-5 h-5 text-cyan-400 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M9 17v-2m3 2v-4m3 4v-6m2 10H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
               </svg>
               Transacciones Recientes
             </h3>
           </div>
-          <ul className="divide-y divide-gray-200">
-            <li className="px-6 py-8 text-center text-gray-500">
-              <svg className="mx-auto h-12 w-12 text-gray-300 mb-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <ul className="divide-y divide-cyan-500/10">
+            <li className="px-6 py-12 text-center">
+              <svg className="mx-auto h-16 w-16 text-slate-600 mb-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M9 17v-2m3 2v-4m3 4v-6m2 10H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
               </svg>
-              <p className="text-sm font-medium">No hay transacciones recientes</p>
+              <p className="text-sm font-medium text-slate-400">No hay transacciones recientes</p>
             </li>
           </ul>
         </div>

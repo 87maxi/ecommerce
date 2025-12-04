@@ -16,7 +16,7 @@ type RootLayoutProps = {
 export default function RootLayout({ children }: RootLayoutProps) {
   return (
     <html lang="en">
-      <body className="min-h-screen bg-[var(--background)] text-[var(--foreground)] font-sans antialiased">
+      <body className="min-h-screen bg-slate-900 text-slate-200 font-sans antialiased">
         <ThemeProvider>
           <WalletProvider>
             <RoleProvider>
@@ -24,7 +24,7 @@ export default function RootLayout({ children }: RootLayoutProps) {
                 <Header />
                 <div className="flex flex-1">
                   <Sidebar />
-                  <main className="flex-1 w-full min-w-0 pt-16 px-4 sm:px-6 lg:px-8 pb-8">
+                  <main className="flex-1 w-full min-w-0 pt-16 px-4 sm:px-6 lg:px-8 pb-8 md:ml-72">
                     <div className="max-w-7xl mx-auto">
                       {children}
                     </div>

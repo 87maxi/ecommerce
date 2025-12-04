@@ -101,26 +101,29 @@ export function AdminDashboard() {
       {/* Header */}
       <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-4">
         <div>
-          <h1 className="text-2xl sm:text-3xl font-bold text-gray-900">Panel de Administración</h1>
-          <p className="text-sm sm:text-base text-gray-500 mt-2">
+          <h1 className="text-2xl sm:text-3xl font-bold bg-gradient-to-r from-cyan-400 to-purple-400 bg-clip-text text-transparent">Panel de Administración</h1>
+          <p className="text-sm sm:text-base text-slate-400 mt-2">
             Gestiona empresas, productos y clientes en el e-commerce descentralizado
           </p>
         </div>
-        <div className="inline-flex items-center px-3 py-1.5 rounded-full text-sm font-medium bg-red-100 text-red-800 self-start">
+        <div className="inline-flex items-center px-3 py-1.5 rounded-lg text-sm font-medium bg-gradient-to-r from-red-500/20 to-rose-500/20 text-red-300 border border-red-500/30 self-start">
           Rol: Administrador
         </div>
       </div>
 
       {dashboardError ? (
-        <Card className="border-red-200 bg-red-50">
+        <Card className="border-red-500/30 bg-red-500/10">
           <CardContent className="p-6">
-            <p className="text-red-800">{dashboardError}</p>
+            <p className="text-red-300">{dashboardError}</p>
           </CardContent>
         </Card>
       ) : dashboardLoading ? (
         <div className="flex justify-center items-center py-12">
-          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-[var(--primary)]"></div>
-          <span className="ml-3 text-[var(--muted)]">Cargando datos...</span>
+          <div className="relative">
+            <div className="animate-spin rounded-full h-16 w-16 border-4 border-slate-700"></div>
+            <div className="animate-spin rounded-full h-16 w-16 border-t-4 border-cyan-500 absolute top-0 left-0 shadow-lg shadow-cyan-500/50"></div>
+          </div>
+          <span className="ml-4 text-slate-300 font-medium">Cargando datos...</span>
         </div>
       ) : (
         <>
