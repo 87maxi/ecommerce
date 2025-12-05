@@ -1,13 +1,6 @@
 
-> compra-stableboin@1.0.0 dev
+> compra-stablecoin@1.0.0 dev
 > next dev -p 3033
-
- ⚠ Warning: Next.js inferred your workspace root, but it may not be correct.
- We detected multiple lockfiles and selected the directory of /home/maxi/package-lock.json as the root directory.
- To silence this warning, set `outputFileTracingRoot` in your Next.js config, or consider removing one of the lockfiles if it's not needed.
-   See https://nextjs.org/docs/app/api-reference/config/next-config-js/output#caveats for more information.
- Detected additional lockfiles: 
-   * /home/maxi/Documentos/source/codecrypto/practice/ecommerce/stablecoin/compra-stableboin/package-lock.json
 
  ⨯ Failed to start server
 Error: listen EADDRINUSE: address already in use :::3033

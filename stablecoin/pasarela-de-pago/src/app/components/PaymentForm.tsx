@@ -3,10 +3,12 @@
 import { useEffect, useState } from 'react';
 import { loadStripe } from '@stripe/stripe-js';
 import { Elements, PaymentElement, useStripe, useElements } from '@stripe/react-stripe-js';
-import MetaMaskConnect from './MetaMaskConnect';
 
 const publishableKey = process.env.NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY || '';
-console.log('[PaymentForm] Stripe publishable key loaded:', publishableKey ? 'YES' : 'NO');
+console.log('[PaymentForm] Environment check:');
+console.log('[PaymentForm] - NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY:', publishableKey);
+console.log('[PaymentForm] - Key length:', publishableKey.length);
+console.log('[PaymentForm] - Starts with pk_test:', publishableKey.startsWith('pk_test_'));
 const stripePromise = loadStripe(publishableKey);
 
 interface PaymentData {

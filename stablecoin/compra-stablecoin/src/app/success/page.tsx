@@ -12,6 +12,39 @@ function SuccessPageContent() {
   const [payment, setPayment] = useState<any>(null);
   const [redirecting, setRedirecting] = useState(false);
   const [showConfetti, setShowConfetti] = useState(false);
+  const [updatedBalance, setUpdatedBalance] = useState<string | null>(null);
+  const [loadingBalance, setLoadingBalance] = useState(false);
+
+  // Function to fetch updated balance
+  const fetchUpdatedBalance = async (walletAddress: string) => {
+    if (!window.ethereum) return;
+
+    setLoadingBalance(true);
+    try {
+      const contractAddress = process.env.NEXT_PUBLIC_EUROTOKEN_CONTRACT_ADDRESS;
+      if (!contractAddress) {
+        console.error('[SUCCESS] Contract address not found');
+        return;
+      }
+
+      const balanceHex = await window.ethereum.request({
+        method: 'eth_call',
+        params: [{
+          to: contractAddress,
+          data: `0x70a08231000000000000000000000000${walletAddress.slice(2)}`,
+        }, 'latest'],
+      });
+
+      const balanceWei = parseInt(balanceHex, 16);
+      const balanceEther = (balanceWei / 1e18).toFixed(2);
+      setUpdatedBalance(balanceEther);
+      console.log('[SUCCESS] Updated balance:', balanceEther, 'EURT');
+    } catch (error) {
+      console.error('[SUCCESS] Error fetching balance:', error);
+    } finally {
+      setLoadingBalance(false);
+    }
+  };
 
   useEffect(() => {
     const params = new URLSearchParams(window.location.search);
@@ -43,60 +76,87 @@ function SuccessPageContent() {
         try {
           const pasarelaUrl = process.env.NEXT_PUBLIC_PASARELA_PAGO_URL || 'http://localhost:3034';
 
-          // Retry mechanism for verification
-          let retries = 0;
-          const maxRetries = 5;
+          // Get payment_intent from URL (Stripe includes this in the return_url)
+          const paymentIntentParam = params.get('payment_intent');
 
-          while (retries < maxRetries) {
-            const response = await fetch(
-              `${pasarelaUrl}/api/verify-minting?invoice=${finalInvoice}&wallet=${finalWallet}`
-            );
+          console.log('[SUCCESS] Payment intent from URL:', paymentIntentParam);
 
-            if (response.ok) {
-              const data = await response.json();
-
-              if (data.minted) {
-                console.log('✅ Tokens minteados exitosamente:', data);
-                setPayment({
-                  amount: finalAmount,
-                  invoice: finalInvoice,
-                  wallet: finalWallet,
-                  status: 'success',
-                  txHash: data.txHash
-                });
-
-                // Clean up session storage
-                sessionStorage.removeItem('redirect_url');
-                sessionStorage.removeItem('invoice');
-                sessionStorage.removeItem('amount');
-                sessionStorage.removeItem('wallet_address');
-
-                // Redirect with success parameters
-                const redirectUrl = `${storedRedirect}?success=true&tokens=${finalAmount}&invoice=${finalInvoice}&wallet=${finalWallet}`;
-                setTimeout(() => {
-                  window.location.href = redirectUrl;
-                }, 3000);
-                return;
-              } else {
-                console.warn(`⚠️ Tokens no minteados aún (intento ${retries + 1}/${maxRetries}):`, data);
-              }
-            }
-
-            retries++;
-            // Wait 2 seconds before retrying
-            await new Promise(resolve => setTimeout(resolve, 2000));
+          if (!paymentIntentParam) {
+            console.error('[SUCCESS] No payment_intent in URL, cannot mint tokens');
+            setPayment({
+              amount: finalAmount,
+              invoice: finalInvoice,
+              wallet: finalWallet,
+              status: 'error',
+              error: 'No payment intent ID found'
+            });
+            return;
           }
 
-          console.error('❌ Fallo en verificación de minting después de', maxRetries, 'intentos');
-          setPayment({
-            amount: finalAmount,
-            invoice: finalInvoice,
-            wallet: finalWallet,
-            status: 'verification_failed'
+          // Call mint-after-payment endpoint
+          console.log('[SUCCESS] Calling mint-after-payment endpoint...');
+          const mintResponse = await fetch(`${pasarelaUrl}/api/mint-after-payment`, {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({
+              paymentIntentId: paymentIntentParam
+            })
           });
 
+          if (mintResponse.ok) {
+            const mintData = await mintResponse.json();
+
+            if (mintData.success) {
+              console.log('✅ Tokens minteados exitosamente:', mintData);
+              setPayment({
+                amount: finalAmount,
+                invoice: finalInvoice,
+                wallet: finalWallet,
+                status: 'success',
+                txHash: mintData.transactionHash
+              });
+
+              // Fetch updated balance after minting
+              await fetchUpdatedBalance(finalWallet);
+
+              // Clean up session storage
+              sessionStorage.removeItem('redirect_url');
+              sessionStorage.removeItem('invoice');
+              sessionStorage.removeItem('amount');
+              sessionStorage.removeItem('wallet_address');
+
+              // Redirect with success parameters
+              const redirectUrl = `${storedRedirect}?success=true&tokens=${finalAmount}&invoice=${finalInvoice}&wallet=${finalWallet}&txHash=${mintData.transactionHash}`;
+              setTimeout(() => {
+                window.location.href = redirectUrl;
+              }, 3000);
+              return;
+            } else {
+              console.error('❌ Error en minting:', mintData);
+              setPayment({
+                amount: finalAmount,
+                invoice: finalInvoice,
+                wallet: finalWallet,
+                status: 'error',
+                error: mintData.error || 'Minting failed'
+              });
+            }
+          } else {
+            const errorData = await mintResponse.json();
+            console.error('❌ Error en respuesta de minting:', errorData);
+            setPayment({
+              amount: finalAmount,
+              invoice: finalInvoice,
+              wallet: finalWallet,
+              status: 'error',
+              error: errorData.error || 'Minting request failed'
+            });
+          }
+
         } catch (error) {
-          console.error('Error verificando minting:', error);
+          console.error('Error minteando tokens:', error);
           setPayment({
             amount: finalAmount,
             invoice: finalInvoice,
@@ -118,6 +178,8 @@ function SuccessPageContent() {
 
     if (wallet && tokens) {
       setPayment({ wallet, amount: tokens });
+      // Fetch updated balance
+      fetchUpdatedBalance(wallet);
     }
   }, []);
 
@@ -149,19 +211,29 @@ function SuccessPageContent() {
             <div className="mt-6 p-4 bg-slate-900/50 rounded-xl border border-slate-700/50 space-y-3">
               <div className="flex justify-between items-center">
                 <span className="text-slate-400 text-sm">Tokens adquiridos</span>
-                <span className="text-emerald-400 font-mono font-bold">{payment.amount} EURT</span>
+                <span className="text-emerald-400 font-mono font-bold text-lg">{payment.amount} EURT</span>
               </div>
               <div className="flex justify-between items-center">
                 <span className="text-slate-400 text-sm">Estado</span>
                 <span className="text-sm font-medium">
                   {payment.status === 'success' && (
-                    <span className="text-emerald-400">Tokens verificados</span>
+                    <span className="flex items-center gap-1.5 text-emerald-400">
+                      <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M5 13l4 4L19 7"></path>
+                      </svg>
+                      Tokens minteados
+                    </span>
                   )}
                   {payment.status === 'verification_failed' && (
                     <span className="text-amber-400">Verificación pendiente</span>
                   )}
                   {payment.status === 'error' && (
-                    <span className="text-red-400">Error en verificación</span>
+                    <span className="flex items-center gap-1.5 text-red-400">
+                      <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M6 18L18 6M6 6l12 12"></path>
+                      </svg>
+                      Error en minting
+                    </span>
                   )}
                 </span>
               </div>
@@ -169,6 +241,61 @@ function SuccessPageContent() {
                 <div className="flex justify-between items-center pt-2 border-t border-slate-800">
                   <span className="text-slate-400 text-sm">Wallet</span>
                   <span className="text-xs font-mono text-indigo-300">{payment.wallet.slice(0, 6)}...{payment.wallet.slice(-4)}</span>
+                </div>
+              )}
+              {payment.txHash && (
+                <div className="pt-2 border-t border-slate-800">
+                  <p className="text-slate-400 text-xs mb-2">Hash de Transacción</p>
+                  <div className="flex items-center gap-2 bg-slate-800/50 rounded-lg p-2">
+                    <code className="text-xs font-mono text-emerald-300 flex-1 overflow-hidden text-ellipsis">
+                      {payment.txHash.slice(0, 20)}...{payment.txHash.slice(-18)}
+                    </code>
+                    <button
+                      onClick={() => {
+                        navigator.clipboard.writeText(payment.txHash);
+                        // Could add a toast notification here
+                      }}
+                      className="p-1.5 hover:bg-slate-700 rounded transition-colors"
+                      title="Copiar hash"
+                    >
+                      <svg className="w-4 h-4 text-slate-400 hover:text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z"></path>
+                      </svg>
+                    </button>
+                  </div>
+                </div>
+              )}
+
+              {/* Updated Balance Section */}
+              {updatedBalance !== null && (
+                <div className="pt-3 border-t border-slate-800">
+                  <div className="bg-gradient-to-br from-emerald-900/30 to-cyan-900/30 rounded-xl p-4 border border-emerald-500/30 relative overflow-hidden">
+                    <div className="absolute top-0 right-0 w-24 h-24 bg-emerald-500/10 rounded-full blur-2xl"></div>
+                    <div className="relative">
+                      <p className="text-xs text-emerald-300 font-medium uppercase tracking-wider mb-2">Balance Final EURT</p>
+                      <div className="flex items-baseline gap-2">
+                        <p className="font-mono font-bold text-3xl text-emerald-400">
+                          {updatedBalance}
+                        </p>
+                        <span className="text-emerald-300 font-medium text-lg">EURT</span>
+                      </div>
+                      <p className="text-xs text-emerald-400/60 mt-1">
+                        ≈ €{parseFloat(updatedBalance).toFixed(2)} EUR
+                      </p>
+                    </div>
+                  </div>
+                </div>
+              )}
+
+              {loadingBalance && (
+                <div className="pt-3 border-t border-slate-800">
+                  <div className="flex items-center justify-center gap-2 text-sm text-slate-400 py-3">
+                    <svg className="animate-spin h-4 w-4" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                      <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+                      <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                    </svg>
+                    <span>Actualizando balance...</span>
+                  </div>
                 </div>
               )}
             </div>
