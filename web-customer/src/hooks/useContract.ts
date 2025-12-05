@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { ethers } from 'ethers';
 
 // Assignment to break down ethers for the specific imports needed
@@ -19,14 +19,17 @@ export function useContract() {
   const [account, setAccount] = useState<string | null>(null);
   const [isInitialized, setIsInitialized] = useState(false);
 
+  const initializationAttempted = useRef(false);
+
   // Inicializar el contrato cuando haya un provider disponible
   useEffect(() => {
     // Prevent multiple initializations or initialize without provider
-    if (isInitialized || !walletProvider || !walletAccount) {
+    if (isInitialized || !walletProvider || !walletAccount || initializationAttempted.current) {
       return;
     }
 
     const initContract = async () => {
+      initializationAttempted.current = true;
       try {
         console.log('[useContract] Initializing contract with shared provider...');
         const web3Signer = walletProvider.getSigner();
@@ -44,15 +47,28 @@ export function useContract() {
         setIsInitialized(true);
 
         // Verificar si el cliente está registrado y registrarlo si no lo está
-        await checkAndRegisterCustomer(ecommerceContract, walletAccount);
+        // REMOVED: Auto-registration causes unwanted wallet popups on redirect.
+        // Registration should be lazy (on action) or manual.
+        // await checkAndRegisterCustomer(ecommerceContract, walletAccount);
       } catch (error) {
         console.error('[useContract] Error initializing contract:', error);
+        // Do NOT reset isInitialized to false here, as it causes a loop.
+        // Instead, we leave it as is (or handle error state).
+        // If we want to retry, we should have a manual retry mechanism.
         setIsInitialized(false);
+        // Actually, if we set it to false, we must ensure initializationAttempted prevents the loop.
+        // But if we want to allow retry on account change, we need to reset initializationAttempted when account changes.
       }
     };
 
     initContract();
   }, [walletProvider, walletAccount, isInitialized]);
+
+  // Reset initialization attempt when account changes
+  useEffect(() => {
+    initializationAttempted.current = false;
+    setIsInitialized(false);
+  }, [walletAccount]);
 
   // Función para verificar y registrar al cliente si no está registrado
   const checkAndRegisterCustomer = async (contract: ethers.Contract, account: string): Promise<boolean> => {

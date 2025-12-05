@@ -17,14 +17,19 @@ const MetaMaskConnect = ({ onWalletConnected }: Props) => {
     const [isConnected, setIsConnected] = useState(false);
     const [walletAddress, setWalletAddress] = useState("");
     const [balance, setBalance] = useState("0");
+    const [isConnecting, setIsConnecting] = useState(false);
+    const [isProcessing, setIsProcessing] = useState(false);
 
     const connectWallet = async () => {
+        if (isConnecting) return;
+
         if (!window.ethereum) {
             console.warn("MetaMask no detectado. Abriendo página de instalación.");
             window.open("https://metamask.io/download.html", "_blank");
             return;
         }
 
+        setIsConnecting(true);
         try {
             const accounts = await window.ethereum.request({
                 method: "eth_requestAccounts",
@@ -34,12 +39,30 @@ const MetaMaskConnect = ({ onWalletConnected }: Props) => {
                 const address = accounts[0];
                 setWalletAddress(address);
                 setIsConnected(true);
-                onWalletConnected(address);
+
+                // Call parent callback
+                setIsProcessing(true);
+                await onWalletConnected(address);
+                setIsProcessing(false);
+
                 await updateBalance(address);
-                // Token addition is now manual via "Agregar a Wallet" button
             }
         } catch (error) {
             console.error("Error al conectar con MetaMask:", error);
+        } finally {
+            setIsConnecting(false);
+        }
+    };
+
+    const handleContinue = async () => {
+        if (isProcessing) return;
+        setIsProcessing(true);
+        try {
+            await onWalletConnected(walletAddress);
+        } catch (error) {
+            console.error("Error continuing:", error);
+        } finally {
+            setIsProcessing(false);
         }
     };
 
@@ -110,17 +133,27 @@ const MetaMaskConnect = ({ onWalletConnected }: Props) => {
                 {!isConnected ? (
                     <button
                         onClick={connectWallet}
-                        className="w-full group relative overflow-hidden bg-gradient-to-r from-indigo-600 to-purple-600 hover:from-indigo-500 hover:to-purple-500 text-white shadow-[0_0_20px_rgba(99,102,241,0.3)] hover:shadow-[0_0_30px_rgba(99,102,241,0.5)] transition-all duration-300 py-4 px-6 rounded-xl font-bold text-lg transform hover:-translate-y-0.5 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2 focus:ring-offset-slate-900"
+                        disabled={isConnecting}
+                        className={`w-full group relative overflow-hidden bg-gradient-to-r from-indigo-600 to-purple-600 hover:from-indigo-500 hover:to-purple-500 text-white shadow-[0_0_20px_rgba(99,102,241,0.3)] hover:shadow-[0_0_30px_rgba(99,102,241,0.5)] transition-all duration-300 py-4 px-6 rounded-xl font-bold text-lg transform hover:-translate-y-0.5 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2 focus:ring-offset-slate-900 ${isConnecting ? 'opacity-70 cursor-wait' : ''}`}
                     >
                         <div className="absolute inset-0 bg-white/20 translate-y-full group-hover:translate-y-0 transition-transform duration-300 skew-y-12"></div>
                         <div className="relative flex items-center justify-center space-x-3">
-                            <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
-                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"></path>
-                            </svg>
-                            <span>Conectar Wallet</span>
-                            <svg className="w-5 h-5 opacity-70 group-hover:translate-x-1 transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
-                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M17 8l4 4m0 0l-4 4m4-4H3"></path>
-                            </svg>
+                            {isConnecting ? (
+                                <svg className="animate-spin -ml-1 mr-3 h-5 w-5 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                                    <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+                                    <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                                </svg>
+                            ) : (
+                                <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"></path>
+                                </svg>
+                            )}
+                            <span>{isConnecting ? 'Conectando...' : 'Conectar Wallet'}</span>
+                            {!isConnecting && (
+                                <svg className="w-5 h-5 opacity-70 group-hover:translate-x-1 transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M17 8l4 4m0 0l-4 4m4-4H3"></path>
+                                </svg>
+                            )}
                         </div>
                     </button>
                 ) : (
@@ -195,15 +228,25 @@ const MetaMaskConnect = ({ onWalletConnected }: Props) => {
             {/* Continue button when wallet is already connected */}
             {isConnected && (
                 <button
-                    onClick={() => onWalletConnected(walletAddress)}
-                    className="w-full group relative overflow-hidden bg-gradient-to-r from-indigo-600 to-purple-600 hover:from-indigo-500 hover:to-purple-500 text-white shadow-[0_0_20px_rgba(99,102,241,0.3)] hover:shadow-[0_0_30px_rgba(99,102,241,0.5)] transition-all duration-300 py-4 px-6 rounded-xl font-bold text-lg transform hover:-translate-y-0.5 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2 focus:ring-offset-slate-900"
+                    onClick={handleContinue}
+                    disabled={isProcessing}
+                    className={`w-full group relative overflow-hidden bg-gradient-to-r from-indigo-600 to-purple-600 hover:from-indigo-500 hover:to-purple-500 text-white shadow-[0_0_20px_rgba(99,102,241,0.3)] hover:shadow-[0_0_30px_rgba(99,102,241,0.5)] transition-all duration-300 py-4 px-6 rounded-xl font-bold text-lg transform hover:-translate-y-0.5 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2 focus:ring-offset-slate-900 ${isProcessing ? 'opacity-70 cursor-wait' : ''}`}
                 >
                     <div className="absolute inset-0 bg-white/20 translate-y-full group-hover:translate-y-0 transition-transform duration-300 skew-y-12"></div>
                     <div className="relative flex items-center justify-center space-x-3">
-                        <span>Continuar al Pago</span>
-                        <svg className="w-5 h-5 opacity-70 group-hover:translate-x-1 transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M17 8l4 4m0 0l-4 4m4-4H3" />
-                        </svg>
+                        {isProcessing ? (
+                            <svg className="animate-spin -ml-1 mr-3 h-5 w-5 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                                <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+                                <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                            </svg>
+                        ) : (
+                            <span>Continuar al Pago</span>
+                        )}
+                        {!isProcessing && (
+                            <svg className="w-5 h-5 opacity-70 group-hover:translate-x-1 transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M17 8l4 4m0 0l-4 4m4-4H3" />
+                            </svg>
+                        )}
                     </div>
                 </button>
             )}
