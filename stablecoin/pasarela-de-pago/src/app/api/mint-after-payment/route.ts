@@ -13,6 +13,16 @@ const stripe = require('stripe')(process.env.STRIPE_SECRET_KEY!);
  *   paymentIntentId: string
  * }
  */
+const corsHeaders = {
+    'Access-Control-Allow-Origin': '*', // En producción debería ser específico
+    'Access-Control-Allow-Methods': 'POST, OPTIONS',
+    'Access-Control-Allow-Headers': 'Content-Type, Authorization',
+};
+
+export async function OPTIONS() {
+    return NextResponse.json({}, { headers: corsHeaders });
+}
+
 export async function POST(request: NextRequest) {
     try {
         const body = await request.json();
@@ -22,7 +32,7 @@ export async function POST(request: NextRequest) {
             console.error('[MINT-AFTER-PAYMENT] Missing paymentIntentId');
             return NextResponse.json(
                 { error: 'Missing paymentIntentId' },
-                { status: 400 }
+                { status: 400, headers: corsHeaders }
             );
         }
 
@@ -35,7 +45,7 @@ export async function POST(request: NextRequest) {
             console.error('[MINT-AFTER-PAYMENT] Payment not succeeded:', paymentIntent.status);
             return NextResponse.json(
                 { error: 'Payment not succeeded', status: paymentIntent.status },
-                { status: 400 }
+                { status: 400, headers: corsHeaders }
             );
         }
 
@@ -72,7 +82,7 @@ export async function POST(request: NextRequest) {
             });
             return NextResponse.json(
                 { error: 'Order not found' },
-                { status: 404 }
+                { status: 404, headers: corsHeaders }
             );
         }
 
@@ -84,7 +94,7 @@ export async function POST(request: NextRequest) {
                 alreadyMinted: true,
                 transactionHash: order.txHash,
                 message: 'Tokens were already minted'
-            });
+            }, { headers: corsHeaders });
         }
 
         // Mintear los tokens
@@ -107,13 +117,13 @@ export async function POST(request: NextRequest) {
                 transactionHash: mintResult.transactionHash,
                 amount: mintResult.amount,
                 message: 'Tokens minted successfully'
-            });
+            }, { headers: corsHeaders });
 
         } catch (mintError: any) {
             console.error('[MINT-AFTER-PAYMENT] Error minting tokens:', mintError);
             return NextResponse.json(
                 { error: 'Failed to mint tokens', details: mintError.message },
-                { status: 500 }
+                { status: 500, headers: corsHeaders }
             );
         }
 
@@ -121,7 +131,7 @@ export async function POST(request: NextRequest) {
         console.error('[MINT-AFTER-PAYMENT] Unexpected error:', error);
         return NextResponse.json(
             { error: 'Internal server error', details: error.message },
-            { status: 500 }
+            { status: 500, headers: corsHeaders }
         );
     }
 }

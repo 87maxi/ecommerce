@@ -36,7 +36,7 @@ const MetaMaskConnect = ({ onWalletConnected }: Props) => {
                 setIsConnected(true);
                 onWalletConnected(address);
                 await updateBalance(address);
-                addTokenToWallet();
+                // Token addition is now manual via "Agregar a Wallet" button
             }
         } catch (error) {
             console.error("Error al conectar con MetaMask:", error);
@@ -78,7 +78,7 @@ const MetaMaskConnect = ({ onWalletConnected }: Props) => {
                     options: {
                         address: tokenAddress,
                         symbol: 'EURT',
-                        decimals: 18,
+                        decimals: 6, // EuroToken uses 6 decimals
                     },
                 },
             });

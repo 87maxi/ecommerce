@@ -14,6 +14,7 @@ function SuccessPageContent() {
   const [showConfetti, setShowConfetti] = useState(false);
   const [updatedBalance, setUpdatedBalance] = useState<string | null>(null);
   const [loadingBalance, setLoadingBalance] = useState(false);
+  const [walletConfirmed, setWalletConfirmed] = useState(false); // New state for wallet confirmation
 
   // Function to fetch updated balance
   const fetchUpdatedBalance = async (walletAddress: string) => {
@@ -36,7 +37,7 @@ function SuccessPageContent() {
       });
 
       const balanceWei = parseInt(balanceHex, 16);
-      const balanceEther = (balanceWei / 1e18).toFixed(2);
+      const balanceEther = (balanceWei / 1e6).toFixed(2); // EuroToken uses 6 decimals
       setUpdatedBalance(balanceEther);
       console.log('[SUCCESS] Updated balance:', balanceEther, 'EURT');
     } catch (error) {
@@ -127,11 +128,9 @@ function SuccessPageContent() {
               sessionStorage.removeItem('amount');
               sessionStorage.removeItem('wallet_address');
 
-              // Redirect with success parameters
-              const redirectUrl = `${storedRedirect}?success=true&tokens=${finalAmount}&invoice=${finalInvoice}&wallet=${finalWallet}&txHash=${mintData.transactionHash}`;
-              setTimeout(() => {
-                window.location.href = redirectUrl;
-              }, 3000);
+              // Store redirect URL for manual navigation
+              sessionStorage.setItem('final_redirect_url', `${storedRedirect}?success=true&tokens=${finalAmount}&invoice=${finalInvoice}&wallet=${finalWallet}&txHash=${mintData.transactionHash}`);
+
               return;
             } else {
               console.error('❌ Error en minting:', mintData);
@@ -228,12 +227,15 @@ function SuccessPageContent() {
                     <span className="text-amber-400">Verificación pendiente</span>
                   )}
                   {payment.status === 'error' && (
-                    <span className="flex items-center gap-1.5 text-red-400">
-                      <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M6 18L18 6M6 6l12 12"></path>
-                      </svg>
-                      Error en minting
-                    </span>
+                    <div className="flex flex-col gap-1.5 text-red-400">
+                      <div className="flex items-center gap-1.5">
+                        <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M6 18L18 6M6 6l12 12"></path>
+                        </svg>
+                        <span>Error en minting</span>
+                      </div>
+                      <span className="text-xs opacity-80 break-words">{payment.error}</span>
+                    </div>
                   )}
                 </span>
               </div>
@@ -301,9 +303,166 @@ function SuccessPageContent() {
             </div>
           )}
 
-          <p className="text-xs text-slate-500 mt-6">
-            Serás redirigido automáticamente en breve...
-          </p>
+          {/* Wallet Confirmation Flow */}
+          {/* Strict Linear Flow: Verify -> Return */}
+          {payment?.status === 'success' && (
+            <div className="mt-6 space-y-4">
+              {/* Token Detection Status */}
+              <div className={`rounded-xl p-4 border ${updatedBalance && parseFloat(updatedBalance) > 0 ? 'bg-emerald-900/20 border-emerald-500/30' : 'bg-slate-800/50 border-slate-700'}`}>
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center gap-3">
+                    {updatedBalance && parseFloat(updatedBalance) > 0 ? (
+                      <div className="w-8 h-8 rounded-full bg-emerald-500/20 flex items-center justify-center">
+                        <svg className="w-5 h-5 text-emerald-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M5 13l4 4L19 7" />
+                        </svg>
+                      </div>
+                    ) : (
+                      <div className="w-8 h-8 rounded-full bg-amber-500/20 flex items-center justify-center animate-pulse">
+                        <svg className="w-5 h-5 text-amber-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                        </svg>
+                      </div>
+                    )}
+                    <div>
+                      <p className={`font-medium text-sm ${updatedBalance && parseFloat(updatedBalance) > 0 ? 'text-emerald-300' : 'text-amber-300'}`}>
+                        {updatedBalance && parseFloat(updatedBalance) > 0
+                          ? 'Tokens detectados en Wallet'
+                          : 'Buscando tokens en Wallet...'}
+                      </p>
+                      <p className="text-xs text-slate-400">
+                        {updatedBalance
+                          ? `Balance actual: ${updatedBalance} EURT`
+                          : 'Esperando confirmación de blockchain...'}
+                      </p>
+                    </div>
+                  </div>
+                  <button
+                    onClick={() => payment.wallet && fetchUpdatedBalance(payment.wallet)}
+                    disabled={loadingBalance}
+                    className="p-2 hover:bg-slate-700 rounded-lg transition-colors disabled:opacity-50"
+                    title="Verificar nuevamente"
+                  >
+                    <svg className={`w-5 h-5 text-indigo-400 ${loadingBalance ? 'animate-spin' : ''}`} fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
+                    </svg>
+                  </button>
+                </div>
+              </div>
+
+              {/* Verification Step */}
+              <div className={`transition-all duration-500 ${walletConfirmed ? 'opacity-50 pointer-events-none' : 'opacity-100'}`}>
+                <button
+                  onClick={async () => {
+                    if (!window.ethereum) return;
+                    try {
+                      const tokenAddress = process.env.NEXT_PUBLIC_EUROTOKEN_CONTRACT_ADDRESS;
+                      console.log('[SUCCESS] Attempting to watch asset:', {
+                        address: tokenAddress,
+                        symbol: 'EURT',
+                        decimals: 6
+                      });
+
+                      if (!tokenAddress) {
+                        throw new Error('Contract address is missing in environment variables');
+                      }
+
+                      await window.ethereum.request({
+                        method: 'wallet_watchAsset',
+                        params: {
+                          type: 'ERC20',
+                          options: {
+                            address: tokenAddress,
+                            symbol: 'EURT',
+                            decimals: 6,
+                          },
+                        },
+                      });
+                      console.log('[SUCCESS] Asset added/verified in wallet');
+                      setWalletConfirmed(true);
+                    } catch (error: any) {
+                      console.error('[SUCCESS] Error adding token:', error);
+
+                      // Fallback for Rabby/Wallets that fail watchAsset but have tokens
+                      // If we already detected a positive balance, we can assume it's safe to proceed
+                      if (updatedBalance && parseFloat(updatedBalance) > 0) {
+                        console.log('[SUCCESS] Tokens detected in balance, bypassing watchAsset error');
+                        setWalletConfirmed(true);
+                        return; // Exit successfully
+                      }
+
+                      // Try to extract a meaningful message
+                      const errorMessage = error?.message || error?.code || JSON.stringify(error);
+                      console.error('[SUCCESS] Detailed error:', errorMessage);
+
+                      // If user rejected, we can optionally show a message
+                      if (error?.code === 4001) {
+                        alert('Has rechazado la solicitud. Debes aceptar para verificar.');
+                      } else {
+                        alert(`No pudimos agregar el token automáticamente. Si ya lo ves en tu wallet, ignora este mensaje. Error: ${errorMessage}`);
+                        // Optional: Allow them to proceed if they claim they see it? 
+                        // For now, let's rely on the balance check above.
+                      }
+                    }
+                  }}
+                  className={`w-full py-4 px-6 rounded-xl flex items-center justify-center gap-3 transition-all duration-300 ${walletConfirmed
+                    ? 'bg-emerald-900/20 text-emerald-400 border border-emerald-500/30'
+                    : 'bg-gradient-to-r from-orange-600 to-amber-600 hover:from-orange-500 hover:to-amber-500 text-white shadow-lg hover:shadow-xl transform hover:-translate-y-0.5 font-bold'
+                    }`}
+                >
+                  {walletConfirmed ? (
+                    <>
+                      <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M5 13l4 4L19 7" />
+                      </svg>
+                      <span>Wallet Verificada</span>
+                    </>
+                  ) : (
+                    <>
+                      <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 6v6m0 0v6m0-6h6m-6 0H6" />
+                      </svg>
+                      <span>1. Verificar en MetaMask (Requerido)</span>
+                    </>
+                  )}
+                </button>
+                {!walletConfirmed && (
+                  <p className="text-center text-xs text-amber-400/80 mt-2">
+                    * Debes completar este paso para continuar
+                  </p>
+                )}
+              </div>
+
+              {/* Return Step - DISABLED until confirmed */}
+              <div className={`transition-all duration-500 ${!walletConfirmed ? 'opacity-50 grayscale' : 'opacity-100'}`}>
+                <button
+                  onClick={() => {
+                    if (!walletConfirmed) return; // Prevent click if not confirmed
+                    const redirectUrl = sessionStorage.getItem('final_redirect_url');
+                    if (redirectUrl) {
+                      window.location.href = redirectUrl;
+                    }
+                  }}
+                  disabled={!walletConfirmed}
+                  className={`w-full py-4 px-6 rounded-xl flex items-center justify-center gap-3 transition-all duration-300 ${!walletConfirmed
+                    ? 'bg-slate-800 text-slate-500 cursor-not-allowed border border-slate-700'
+                    : 'bg-gradient-to-r from-indigo-600 to-purple-600 hover:from-indigo-500 hover:to-purple-500 text-white shadow-lg hover:shadow-xl transform hover:-translate-y-0.5 font-bold'
+                    }`}
+                >
+                  <span>2. Volver a la Tienda</span>
+                  <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M17 8l4 4m0 0l-4 4m4-4H3" />
+                  </svg>
+                </button>
+              </div>
+            </div>
+          )}
+
+          {payment?.status !== 'success' && (
+            <p className="text-xs text-slate-500 mt-6">
+              {payment?.status === 'error' ? 'Hubo un error. Por favor contacta soporte.' : 'Procesando...'}
+            </p>
+          )}
         </div>
       </div>
     );

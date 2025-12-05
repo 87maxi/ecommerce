@@ -14,6 +14,16 @@ const stripe = require('stripe')(process.env.STRIPE_SECRET_KEY!);
  *   invoice: string
  * }
  */
+const corsHeaders = {
+    'Access-Control-Allow-Origin': '*', // En producción debería ser específico
+    'Access-Control-Allow-Methods': 'POST, OPTIONS',
+    'Access-Control-Allow-Headers': 'Content-Type, Authorization',
+};
+
+export async function OPTIONS() {
+    return NextResponse.json({}, { headers: corsHeaders });
+}
+
 export async function POST(request: NextRequest) {
     try {
         const body: CreatePaymentIntentRequest = await request.json();
@@ -24,7 +34,7 @@ export async function POST(request: NextRequest) {
             console.error('[CREATE-PAYMENT-INTENT] Missing required fields:', { amount, walletAddress, invoice });
             return NextResponse.json(
                 { error: 'Missing required fields: amount, walletAddress, invoice' },
-                { status: 400 }
+                { status: 400, headers: corsHeaders }
             );
         }
 
@@ -34,7 +44,7 @@ export async function POST(request: NextRequest) {
             console.error('[CREATE-PAYMENT-INTENT] Invalid amount:', amount);
             return NextResponse.json(
                 { error: 'Amount must be a positive number' },
-                { status: 400 }
+                { status: 400, headers: corsHeaders }
             );
         }
 
@@ -89,13 +99,13 @@ export async function POST(request: NextRequest) {
             orderId
         };
 
-        return NextResponse.json(response);
+        return NextResponse.json(response, { headers: corsHeaders });
 
     } catch (error: any) {
         console.error('[CREATE-PAYMENT-INTENT] Error:', error);
         return NextResponse.json(
             { error: 'Error al crear el intento de pago', details: error.message },
-            { status: 500 }
+            { status: 500, headers: corsHeaders }
         );
     }
 }
